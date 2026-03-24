@@ -1251,12 +1251,12 @@ img { max-width: 100%; display: block; }
   white-space: nowrap;
   overflow: hidden;
   box-shadow: 0 0 12px rgba(15, 23, 42, 0.8);
+
+  margin-top: 56px;   /* neu: Abstand unter Navbar */
+  position: relative; /* neu: für z-index */
+  z-index: 900;       /* neu: über dem Content */
 }
 
-.clan-news-ticker .label {
-  font-weight: 600;
-  margin-right: 1rem;
-}
 
 .clan-news-ticker .items {
   display: inline-block;
