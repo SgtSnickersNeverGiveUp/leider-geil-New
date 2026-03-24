@@ -1251,12 +1251,24 @@ img { max-width: 100%; display: block; }
   white-space: nowrap;
   overflow: hidden;
   box-shadow: 0 0 12px rgba(15, 23, 42, 0.8);
-
-  margin-top: 56px;   /* neu: Abstand unter Navbar */
-  position: relative; /* neu: für z-index */
-  z-index: 900;       /* neu: über dem Content */
+  margin-top: 56px;
+  position: relative;
+  z-index: 900;
+  display: flex;
+  align-items: center;
 }
 
+.clan-news-ticker .label {
+  font-weight: 600;
+  margin-right: 1rem;
+  flex-shrink: 0;
+}
+
+/* Nur der Bereich rechts vom Label ist „Laufstrecke“ */
+.clan-news-ticker .track {
+  flex: 1;
+  overflow: hidden;
+}
 
 .clan-news-ticker .items {
   display: inline-block;
@@ -1265,10 +1277,7 @@ img { max-width: 100%; display: block; }
 }
 
 @keyframes clan-news-marquee {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-100%);
-  }
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-100%); }
 }
+
