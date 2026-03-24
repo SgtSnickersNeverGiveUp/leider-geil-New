@@ -7,9 +7,10 @@ document.addEventListener('DOMContentLoaded', () => {
     .then((items) => {
       if (!Array.isArray(items) || items.length === 0) return;
 
-      const texts = items
-        .map((n) => n.title || n.text || '')
+            const texts = items
+        .map((n) => n.text)
         .filter((t) => t && t.trim().length > 0);
+
 
       if (texts.length === 0) return;
 
