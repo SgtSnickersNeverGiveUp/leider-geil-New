@@ -367,6 +367,43 @@ function initEventForm() {
     }
   });
 }
+/* ══════════════════════════════════════════════════════════
+   12. Clan News Ticker (rotierende Kurz-News aus news.json)
+   ══════════════════════════════════════════════════════════ */
+
+const TICKER_INTERVAL = 7000; // 7 Sekunden
+
+async function initClanNewsTicker() {
+  const bar = document.getElementById('lg-news-bar');
+  const itemEl = document.getElementById('lg-news-item');
+  if (!bar || !itemEl) return;
+
+  try {
+    const res = await fetch('/assets/data/news.json');
+    if (!res.ok) throw new Error('News JSON not found');
+    const news = await res.json();
+    if (!Array.isArray(news) || news.length === 0) return;
+
+    let index = 0;
+    const showItem = () => {
+      const entry = news[index];
+      // Fade-out
+      itemEl.classList.remove('lg-news-item--visible');
+      setTimeout(() => {
+        itemEl.textContent = entry.text;
+        itemEl.classList.add('lg-news-item--visible');
+      }, 200);
+      index = (index + 1) % news.length;
+    };
+
+    bar.style.display = ''; // Balken sichtbar machen
+    showItem();
+    setInterval(showItem, TICKER_INTERVAL);
+  } catch (err) {
+    console.warn('[Clan News Ticker]', err.message);
+    // Bei Fehler: Ticker versteckt lassen
+  }
+}
 
 /* ══════════════════════════════════════════════════════════
    INIT – Alles starten wenn DOM bereit
@@ -388,4 +425,8 @@ document.addEventListener('DOMContentLoaded', () => {
   fetchDiscordStatus();
   fetchTwitchStatus();
   startLiveUpdates();
+
+  // Clan News Ticker starten
+  initClanNewsTicker();
 });
+
