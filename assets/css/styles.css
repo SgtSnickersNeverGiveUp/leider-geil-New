@@ -668,11 +668,13 @@ img { max-width: 100%; display: block; }
   line-height: 1.5;
   margin-top: var(--sp-sm);
   text-align: left;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid var(--clr-border);
+  background: rgba(20, 20, 28, 0.7);
 }
+
 
 .roster-card__fun-tags {
   display: flex;
