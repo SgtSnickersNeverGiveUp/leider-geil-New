@@ -47,9 +47,9 @@ exports.handler = async (event) => {
       };
     }
 
-    let formData;
+    let formPayload;
     try {
-      formData = JSON.parse(event.body || "{}");
+      formPayload = JSON.parse(event.body || "{}");
     } catch (e) {
       console.error("JSON parse error:", e, event.body);
       return {
@@ -58,7 +58,19 @@ exports.handler = async (event) => {
       };
     }
 
-    const formName = formData["form-name"] || formData.form_name || "unknown";
+    // Netlify Outgoing Webhook: { form_name: "...", data: { ...fields... }, ... }
+    const formName =
+      formPayload.form_name ||
+      formPayload["form-name"] ||
+      formPayload["form-name"] ||
+      "unknown";
+
+    const fields = formPayload.data || formPayload || {};
+
+    console.log("Received form submission:", {
+      formName,
+      fields,
+    });
 
     let webhookUrl = null;
 
@@ -86,21 +98,21 @@ exports.handler = async (event) => {
 
     if (formName === "event-signup") {
       content =
-        "**Neue Event-Anmeldung**\n" +
-        `Name / Gaming-ID: ${formData["name-gaming-id"] || "-"}\n` +
-        `E-Mail: ${formData["email"] || "-"}\n` +
-        `Spiel: ${formData["spiel"] || "-"}\n` +
-        `Clan-Name: ${formData["clan-name"] || "-"}\n` +
-        `Anzahl Spieler: ${formData["anzahl-spieler"] || "-"}\n` +
-        `Bemerkungen: ${formData["bemerkungen"] || "-"}\n`;
+        "**📅 Neue Event-Anmeldung**\n" +
+        `**Name / Gaming-ID:** ${fields["name-gaming-id"] || "-"}\n` +
+        `**E-Mail:** ${fields["email"] || "-"}\n` +
+        `**Spiel:** ${fields["spiel"] || "-"}\n` +
+        `**Clan-Name:** ${fields["clan-name"] || "-"}\n` +
+        `**Anzahl Spieler:** ${fields["anzahl-spieler"] || "-"}\n` +
+        `**Bemerkungen:** ${fields["bemerkungen"] || "-"}\n`;
     } else if (formName === "join-resistance") {
       content =
-        "**Neue Clan-Bewerbung**\n" +
-        `Gaming-ID: ${formData["gaming-id"] || "-"}\n` +
-        `Alter: ${formData["alter"] || "-"}\n` +
-        `Hauptspiel: ${formData["spiel"] || "-"}\n` +
-        `Rolle: ${formData["rolle"] || "-"}\n` +
-        `Über mich: ${formData["ueber-mich"] || "-"}\n`;
+        "**🛡️ Neue Clan-Bewerbung**\n" +
+        `**Gaming-ID:** ${fields["gaming-id"] || "-"}\n` +
+        `**Alter:** ${fields["alter"] || "-"}\n` +
+        `**Hauptspiel:** ${fields["spiel"] || "-"}\n` +
+        `**Rolle:** ${fields["rolle"] || "-"}\n` +
+        `**Über mich:** ${fields["ueber-mich"] || "-"}\n`;
     }
 
     const payload = { content };
@@ -119,3 +131,4 @@ exports.handler = async (event) => {
     };
   }
 };
+
