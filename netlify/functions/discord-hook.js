@@ -47,9 +47,9 @@ exports.handler = async (event) => {
       };
     }
 
-    let formData;
+    let body;
     try {
-      formData = JSON.parse(event.body || "{}");
+      body = JSON.parse(event.body || "{}");
     } catch (e) {
       console.error("JSON parse error:", e, event.body);
       return {
@@ -58,7 +58,14 @@ exports.handler = async (event) => {
       };
     }
 
-    const formName = formData["form-name"] || formData.form_name || "unknown";
+    // Netlify-Form-Webhooks: Daten liegen unter body.payload.data
+    const payload = body.payload || {};
+    const data = payload.data || {};
+    const formName =
+      data["form-name"] ||
+      payload.form_name ||
+      payload.formName ||
+      "unknown";
 
     let webhookUrl = null;
 
@@ -87,25 +94,25 @@ exports.handler = async (event) => {
     if (formName === "event-signup") {
       content =
         "**Neue Event-Anmeldung**\n" +
-        `Name / Gaming-ID: ${formData["name-gaming-id"] || "-"}\n` +
-        `E-Mail: ${formData["email"] || "-"}\n` +
-        `Spiel: ${formData["spiel"] || "-"}\n` +
-        `Clan-Name: ${formData["clan-name"] || "-"}\n` +
-        `Anzahl Spieler: ${formData["anzahl-spieler"] || "-"}\n` +
-        `Bemerkungen: ${formData["bemerkungen"] || "-"}\n`;
+        `Name / Gaming-ID: ${data["name-gaming-id"] || "-"}\n` +
+        `E-Mail: ${data["email"] || "-"}\n` +
+        `Spiel: ${data["spiel"] || "-"}\n` +
+        `Clan-Name: ${data["clan-name"] || "-"}\n` +
+        `Anzahl Spieler: ${data["anzahl-spieler"] || "-"}\n` +
+        `Bemerkungen: ${data["bemerkungen"] || "-"}\n`;
     } else if (formName === "join-resistance") {
       content =
         "**Neue Clan-Bewerbung**\n" +
-        `Gaming-ID: ${formData["gaming-id"] || "-"}\n` +
-        `Alter: ${formData["alter"] || "-"}\n` +
-        `Hauptspiel: ${formData["spiel"] || "-"}\n` +
-        `Rolle: ${formData["rolle"] || "-"}\n` +
-        `Über mich: ${formData["ueber-mich"] || "-"}\n`;
+        `Gaming-ID: ${data["gaming-id"] || "-"}\n` +
+        `Alter: ${data["alter"] || "-"}\n` +
+        `Hauptspiel: ${data["spiel"] || "-"}\n` +
+        `Rolle: ${data["rolle"] || "-"}\n` +
+        `Über mich: ${data["ueber-mich"] || "-"}\n`;
     }
 
-    const payload = { content };
+    const discordPayload = { content };
 
-    await postToDiscord(webhookUrl, payload);
+    await postToDiscord(webhookUrl, discordPayload);
 
     return {
       statusCode: 200,
