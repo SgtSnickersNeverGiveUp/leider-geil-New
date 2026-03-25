@@ -52,8 +52,17 @@
         <div class="terminal__body">
           <p class="terminal__prompt">root@leider-geil:~$ ./bewerbung --init</p>
           <p class="terminal__output">[SYSTEM] Recruitment-Modul geladen. Fülle alle Felder aus, Soldat.</p>
-          <form id="recruit-form" name="recruitment" method="POST" data-netlify="true" data-netlify-honeypot="website" autocomplete="off">
-            <input type="hidden" name="form-name" value="recruitment">
+          <form
+  id="recruit-form"
+  name="join-resistance"
+  method="POST"
+  data-netlify="true"
+  data-netlify-honeypot="website"
+  autocomplete="off"
+>
+
+            <input type="hidden" name="form-name" value="join-resistance">
+
             <div class="form-group">
               <label for="r-gamingid">Gaming-ID</label>
               <input type="text" id="r-gamingid" name="gaming-id" required placeholder="Dein Ingame-Name / Steam-ID">
