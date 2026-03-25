@@ -1,3 +1,43 @@
+const https = require("https");
+
+function postToDiscord(webhookUrl, payload) {
+  return new Promise((resolve, reject) => {
+    const data = JSON.stringify(payload);
+    const url = new URL(webhookUrl);
+
+    const options = {
+      hostname: url.hostname,
+      path: url.pathname + url.search,
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Content-Length": Buffer.byteLength(data),
+      },
+    };
+
+    const req = https.request(options, (res) => {
+      let body = "";
+      res.on("data", (chunk) => (body += chunk.toString()));
+      res.on("end", () => {
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          resolve(body);
+        } else {
+          console.error("Discord error:", res.statusCode, body);
+          reject(new Error("Discord webhook error"));
+        }
+      });
+    });
+
+    req.on("error", (err) => {
+      console.error("Request error:", err);
+      reject(err);
+    });
+
+    req.write(data);
+    req.end();
+  });
+}
+
 exports.handler = async (event) => {
   try {
     if (event.httpMethod !== "POST") {
@@ -7,10 +47,19 @@ exports.handler = async (event) => {
       };
     }
 
-    const formData = JSON.parse(event.body || "{}");
+    let formData;
+    try {
+      formData = JSON.parse(event.body || "{}");
+    } catch (e) {
+      console.error("JSON parse error:", e, event.body);
+      return {
+        statusCode: 400,
+        body: "Invalid JSON",
+      };
+    }
+
     const formName = formData["form-name"] || formData.form_name || "unknown";
 
-    // Wähle Discord-Webhook je nach Formular
     let webhookUrl = null;
 
     if (formName === "event-signup") {
@@ -18,7 +67,7 @@ exports.handler = async (event) => {
     } else if (formName === "join-resistance") {
       webhookUrl = process.env.DISCORD_CLAN_WEBHOOK;
     } else {
-      // unbekanntes Formular – nichts machen
+      console.log("Unknown form, ignoring:", formName);
       return {
         statusCode: 200,
         body: "Ignored form",
@@ -33,7 +82,6 @@ exports.handler = async (event) => {
       };
     }
 
-    // Nachrichtentext für Discord bauen
     let content = "";
 
     if (formName === "event-signup") {
@@ -55,26 +103,9 @@ exports.handler = async (event) => {
         `Über mich: ${formData["ueber-mich"] || "-"}\n`;
     }
 
-    const payload = {
-      content,
-    };
+    const payload = { content };
 
-    const response = await fetch(webhookUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-      const text = await response.text();
-      console.error("Discord webhook error:", response.status, text);
-      return {
-        statusCode: 500,
-        body: "Discord webhook error",
-      };
-    }
+    await postToDiscord(webhookUrl, payload);
 
     return {
       statusCode: 200,
