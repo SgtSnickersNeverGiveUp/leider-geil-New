@@ -2597,15 +2597,22 @@ function renderEventRegistrations() {
         ${currentEventRegistrations.map(reg => `
           <tr>
             <td><strong>${escapeHtml(reg.name)}</strong></td>
-            <td>${getGameTag(reg.spiel)}</td>
-            <td>${escapeHtml(reg.clan || '–')}</td>
-            <td>${escapeHtml(reg.spielerAnzahl || '–')}</td>
-            <td class="app-about">${escapeHtml(truncate(reg.bemerkungen || '', 60))}</td>
-            <td class="app-date">${formatDate(reg.createdAt)}</td>
-            <td>
-              <button class="btn-sm" onclick="showEvtDetail('${reg.id}')">Details</button>
-              <button class="btn-delete" onclick="deleteEventRegistration('${reg.id}')">L\u00f6schen</button>
-            </td>
+<td>${
+  reg.spiel === 'PUBG'
+    ? '<span class="tag tag--pubg">PUBG</span>'
+    : reg.spiel === 'ARC Raiders'
+      ? '<span class="tag tag--arc">ARC Raiders</span>'
+      : '<span class="tag tag--both">Mixed</span>'
+}</td>
+<td>${escapeHtml(reg.clan || '–')}</td>
+<td>${escapeHtml(reg.spielerAnzahl || '–')}</td>
+<td class="app-about">${escapeHtml(truncate(reg.bemerkungen || '', 60))}</td>
+<td class="app-date">${formatDate(reg.createdAt)}</td>
+<td>
+  <button class="btn-sm" onclick="showEvtDetail('${reg.id}')">Details</button>
+  <button class="btn-delete" onclick="deleteEventRegistration('${reg.id}')">Löschen</button>
+</td>
+
           </tr>
         `).join('')}
       </tbody>
