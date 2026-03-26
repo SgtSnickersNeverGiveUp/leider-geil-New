@@ -36,9 +36,10 @@ async function fetchDiscordStatus() {
     if (dot && online > 0) dot.classList.add('live-status__dot--online');
   } catch (err) {
     console.warn('[Discord]', err.message);
-    el.textContent = 'Offline';
+    el.textContent = 'Keine Verbindung';
   }
 }
+
 
 /* ══════════════════════════════════════════════════════════
    3. Twitch API – Live-Status (via Netlify Function)
