@@ -1515,6 +1515,7 @@ navLinks.forEach(link => {
 // BEWERBUNGEN (Applications) – KOMPLETT FUNKTIONAL
 // ══════════════════════════════════════════════════════════
 
+let currentApplications = [];
 
 async function loadApplications() {
   const body = document.getElementById('applications-body');
@@ -1545,6 +1546,7 @@ async function loadApplications() {
   renderApplications();
   updateStats();
 }
+
 
 function renderApplications() {
   const body = document.getElementById('applications-body');
