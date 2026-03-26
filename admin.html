@@ -2095,7 +2095,14 @@ function renderEventsAdmin(events) {
           <div class="admin-event-title">${escapeHtml(ev.title)}</div>
           <div class="admin-event-meta">
             <span>${dateStr}</span>
-            <span>${getGameTag(ev.game)}</span>
+            <span>${
+  ev.game === 'PUBG'
+    ? 'PUBG'
+    : ev.game === 'ARC Raiders'
+      ? 'ARC Raiders'
+      : 'Mixed'
+}</span>
+
           </div>
         </div>
         <div class="admin-event-actions">
