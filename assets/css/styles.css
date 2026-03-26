@@ -259,8 +259,13 @@ img { max-width: 100%; display: block; }
   pointer-events: none;
 }
 
-.hero__panel--pubg { background: linear-gradient(135deg, #1a0f00 0%, var(--clr-bg) 100%); }
-.hero__panel--arc  { background: linear-gradient(135deg, #001a10 0%, var(--clr-bg) 100%); }
+.hero__panel--pubg {
+  background: linear-gradient(135deg, #1a0f00 0%, var(--clr-bg) 100%);
+}
+
+.hero__panel--arc {
+  background: linear-gradient(135deg, #001a10 0%, var(--clr-bg) 100%);
+}
 
 .hero__label {
   position: absolute;
@@ -296,7 +301,11 @@ img { max-width: 100%; display: block; }
   text-align: center;
   z-index: 10;
   padding: var(--sp-lg);
-  background: radial-gradient(ellipse at center, rgba(13,13,18,.85) 0%, rgba(13,13,18,.4) 100%);
+  background: radial-gradient(
+    ellipse at center,
+    rgba(13, 13, 18, .85) 0%,
+    rgba(13, 13, 18, .4) 100%
+  );
 }
 
 .hero__heading {
@@ -315,70 +324,22 @@ img { max-width: 100%; display: block; }
     0 0 100px rgba(57, 255, 20, .1);
 }
 
-/* Glitch-Effekt */
-.glitch {
-  position: relative;
-  animation: glitchBase 4s infinite;
-}
-
-.glitch::before,
-.glitch::after {
-  content: attr(data-text);
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-}
-
-.glitch::before {
-  color: #ffffff;
-  text-shadow:
-    0 0 10px rgba(57, 255, 20, .3),
-    0 0 30px rgba(57, 255, 20, .2),
-    0 0 60px rgba(57, 255, 20, .15),
-    0 0 100px rgba(57, 255, 20, .1);
-  clip-path: inset(0 0 65% 0);
-  animation: glitchTop 3s infinite;
-}
-
-.glitch::after {
-  color: #ffffff;
-  text-shadow:
-    0 0 10px rgba(57, 255, 20, .3),
-    0 0 30px rgba(57, 255, 20, .2),
-    0 0 60px rgba(57, 255, 20, .15),
-    0 0 100px rgba(57, 255, 20, .1);
-  clip-path: inset(65% 0 0 0);
-  animation: glitchBottom 2.5s infinite;
-}
-
-@keyframes glitchBase {
-  0%, 92%, 100% { transform: translate(0); }
-  93% { transform: translate(-3px, 1px); }
-  95% { transform: translate(2px, -1px); }
-  97% { transform: translate(-1px, 2px); }
-}
-
-@keyframes glitchTop {
-  0%, 90%, 100% { transform: translate(0); }
-  91% { transform: translate(4px, -2px); }
-  93% { transform: translate(-3px, 0); }
-  95% { transform: translate(2px, 1px); }
-}
-
-@keyframes glitchBottom {
-  0%, 88%, 100% { transform: translate(0); }
-  89% { transform: translate(-4px, 2px); }
-  92% { transform: translate(3px, -1px); }
-  94% { transform: translate(-2px, 0); }
-}
-
+/* Untertitel und Erklärung im Hero */
 .hero__sub {
-  font-family: var(--ff-mono);
-  font-size: clamp(.85rem, 1.5vw, 1.1rem);
+  margin-top: 0.75rem;
+  font-size: 1rem;
   color: var(--clr-text-muted);
-  margin-top: var(--sp-md);
-  letter-spacing: .04em;
 }
+
+.hero__hint {
+  margin-top: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--clr-text-muted);
+  font-family: var(--ff-mono);
+  opacity: 0.9;
+  max-width: 32rem;
+}
+
 
 /* ── CTA Button ────────────────────────────────────────── */
 .btn {
