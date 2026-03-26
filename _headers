@@ -1,3 +1,5 @@
-/admin*
+/admin
   Basic-Auth: clanadmin:MilfHunter
 
+/admin/*
+  Basic-Auth: clanadmin:MilfHunter
