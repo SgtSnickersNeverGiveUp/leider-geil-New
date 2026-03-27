@@ -601,6 +601,7 @@ img { max-width: 100%; display: block; }
   margin-bottom: var(--sp-md);
 }
 
+/* Game-Tags */
 .roster-card__games {
   display: flex;
   justify-content: center;
@@ -620,7 +621,7 @@ img { max-width: 100%; display: block; }
 .roster-card__tag--arc   { color: var(--clr-accent-arc);  border: 1px solid var(--clr-accent-arc);  }
 .roster-card__tag--other { color: var(--clr-text-muted);  border: 1px solid var(--clr-border); }
 
-/* ── Steckbrief (Profile Details) ─────────────────────── */
+/* Clan-Rolle Badge */
 .roster-card__clan-role {
   display: inline-block;
   font-family: var(--ff-mono);
@@ -635,20 +636,20 @@ img { max-width: 100%; display: block; }
   background: rgba(15, 242, 169, .08);
 }
 
+/* Bio/Text */
 .roster-card__bio {
   font-size: .8rem;
   color: var(--clr-text-muted);
   line-height: 1.5;
   margin-top: var(--sp-sm);
   text-align: left;
-
   padding: 0.5rem 0.75rem;
   border-radius: 6px;
   border: 1px solid var(--clr-border);
   background: rgba(20, 20, 28, 0.7);
 }
 
-
+/* Fun-Tags */
 .roster-card__fun-tags {
   display: flex;
   justify-content: center;
@@ -666,6 +667,7 @@ img { max-width: 100%; display: block; }
   background: rgba(255, 156, 67, .08);
   border: 1px solid rgba(255, 156, 67, .25);
 }
+
 
 /* ── Event Timeline ────────────────────────────────────── */
 #events {
