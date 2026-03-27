@@ -769,6 +769,29 @@ img { max-width: 100%; display: block; }
   border: 1px solid var(--clr-border);
   color: var(--clr-text-muted);
 }
+.timeline__meta {
+  display: flex;
+  gap: .5rem;
+  margin-top: .5rem;
+  font-family: var(--ff-mono);
+  font-size: .75rem;
+}
+
+.timeline__type--event {
+  background: rgba(15, 242, 169, .12);
+  color: #0FF2A9;
+  border-color: rgba(15, 242, 169, .5);
+}
+
+.timeline__type--match {
+  background: rgba(255, 156, 67, .12);
+  color: #FF9C43;
+  border-color: rgba(255, 156, 67, .5);
+}
+
+.timeline__game {
+  opacity: .75;
+}
 
 .timeline__image {
   width: 100%;
