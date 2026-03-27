@@ -239,6 +239,21 @@ async function renderTimeline() {
 }
 
 
+function observeTimeline() {
+  const items = $$('.timeline__item');
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    },
+    { threshold: 0.15 }
+  );
+  items.forEach((item) => observer.observe(item));
+}
 
 /* ══════════════════════════════════════════════════════════
    6. Header Banner (from Admin Settings)
