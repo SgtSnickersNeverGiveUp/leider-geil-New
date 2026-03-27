@@ -149,46 +149,31 @@ async function renderTimeline() {
     // Sortiere nach Datum absteigend
     events.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-        wrap.innerHTML = events.map(e => {
-      const dotClass = e.game === 'PUBG' ? 'timeline__dot--pubg' : '';
-      const dateStr = new Date(e.date).toLocaleDateString('de-DE', {
-        year: 'numeric', month: 'long', day: 'numeric',
-      });
-      const imgSrc = e.image
-        ? e.image + (e.image.startsWith('/api/event-image') ? (e.image.includes('?') ? '&' : '?') + 't=' + Math.floor(Date.now() / 60000) : '')
-        : '';
-      const imgHtml = imgSrc
-        ? `<img class="timeline__image" src="${imgSrc}" alt="${e.title}" loading="lazy" onerror="this.style.display='none'">`
-        : '';
-      return `
-        <div class="timeline__item" data-id="${e.id}">
-          <div class="timeline__dot ${dotClass}"></div>
-          <div class="timeline__card">
-            ${imgHtml}
-            <time class="timeline__date">${dateStr}</time>
-            <h3 class="timeline__title">${e.title}</h3>
-            <p class="timeline__desc">${e.description}</p>
-            <span class="timeline__type">${e.type}</span>
-          </div>
-        </div>`;
-    }).join('');
-
-    // Nur die ersten 2 Events zeigen, Rest per Button
+            // Nur die ersten 2 Events zeigen, Rest per Button (Toggle)
     const items = Array.from(wrap.querySelectorAll('.timeline__item'));
     const moreBtn = document.getElementById('events-more-btn');
 
     if (items.length > 2 && moreBtn) {
-      items.forEach((item, index) => {
-        if (index >= 2) {
-          item.classList.add('timeline__item--hidden');
-        }
-      });
+      let expanded = false;
+
+      const updateView = () => {
+        items.forEach((item, index) => {
+          if (!expanded && index >= 2) {
+            item.classList.add('timeline__item--hidden');
+          } else {
+            item.classList.remove('timeline__item--hidden');
+          }
+        });
+        moreBtn.textContent = expanded ? 'Weniger Events anzeigen' : 'Mehr Events anzeigen';
+      };
+
+      updateView();
 
       moreBtn.style.display = ''; // Button sichtbar machen
 
       moreBtn.addEventListener('click', () => {
-        items.forEach(item => item.classList.remove('timeline__item--hidden'));
-        moreBtn.style.display = 'none';
+        expanded = !expanded;
+        updateView();
       });
     } else if (moreBtn) {
       // Weniger als 3 Events: Button ausblenden
