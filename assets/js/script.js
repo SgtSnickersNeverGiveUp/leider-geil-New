@@ -149,7 +149,7 @@ async function renderTimeline() {
     // Sortiere nach Datum absteigend
     events.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-    wrap.innerHTML = events.map(e => {
+        wrap.innerHTML = events.map(e => {
       const dotClass = e.game === 'PUBG' ? 'timeline__dot--pubg' : '';
       const dateStr = new Date(e.date).toLocaleDateString('de-DE', {
         year: 'numeric', month: 'long', day: 'numeric',
@@ -173,7 +173,30 @@ async function renderTimeline() {
         </div>`;
     }).join('');
 
+    // Nur die ersten 2 Events zeigen, Rest per Button
+    const items = Array.from(wrap.querySelectorAll('.timeline__item'));
+    const moreBtn = document.getElementById('events-more-btn');
+
+    if (items.length > 2 && moreBtn) {
+      items.forEach((item, index) => {
+        if (index >= 2) {
+          item.classList.add('timeline__item--hidden');
+        }
+      });
+
+      moreBtn.style.display = ''; // Button sichtbar machen
+
+      moreBtn.addEventListener('click', () => {
+        items.forEach(item => item.classList.remove('timeline__item--hidden'));
+        moreBtn.style.display = 'none';
+      });
+    } else if (moreBtn) {
+      // Weniger als 3 Events: Button ausblenden
+      moreBtn.style.display = 'none';
+    }
+
     observeTimeline();
+
   } catch (err) {
     console.error('[Timeline]', err);
     wrap.innerHTML = '<p style="color:var(--clr-danger);">Events konnten nicht geladen werden.</p>';
