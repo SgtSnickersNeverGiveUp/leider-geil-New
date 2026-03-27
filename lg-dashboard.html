@@ -1521,28 +1521,16 @@ async function loadApplications() {
   const body = document.getElementById('applications-body');
   body.innerHTML = '<div class="loading">Lade Bewerbungen</div>';
 
-  // TEST-DATEN (echte Netlify Forms!)
-  currentApplications = [
-    {
-      id: 1,
-      gamingId: "TestPlayer123", 
-      alter: 25,
-      hauptspiel: "PUBG",
-      rolle: "Flex", 
-      ueberMich: "Test für Admin-Dashboard",
-      createdAt: "2026-03-21T01:18:00Z"
-    },
-    {
-      id: 2,
-      gamingId: "76561198015672867", 
-      alter: 28,
-      hauptspiel: "PUBG",
-      rolle: "IGL",
-      ueberMich: "Dirk | Sgt.Snickers Moin zusammen!",
-      createdAt: "2026-03-15T10:30:00Z"
-    }
-  ];
-  
+  try {
+    const res = await fetch(API_URL); // '/api/applications'
+    if (!res.ok) throw new Error('API error ' + res.status);
+    currentApplications = await res.json();
+  } catch (err) {
+    console.error('[Applications] Laden fehlgeschlagen', err);
+    body.innerHTML = '<div class="empty-state__text">Fehler beim Laden der Bewerbungen.</div>';
+    return;
+  }
+
   renderApplications();
   updateStats();
 }
