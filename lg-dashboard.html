@@ -1574,9 +1574,9 @@ function renderApplications() {
             <td class="app-about">${app.ueberMich.substring(0,80)}${app.ueberMich.length > 80 ? '...' : ''}</td>
             <td class="app-date">${new Date(app.createdAt).toLocaleString('de-DE')}</td>
             <td>
-              <button class="btn-sm" onclick="alert('Details: ${app.gamingId} | ${app.ueberMich}')">Details</button>
-              <button class="btn-delete" onclick="if(confirm('Löschen?')) alert('Gelöscht: ${app.gamingId}')">Löschen</button>
-            </td>
+  <button class="btn-sm" onclick="alert('Details: ${app.gamingId} | ${app.ueberMich}')">Details</button>
+  <button class="btn-delete" onclick="deleteApplication('${app.id}')">Löschen</button>
+</td>
           </tr>
         `).join('')}
       </tbody>
