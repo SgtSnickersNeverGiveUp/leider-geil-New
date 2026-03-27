@@ -160,45 +160,55 @@ async function renderTimeline() {
     });
 
     // HTML für Timeline-Items bauen
-    wrap.innerHTML = events.map(e => {
-      const game = e.game || 'Mixed';
-      const dotClass = game === 'PUBG' ? 'timeline__dot--pubg'
-        : game === 'ARC Raiders' ? 'timeline__dot--arc'
-        : '';
+wrap.innerHTML = events.map(e => {
+  const game = e.game || 'Mixed';
+  const type = e.type || 'event';
 
-      let dateStr = '';
-      if (e.date) {
-        const d = new Date(e.date);
-        if (!isNaN(d.getTime())) {
-          dateStr = d.toLocaleDateString('de-DE', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          });
-        }
-      }
+  const dotClass = game === 'PUBG' ? 'timeline__dot--pubg'
+    : game === 'ARC Raiders' ? 'timeline__dot--arc'
+    : '';
 
-      const imgSrc = e.image
-        ? e.image + (e.image.startsWith('/api/event-image')
-            ? (e.image.includes('?') ? '&' : '?') + 't=' + Math.floor(Date.now() / 60000)
-            : '')
-        : '';
-      const imgHtml = imgSrc
-        ? `<img class="timeline__image" src="${imgSrc}" alt="${e.title || ''}" loading="lazy" onerror="this.style.display='none'">`
-        : '';
+  const typeClass =
+    type === 'match' ? 'timeline__type--match' : 'timeline__type--event';
 
-      return `
-        <div class="timeline__item" data-id="${e.id || ''}">
-          <div class="timeline__dot ${dotClass}"></div>
-          <div class="timeline__card">
-            ${imgHtml}
-            ${dateStr ? `<time class="timeline__date">${dateStr}</time>` : ''}
-            <h3 class="timeline__title">${e.title || ''}</h3>
-            <p class="timeline__desc">${e.description || ''}</p>
-            <span class="timeline__type">${e.type || ''}</span>
-          </div>
-        </div>`;
-    }).join('');
+  let dateStr = '';
+  if (e.date) {
+    const d = new Date(e.date);
+    if (!isNaN(d.getTime())) {
+      dateStr = d.toLocaleDateString('de-DE', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+    }
+  }
+
+  const imgSrc = e.image
+    ? e.image + (e.image.startsWith('/api/event-image')
+        ? (e.image.includes('?') ? '&' : '?') + 't=' + Math.floor(Date.now() / 60000)
+        : '')
+    : '';
+  const imgHtml = imgSrc
+    ? `<img class="timeline__image" src="${imgSrc}" alt="${e.title || ''}" loading="lazy" onerror="this.style.display='none'">`
+    : '';
+
+  return `
+    <div class="timeline__item" data-id="${e.id || ''}">
+      <div class="timeline__dot ${dotClass}"></div>
+      <div class="timeline__card">
+        ${imgHtml}
+        ${dateStr ? `<time class="timeline__date">${dateStr}</time>` : ''}
+        <h3 class="timeline__title">${e.title || ''}</h3>
+        <p class="timeline__desc">${e.description || ''}</p>
+        <div class="timeline__meta">
+          <span class="timeline__type ${typeClass}">${type}</span>
+          <span class="timeline__game">${game}</span>
+        </div>
+      </div>
+    </div>`;
+}).join('');
+
+
 
     // Nur die ersten 2 Events zeigen, Rest per Button (Toggle)
     const items = Array.from(wrap.querySelectorAll('.timeline__item'));
