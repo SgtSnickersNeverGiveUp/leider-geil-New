@@ -97,55 +97,59 @@ async function renderRoster() {
       members = await res.json();
     }
 
-    grid.innerHTML = "";
-
-    members.forEach(m => {
-      const article = document.createElement("article");
-      article.className = "roster-card";
-
+    grid.innerHTML = members.map(m => {
+      const initials = encodeURIComponent((m.name || '??').slice(0, 2).toUpperCase());
       const avatarSrc = m.avatar
         ? m.avatar + (m.avatar.startsWith('/api/roster-avatar')
             ? (m.avatar.includes('?') ? '&' : '?') + 't=' + Math.floor(Date.now() / 60000)
             : '')
-        : `https://via.placeholder.com/160/1a1a2e/0FF2A9?text=${encodeURIComponent((m.name || '??').slice(0, 2).toUpperCase())}`;
+        : `https://via.placeholder.com/160/1a1a2e/0FF2A9?text=${initials}`;
 
       const games = m.games || [];
-      const tagsHtml = games.map(g => {
+      const gamesHtml = games.map(g => {
         const cls =
-          g === 'PUBG' ? 'pubg'
-          : g === 'ARC Raiders' ? 'arcraiders'
-          : 'other';
-        return `<span class="tag tag--${cls}">${g}</span>`;
-      }).join("");
+          g === 'PUBG' ? 'pubg' :
+          g === 'ARC Raiders' ? 'arc' :
+          'other';
+        return `<span class="roster-card__tag roster-card__tag--${cls}">${g}</span>`;
+      }).join('');
 
-      article.innerHTML = `
-        <div class="roster-card__header">
+      // optionale Fun-Tags (z.B. aus m.funTags = ['Clutch King', 'Meme-Lord'])
+      const funTags = m.funTags || [];
+      const funTagsHtml = funTags.map(tag =>
+        `<span class="roster-card__fun-tag">${tag}</span>`
+      ).join('');
+
+      return `
+        <article class="roster-card">
           <img class="roster-card__avatar"
                src="${avatarSrc}"
                alt="${m.name || ''}"
                loading="lazy"
-               onerror="this.src='https://via.placeholder.com/160/1a1a2e/0FF2A9?text=${encodeURIComponent((m.name || '??').slice(0, 2).toUpperCase())}'">
-          <div>
-            <h3 class="roster-card__name">${m.name || ''}</h3>
-            <p class="roster-card__role">${m.role || ''}</p>
+               onerror="this.src='https://via.placeholder.com/160/1a1a2e/0FF2A9?text=${initials}'">
+
+          <h3 class="roster-card__name">${m.name || ''}</h3>
+
+          ${m.clanRole
+            ? `<div class="roster-card__clan-role">${m.clanRole}</div>`
+            : ''}
+
+          <p class="roster-card__role">${m.role || ''}</p>
+
+          <div class="roster-card__games">
+            ${gamesHtml}
           </div>
-        </div>
 
-        <div class="roster-card__tags">
-          ${tagsHtml}
-        </div>
+          ${m.bio
+            ? `<p class="roster-card__bio">${m.bio}</p>`
+            : ''}
 
-        <ul class="roster-card__meta">
-          ${m.kd ? `<li>K/D: ${m.kd}</li>` : ""}
-          ${m.since ? `<li>Clan seit: ${m.since}</li>` : ""}
-          ${m.favRole ? `<li>Lieblingsrolle: ${m.favRole}</li>` : ""}
-        </ul>
-
-        ${m.bio ? `<p class="roster-card__bio">${m.bio}</p>` : ""}
+          ${funTags.length
+            ? `<div class="roster-card__fun-tags">${funTagsHtml}</div>`
+            : ''}
+        </article>
       `;
-
-      grid.appendChild(article);
-    });
+    }).join('');
 
   } catch (err) {
     console.error('[Roster]', err);
