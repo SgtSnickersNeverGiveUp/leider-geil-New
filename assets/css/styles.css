@@ -378,6 +378,17 @@ img { max-width: 100%; display: block; }
 
 .btn:hover::before { transform: scaleX(1); }
 
+/* Untertitel im Button */
+.btn__subtitle {
+  display: block;
+  font-family: var(--ff-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: none;
+  margin-top: 0.35rem;
+  opacity: 0.8;
+}
+
 /* Ripple */
 .btn .ripple {
   position: absolute;
@@ -393,6 +404,7 @@ img { max-width: 100%; display: block; }
 }
 
 .hero__cta { margin-top: var(--sp-xl); }
+
 
 /* ── Header Banner (Admin-managed) ────────────────────── */
 .header-banner {
