@@ -97,34 +97,62 @@ async function renderRoster() {
       members = await res.json();
     }
 
-    grid.innerHTML = members.map(m => {
-      const avatarSrc = m.avatar
-        ? m.avatar + (m.avatar.startsWith('/api/roster-avatar') ? (m.avatar.includes('?') ? '&' : '?') + 't=' + Math.floor(Date.now() / 60000) : '')
-        : `https://via.placeholder.com/160/1a1a2e/0FF2A9?text=${encodeURIComponent((m.name || '??').slice(0, 2).toUpperCase())}`;
-      return `
-      <article class="roster-card">
-        <img class="roster-card__avatar"
-             src="${avatarSrc}"
-             alt="${m.name}"
-             loading="lazy"
-             onerror="this.src='https://via.placeholder.com/160/1a1a2e/0FF2A9?text=${encodeURIComponent((m.name || '??').slice(0, 2).toUpperCase())}'">
-        <h3 class="roster-card__name">${m.name}</h3>
-        <p class="roster-card__role">${m.role}</p>
-        <div class="roster-card__games">
-          ${(m.games || []).map(g => {
-            const cls = g === 'PUBG' ? 'pubg' : g === 'ARC Raiders' ? 'arc' : 'other';
-            return `<span class="roster-card__tag roster-card__tag--${cls}">${g}</span>`;
-          }).join('')}
-        </div>        
-        ${m.bio ? `<p class="roster-card__bio">${m.bio}</p>` : ''}
+    grid.innerHTML = "";
 
-     </article>`;
-    }).join('');
+    members.forEach(m => {
+      const article = document.createElement("article");
+      article.className = "roster-card";
+
+      const avatarSrc = m.avatar
+        ? m.avatar + (m.avatar.startsWith('/api/roster-avatar')
+            ? (m.avatar.includes('?') ? '&' : '?') + 't=' + Math.floor(Date.now() / 60000)
+            : '')
+        : `https://via.placeholder.com/160/1a1a2e/0FF2A9?text=${encodeURIComponent((m.name || '??').slice(0, 2).toUpperCase())}`;
+
+      const games = m.games || [];
+      const tagsHtml = games.map(g => {
+        const cls =
+          g === 'PUBG' ? 'pubg'
+          : g === 'ARC Raiders' ? 'arcraiders'
+          : 'other';
+        return `<span class="tag tag--${cls}">${g}</span>`;
+      }).join("");
+
+      article.innerHTML = `
+        <div class="roster-card__header">
+          <img class="roster-card__avatar"
+               src="${avatarSrc}"
+               alt="${m.name || ''}"
+               loading="lazy"
+               onerror="this.src='https://via.placeholder.com/160/1a1a2e/0FF2A9?text=${encodeURIComponent((m.name || '??').slice(0, 2).toUpperCase())}'">
+          <div>
+            <h3 class="roster-card__name">${m.name || ''}</h3>
+            <p class="roster-card__role">${m.role || ''}</p>
+          </div>
+        </div>
+
+        <div class="roster-card__tags">
+          ${tagsHtml}
+        </div>
+
+        <ul class="roster-card__meta">
+          ${m.kd ? `<li>K/D: ${m.kd}</li>` : ""}
+          ${m.since ? `<li>Clan seit: ${m.since}</li>` : ""}
+          ${m.favRole ? `<li>Lieblingsrolle: ${m.favRole}</li>` : ""}
+        </ul>
+
+        ${m.bio ? `<p class="roster-card__bio">${m.bio}</p>` : ""}
+      `;
+
+      grid.appendChild(article);
+    });
+
   } catch (err) {
     console.error('[Roster]', err);
     grid.innerHTML = '<p style="color:var(--clr-danger);">Roster konnte nicht geladen werden.</p>';
   }
 }
+
 
 /* ══════════════════════════════════════════════════════════
    5. Event Timeline Rendering + IntersectionObserver
