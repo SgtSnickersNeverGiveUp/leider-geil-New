@@ -778,6 +778,28 @@ img { max-width: 100%; display: block; }
   margin-bottom: var(--sp-sm);
   border: 1px solid var(--clr-glass-border);
 }
+/* Events Titel zentrieren */
+.events__title-center {
+  display: block;
+  text-align: center;
+}
+
+/* Wrapper für den Mehr-Button */
+.events__more-wrap {
+  margin-top: var(--sp-lg);
+  text-align: center;
+}
+
+/* Button etwas kompakter */
+.events__more-btn {
+  font-size: 0.9rem;
+  padding: 0.7rem 1.8rem;
+}
+
+/* Versteckte Timeline-Items */
+.timeline__item--hidden {
+  display: none;
+}
 
 /* ── Recruitment Terminal ──────────────────────────────── */
 .recruit {
