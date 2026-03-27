@@ -146,30 +146,56 @@ async function renderTimeline() {
       events = await res.json();
     }
 
-    // Sortiere nach Datum absteigend
-    events.sort((a, b) => new Date(b.date) - new Date(a.date));
+    // Sicherheitscheck: Events-Array
+    if (!Array.isArray(events) || events.length === 0) {
+      wrap.innerHTML = '<p style="color:var(--clr-text-muted);">Noch keine Events vorhanden.</p>';
+      return;
+    }
+
+    // Sortiere nach Datum absteigend (fallback wenn date fehlt/ungültig)
+    events.sort((a, b) => {
+      const da = a.date ? new Date(a.date) : 0;
+      const db = b.date ? new Date(b.date) : 0;
+      return db - da;
+    });
 
     // HTML für Timeline-Items bauen
     wrap.innerHTML = events.map(e => {
-      const dotClass = e.game === 'PUBG' ? 'timeline__dot--pubg' : '';
-      const dateStr = new Date(e.date).toLocaleDateString('de-DE', {
-        year: 'numeric', month: 'long', day: 'numeric',
-      });
+      const game = e.game || 'Mixed';
+      const dotClass = game === 'PUBG' ? 'timeline__dot--pubg'
+        : game === 'ARC Raiders' ? 'timeline__dot--arc'
+        : '';
+
+      let dateStr = '';
+      if (e.date) {
+        const d = new Date(e.date);
+        if (!isNaN(d.getTime())) {
+          dateStr = d.toLocaleDateString('de-DE', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          });
+        }
+      }
+
       const imgSrc = e.image
-        ? e.image + (e.image.startsWith('/api/event-image') ? (e.image.includes('?') ? '&' : '?') + 't=' + Math.floor(Date.now() / 60000) : '')
+        ? e.image + (e.image.startsWith('/api/event-image')
+            ? (e.image.includes('?') ? '&' : '?') + 't=' + Math.floor(Date.now() / 60000)
+            : '')
         : '';
       const imgHtml = imgSrc
-        ? `<img class="timeline__image" src="${imgSrc}" alt="${e.title}" loading="lazy" onerror="this.style.display='none'">`
+        ? `<img class="timeline__image" src="${imgSrc}" alt="${e.title || ''}" loading="lazy" onerror="this.style.display='none'">`
         : '';
+
       return `
-        <div class="timeline__item" data-id="${e.id}">
+        <div class="timeline__item" data-id="${e.id || ''}">
           <div class="timeline__dot ${dotClass}"></div>
           <div class="timeline__card">
             ${imgHtml}
-            <time class="timeline__date">${dateStr}</time>
-            <h3 class="timeline__title">${e.title}</h3>
-            <p class="timeline__desc">${e.description}</p>
-            <span class="timeline__type">${e.type}</span>
+            ${dateStr ? `<time class="timeline__date">${dateStr}</time>` : ''}
+            <h3 class="timeline__title">${e.title || ''}</h3>
+            <p class="timeline__desc">${e.description || ''}</p>
+            <span class="timeline__type">${e.type || ''}</span>
           </div>
         </div>`;
     }).join('');
@@ -189,19 +215,19 @@ async function renderTimeline() {
             item.classList.remove('timeline__item--hidden');
           }
         });
-        moreBtn.textContent = expanded ? 'Weniger Events anzeigen' : 'Mehr Events anzeigen';
+        moreBtn.textContent = expanded
+          ? 'Weniger Events anzeigen'
+          : 'Mehr Events anzeigen';
       };
 
       updateView();
+      moreBtn.style.display = '';
 
-      moreBtn.style.display = ''; // Button sichtbar machen
-
-      moreBtn.addEventListener('click', () => {
+      moreBtn.onclick = () => {
         expanded = !expanded;
         updateView();
-      });
+      };
     } else if (moreBtn) {
-      // Weniger als 3 Events: Button ausblenden
       moreBtn.style.display = 'none';
     }
 
@@ -211,6 +237,7 @@ async function renderTimeline() {
     wrap.innerHTML = '<p style="color:var(--clr-danger);">Events konnten nicht geladen werden.</p>';
   }
 }
+
 
 
 /* ══════════════════════════════════════════════════════════
