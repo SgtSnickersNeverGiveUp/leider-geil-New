@@ -323,7 +323,62 @@ img { max-width: 100%; display: block; }
     0 0 60px rgba(57, 255, 20, .15),
     0 0 100px rgba(57, 255, 20, .1);
 }
+/* ── Glitch Text Effect ───────────────────────────── */
+.glitch {
+  position: relative;
+  display: inline-block;
+  color: #fff;
+  text-shadow: 0 0 2px rgba(0,0,0,.5);
+  animation: glitch-skew 2s infinite linear alternate-reverse;
+}
 
+.glitch::before,
+.glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  mix-blend-mode: screen;
+}
+
+.glitch::before {
+  text-shadow: -2px 0 #0ff2a9;
+  clip-path: inset(0 0 50% 0);
+  animation: glitch-clip-1 2s infinite linear alternate-reverse;
+}
+
+.glitch::after {
+  text-shadow: 2px 0 #ff3366;
+  clip-path: inset(50% 0 0 0);
+  animation: glitch-clip-2 1.8s infinite linear alternate-reverse;
+}
+
+@keyframes glitch-skew {
+  0% { transform: skew(0deg); }
+  20% { transform: skew(1deg); }
+  40% { transform: skew(-1deg); }
+  60% { transform: skew(0.5deg); }
+  80% { transform: skew(-0.5deg); }
+  100% { transform: skew(0deg); }
+}
+
+@keyframes glitch-clip-1 {
+  0% { clip-path: inset(0 0 45% 0); transform: translate(0, 0); }
+  20% { clip-path: inset(0 0 35% 0); transform: translate(-1px, -1px); }
+  40% { clip-path: inset(0 0 55% 0); transform: translate(1px, 0); }
+  60% { clip-path: inset(0 0 50% 0); transform: translate(-1px, 1px); }
+  80% { clip-path: inset(0 0 40% 0); transform: translate(1px, -1px); }
+  100% { clip-path: inset(0 0 45% 0); transform: translate(0, 0); }
+}
+
+@keyframes glitch-clip-2 {
+  0% { clip-path: inset(55% 0 0 0); transform: translate(0, 0); }
+  20% { clip-path: inset(65% 0 0 0); transform: translate(1px, 1px); }
+  40% { clip-path: inset(50% 0 0 0); transform: translate(-1px, 0); }
+  60% { clip-path: inset(60% 0 0 0); transform: translate(1px, -1px); }
+  80% { clip-path: inset(52% 0 0 0); transform: translate(-1px, 1px); }
+  100% { clip-path: inset(55% 0 0 0); transform: translate(0, 0); }
+}
 /* Untertitel und Erklärung im Hero */
 .hero__sub {
   margin-top: 0.75rem;
