@@ -1,15 +1,23 @@
 // netlify/functions/news.js
 
-const fs = require('fs');
-const path = require('path');
+const { getStore } = require('@netlify/blobs');
 
-const DATA_FILE = path.join(__dirname, 'news-data.json');
+const store = getStore({ name: 'clan-news' });
 
-function readNews() {
+function getCorsHeaders() {
+  return {
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': 'https://www.leider-geil.com',
+    'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+  };
+}
+
+async function readNews() {
   try {
-    if (!fs.existsSync(DATA_FILE)) return [];
-    const raw = fs.readFileSync(DATA_FILE, 'utf8');
-    const json = JSON.parse(raw);
+    const blob = await store.get('news.json');
+    if (!blob) return [];
+    const json = JSON.parse(blob);
     return Array.isArray(json) ? json : [];
   } catch (err) {
     console.error('readNews error', err);
@@ -17,17 +25,14 @@ function readNews() {
   }
 }
 
-function writeNews(newsArray) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(newsArray, null, 2), 'utf8');
+async function writeNews(newsArray) {
+  await store.set('news.json', JSON.stringify(newsArray, null, 2), {
+    metadata: { type: 'clan-news' },
+  });
 }
 
 exports.handler = async (event, context) => {
-  const headers = {
-    'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': 'https://www.leider-geil.com',
-    'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
-  };
+  const headers = getCorsHeaders();
 
   // Preflight
   if (event.httpMethod === 'OPTIONS') {
@@ -39,7 +44,7 @@ exports.handler = async (event, context) => {
   }
 
   if (event.httpMethod === 'GET') {
-    const news = readNews();
+    const news = await readNews();
     return {
       statusCode: 200,
       headers,
@@ -48,26 +53,26 @@ exports.handler = async (event, context) => {
   }
 
   if (event.httpMethod === 'POST') {
-  try {
-    console.log('RAW BODY:', event.body);
-    const body = event.body ? JSON.parse(event.body) : [];
-    console.log('PARSED BODY:', body);
-    const news = Array.isArray(body) ? body : [];
-    writeNews(news);
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({ ok: true, count: news.length }),
-    };
-  } catch (err) {
-    console.error('POST /news error', err, 'body was:', event.body);
-    return {
-      statusCode: 400,
-      headers,
-      body: JSON.stringify({ error: 'Invalid JSON', raw: event.body }),
-    };
+    try {
+      console.log('RAW BODY:', event.body);
+      const body = event.body ? JSON.parse(event.body) : [];
+      console.log('PARSED BODY:', body);
+      const news = Array.isArray(body) ? body : [];
+      await writeNews(news);
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({ ok: true, count: news.length }),
+      };
+    } catch (err) {
+      console.error('POST /news error', err, 'body was:', event.body);
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'Invalid JSON', raw: event.body }),
+      };
+    }
   }
-}
 
   // Fallback für andere Methoden
   return {
