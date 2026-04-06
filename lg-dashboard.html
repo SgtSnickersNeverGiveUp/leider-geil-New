@@ -2156,41 +2156,43 @@ function initNewsAdmin() {
   });
 
   // Speichern: News + Ticker Settings
-  saveBtn.addEventListener('click', async () => {
-    statusEl.textContent = 'Speichern...';
+saveBtn.addEventListener('click', async () => {
+  statusEl.textContent = 'Speichern...';
 
-    const speedInput = document.getElementById('ticker-speed');
-    const sepInput = document.getElementById('ticker-separator');
+  const speedInput = document.getElementById('ticker-speed');
+  const sepInput = document.getElementById('ticker-separator');
 
-    const tickerSpeedSeconds = speedInput ? Number(speedInput.value) || 40 : 40;
-    const tickerSeparator = sepInput ? (sepInput.value || '   ●   ') : '   ●   ';
+  const tickerSpeedSeconds = speedInput ? Number(speedInput.value) || 40 : 40;
+  const tickerSeparator = sepInput ? (sepInput.value || '   ●   ') : '   ●   ';
 
-    try {
-      // 1) News speichern
-      const resNews = await fetch(NEWS_API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(window._lgNews || []),
-      });
-      if (!resNews.ok) throw new Error('News HTTP ' + resNews.status);
+  try {
+    const newsToSave = Array.isArray(window._lgNews) ? window._lgNews : [];
 
-      // 2) Ticker Settings speichern
-      const resSettings = await fetch(SETTINGS_API, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          tickerSpeedSeconds,
-          tickerSeparator,
-        }),
-      });
-      if (!resSettings.ok) throw new Error('Settings HTTP ' + resSettings.status);
+    // 1) News speichern
+    const resNews = await fetch(NEWS_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newsToSave),
+    });
+    if (!resNews.ok) throw new Error('News HTTP ' + resNews.status);
 
-      statusEl.textContent = 'Gespeichert';
-    } catch (err) {
-      console.error('News/Ticker save', err);
-      statusEl.textContent = 'Fehler beim Speichern';
-    }
-  });
+    // 2) Ticker Settings speichern
+    const resSettings = await fetch(SETTINGS_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tickerSpeedSeconds,
+        tickerSeparator,
+      }),
+    });
+    if (!resSettings.ok) throw new Error('Settings HTTP ' + resSettings.status);
+
+    statusEl.textContent = 'Gespeichert';
+  } catch (err) {
+    console.error('News/Ticker save', err);
+    statusEl.textContent = 'Fehler beim Speichern';
+  }
+});
 }
 // ══════════════════════════════════════════════════════════
 // EVENT IMAGE UPLOAD (mirrors roster avatar upload)
