@@ -1345,3 +1345,13 @@ img { max-width: 100%; display: block; }
   0%   { transform: translateX(0); }
   100% { transform: translateX(-100%); }
 }
+/* Clan News Ticker – Hard Fix */
+#clan-news-ticker .track {
+  overflow: hidden;
+}
+
+#clan-news-ticker .items {
+  display: inline-block !important;
+  white-space: nowrap !important;   /* absolut kein Umbruch */
+  line-height: 1.2 !important;
+}
