@@ -1473,10 +1473,24 @@ const EVENTS_API = '/api/events';
 const EVENT_IMAGE_API = '/api/event-image';
 const VIDEOS_API = '/api/videos';
 const EVT_REGISTRATIONS_API = '/api/event-registrations';
-
+const NEWS_API_URL = '/api/news';
 const SETTINGS_API = '/api/settings';
 const BANNER_IMAGE_API = '/api/banner-image';
+async function loadTickerSettings() {
+  try {
+    const res = await fetch(SETTINGS_API);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const settings = await res.json();
 
+    const speedInput = document.getElementById('ticker-speed');
+    const sepInput = document.getElementById('ticker-separator');
+
+    if (speedInput) speedInput.value = settings.tickerSpeedSeconds ?? 40;
+    if (sepInput) sepInput.value = settings.tickerSeparator ?? '   ●   ';
+  } catch (err) {
+    console.error('Ticker Settings laden fehlgeschlagen:', err);
+  }
+}
 
 
 
