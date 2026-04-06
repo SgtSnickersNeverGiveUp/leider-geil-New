@@ -14,13 +14,12 @@ document.addEventListener('DOMContentLoaded', () => {
         .filter((t) => t && t.trim().length > 0);
       if (texts.length === 0) return;
 
-      // Defaults, falls noch nichts gespeichert ist
       const speedSeconds = Number(settings.tickerSpeedSeconds) || 40;
       const separator = settings.tickerSeparator || '   ●   ';
 
       tickerItemsEl.innerHTML = texts.join(separator);
 
-      // Animationsdauer aus Settings
+      // Dauer aus Settings → passt zu deinem CSS (animation-name, -timing, -iteration)
       tickerItemsEl.style.animationDuration = `${speedSeconds}s`;
     })
     .catch((err) => {
