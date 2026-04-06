@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const tickerItemsEl = document.querySelector('#clan-news-ticker .items');
   if (!tickerItemsEl) return;
 
-  // Relativer Pfad, damit es auf GitHub Pages UND Netlify funktioniert
+  // wichtig: RELATIVER Pfad, kein führender Slash
   fetch('assets/data/news.json')
     .then((res) => res.json())
     .then((items) => {
@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (texts.length === 0) return;
 
-      // HTML erlauben (für <br>) statt nur textContent
+      // HTML erlauben (für <br> im Event-Text)
       tickerItemsEl.innerHTML = texts.join('  -   ');
       console.log('[Clan News Ticker] Geladene Einträge:', texts);
     })
