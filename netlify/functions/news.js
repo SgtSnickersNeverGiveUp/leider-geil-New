@@ -48,24 +48,26 @@ exports.handler = async (event, context) => {
   }
 
   if (event.httpMethod === 'POST') {
-    try {
-      const body = event.body ? JSON.parse(event.body) : [];
-      const news = Array.isArray(body) ? body : [];
-      writeNews(news);
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify({ ok: true, count: news.length }),
-      };
-    } catch (err) {
-      console.error('POST /news error', err, 'body:', event.body);
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({ error: 'Invalid JSON' }),
-      };
-    }
+  try {
+    console.log('RAW BODY:', event.body);
+    const body = event.body ? JSON.parse(event.body) : [];
+    console.log('PARSED BODY:', body);
+    const news = Array.isArray(body) ? body : [];
+    writeNews(news);
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({ ok: true, count: news.length }),
+    };
+  } catch (err) {
+    console.error('POST /news error', err, 'body was:', event.body);
+    return {
+      statusCode: 400,
+      headers,
+      body: JSON.stringify({ error: 'Invalid JSON', raw: event.body }),
+    };
   }
+}
 
   // Fallback für andere Methoden
   return {
