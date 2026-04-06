@@ -22,7 +22,6 @@ function writeNews(newsArray) {
 }
 
 exports.handler = async (event, context) => {
-  // CORS für Admin-Domain anpassen, wenn nötig
   const headers = {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': 'https://www.leider-geil.com',
@@ -50,7 +49,7 @@ exports.handler = async (event, context) => {
 
   if (event.httpMethod === 'POST') {
     try {
-      const body = JSON.parse(event.body || '[]');
+      const body = event.body ? JSON.parse(event.body) : [];
       const news = Array.isArray(body) ? body : [];
       writeNews(news);
       return {
@@ -59,7 +58,7 @@ exports.handler = async (event, context) => {
         body: JSON.stringify({ ok: true, count: news.length }),
       };
     } catch (err) {
-      console.error('POST /news error', err);
+      console.error('POST /news error', err, 'body:', event.body);
       return {
         statusCode: 400,
         headers,
@@ -68,6 +67,7 @@ exports.handler = async (event, context) => {
     }
   }
 
+  // Fallback für andere Methoden
   return {
     statusCode: 405,
     headers,
