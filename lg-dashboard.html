@@ -1516,6 +1516,10 @@ function switchPage(pageId) {
   if (pageId === 'page-videos') loadVideos();
   if (pageId === 'page-banner') loadBannerSettings();
   if (pageId === 'page-event-anmeldungen') loadEventRegistrations();
+  if (pageId === 'page-news') {
+    loadTickerSettings();
+    initNewsAdmin();
+  }
 }
 
 navLinks.forEach(link => {
