@@ -1336,9 +1336,12 @@ img { max-width: 100%; display: block; }
 /* Lauftext */
 .clan-news-ticker .items {
   display: inline-block;
-  white-space: nowrap;                 /* alles in einer Zeile */
-  padding-left: 100%;                  /* startet außerhalb rechts */
-  animation: clan-news-marquee 40s linear infinite;
+  white-space: nowrap;
+  padding-left: 100%;
+  /* Dauer nicht mehr fest im CSS */
+  animation-name: clan-news-marquee;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
 }
 
 @keyframes clan-news-marquee {
