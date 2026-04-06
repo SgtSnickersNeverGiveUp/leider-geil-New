@@ -1240,7 +1240,51 @@
         </div>
       </section>
     </div>
+<!-- PAGE CLAN NEWS -->
+<div class="admin-page" id="page-news">
+  <section class="panel">
+    <div class="panelheader">
+      <h2 class="paneltitle">Clan News Ticker</h2>
+      <div class="panelactions">
+        <button class="btn-sm" id="btn-refresh-news">Aktualisieren</button>
+        <button class="btn-sm btn-sm--accent" id="news-add">Eintrag</button>
+      </div>
+    </div>
 
+    <div class="panelbody">
+      <div class="admin-formsection">Ticker-Einstellungen</div>
+
+      <div class="admin-formgroup">
+        <label class="admin-formlabel" for="ticker-speed">
+          Ticker-Geschwindigkeit (Sekunden für eine Runde)
+        </label>
+        <input class="admin-forminput" type="number" id="ticker-speed" min="5" max="120" step="5">
+        <div class="admin-formhint">
+          Größere Zahl = langsamer, kleinere Zahl = schneller.
+        </div>
+      </div>
+
+      <div class="admin-formgroup">
+        <label class="admin-formlabel" for="ticker-separator">
+          Trenner zwischen Nachrichten
+        </label>
+        <input class="admin-forminput" type="text" id="ticker-separator" placeholder="   ●   ">
+        <div class="admin-formhint">
+          Wird zwischen die Texte gesetzt, z.B. • oder |.
+        </div>
+      </div>
+
+      <div class="admin-formsection" style="margin-top:1.5rem;">Ticker-Einträge</div>
+
+      <div id="news-status" class="admin-formhint">Noch nicht geladen.</div>
+      <div id="news-list" class="admin-form" style="margin-top:1rem"></div>
+
+      <button type="button" class="admin-formsubmit" id="news-save">
+        News & Ticker speichern
+      </button>
+    </div>
+  </section>
+</div>
     <!-- ═══════════════════════════════════════════════════════
          PAGE: EVENTS
          ═══════════════════════════════════════════════════════ -->
