@@ -2593,13 +2593,19 @@ document.getElementById('videos-form').addEventListener('submit', async (e) => {
   btn.disabled = true;
 
   const title = document.getElementById('video-title').value.trim();
+  const platform = document.getElementById('video-platform').value;
   const url = document.getElementById('video-url').value.trim();
+
+  if (!title || !platform || !url) {
+    btn.disabled = false;
+    return;
+  }
 
   try {
     const res = await fetch(VIDEOS_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, url }),
+      body: JSON.stringify({ title, platform, url }),
     });
     if (!res.ok) {
       const data = await res.json();
