@@ -1,6 +1,6 @@
 # Clan‑Leider‑Geil
 
-Willkommen bei **Clan‑Leider‑Geil** – deine zentrale Anlaufstelle für Gaming‑Streams, Events und Community‑Chat!
+Willkommen bei **Clan Leider‑Geil** – deine zentrale Anlaufstelle für Gaming‑Streams, Events und Community‑Chat!
 
 > **Streams**  
 > - Twitch: [sgtsnickersnevergiveup](https://www.twitch.tv/sgtsnickersnevergiveup)  
