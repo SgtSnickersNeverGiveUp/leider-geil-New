@@ -446,9 +446,9 @@ function renderPublicRosterCard(m) {
             ${genderBadge}
           </div>
           <div class="roster-card-role">${escapeHtml(displayRole)}</div>
-          <div class="roster-card__games">
-            ${gamesHtml}
-          </div>
+          <div class="roster-card-games">
+  ${gamesHtml}
+</div>
         </div>
       </header>
 
