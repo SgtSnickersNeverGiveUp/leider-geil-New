@@ -1,11 +1,11 @@
-/* ── Roster Grid ──────────────────────────────────────── */
+/* ── Roster Grid ────────────────────────────────────────────────────── */
 'use strict';
 
-/* ── Helper: DOM‑Abfrage ───────────────────────────── */
+/* ── Helper: DOM‑Abfrage ───────────────────────────────────────────── */
 const $  = (sel, ctx = document) => ctx.querySelector(sel);
 const $$ = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
 
-/* ── 1. Video‑Quellen setzen ────────────────────────────── */
+/* ── 1. Video‑Quellen setzen ───────────────────────────────────────── */
 function initVideos() {
   const pubgFrame = $('#video-pubg');
   const arcFrame  = $('#video-arc');
@@ -13,7 +13,7 @@ function initVideos() {
   if (arcFrame)  arcFrame.src = SITE_CONFIG.videoARC;
 }
 
-/* ── 2. Discord API – Member Count (öffentliches Widget) ── */
+/* ── 2. Discord API – Member Count (öffentliches Widget) ────────────── */
 async function fetchDiscordStatus() {
   const el = $('#discord-count');
   if (!el) return;
@@ -32,7 +32,7 @@ async function fetchDiscordStatus() {
   }
 }
 
-/* ── 3. Twitch API – Live‑Status (via Netlify Function) ───── */
+/* ── 3. Twitch API – Live‑Status (via Netlify Function) ─────────────── */
 async function fetchTwitchStatus() {
   const el = $('#twitch-status');
   if (!el) return;
@@ -63,8 +63,7 @@ async function fetchTwitchStatus() {
   }
 }
 
-/* ── 4. Roster Rendering (internal) ──────────────────────── */
-/* Kommentiere diese Funktion aus, wenn du nur das öffentliche Roster anzeigen willst. */
+/* ── 4. Roster Rendering (internal) ──────────────────────────────────── */
 /*
 async function renderRoster() {
   const grid = $('#roster-grid');
@@ -73,11 +72,116 @@ async function renderRoster() {
 }
 */
 
-/* ── 5. Event Timeline Rendering + IntersectionObserver ──── */
+/* ── 5. Event Timeline Rendering + IntersectionObserver ─────────────── */
 async function renderTimeline() {
   const wrap = $('#timeline');
   if (!wrap) return;
-  // … (originaler Code von renderTimeline)
+
+  try {
+    let events;
+    try {
+      const res = await fetch(SITE_CONFIG.eventsApi || '/api/events');
+      if (!res.ok) throw new Error('API unavailable');
+      events = await res.json();
+    } catch {
+      const res = await fetch(SITE_CONFIG.eventsPath);
+      if (!res.ok) throw new Error(`Events fetch ${res.status}`);
+      events = await res.json();
+    }
+
+    if (!Array.isArray(events) || events.length === 0) {
+      wrap.innerHTML = '<p style="color:var(--clr-text-muted);">Noch keine Events vorhanden.</p>';
+      return;
+    }
+
+    events.sort((a, b) => {
+      const da = a.date ? new Date(a.date) : 0;
+      const db = b.date ? new Date(b.date) : 0;
+      return db - da;
+    });
+
+    wrap.innerHTML = events.map(e => {
+      const game = e.game || 'Mixed';
+      const type = e.type || 'event';
+
+      const dotClass = game === 'PUBG' ? 'timeline__dot--pubg'
+        : game === 'ARC Raiders' ? 'timeline__dot--arc'
+        : '';
+
+      const typeClass = type === 'match' ? 'timeline__type--match' : 'timeline__type--event';
+
+      let dateStr = '';
+      if (e.date) {
+        const d = new Date(e.date);
+        if (!isNaN(d.getTime())) {
+          dateStr = d.toLocaleDateString('de-DE', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          });
+        }
+      }
+
+      const imgSrc = e.image
+        ? e.image + (e.image.startsWith('/api/event-image')
+            ? (e.image.includes('?') ? '&' : '?') + 't=' + Math.floor(Date.now() / 60000)
+            : '')
+        : '';
+      const imgHtml = imgSrc
+        ? `<img class="timeline__image" src="${imgSrc}" alt="${e.title || ''}" loading="lazy" onerror="this.style.display='none'">`
+        : '';
+
+      return `
+        <div class="timeline__item" data-id="${e.id || ''}">
+          <div class="timeline__dot ${dotClass}"></div>
+          <div class="timeline__card">
+            ${imgHtml}
+            ${dateStr ? `<time class="timeline__date">${dateStr}</time>` : ''}
+            <h3 class="timeline__title">${e.title || ''}</h3>
+            <p class="timeline__desc">${e.description || ''}</p>
+            <div class="timeline__meta">
+              <span class="timeline__type ${typeClass}">${type}</span>
+              <span class="timeline__game">${game}</span>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+
+    const items = Array.from(wrap.querySelectorAll('.timeline__item'));
+    const moreBtn = document.getElementById('events-more-btn');
+
+    if (items.length > 2 && moreBtn) {
+      let expanded = false;
+
+      const updateView = () => {
+        items.forEach((item, index) => {
+          if (!expanded && index >= 2) {
+            item.classList.add('timeline__item--hidden');
+          } else {
+            item.classList.remove('timeline__item--hidden');
+          }
+        });
+        moreBtn.textContent = expanded
+          ? 'Weniger Events anzeigen'
+          : 'Mehr Events anzeigen';
+      };
+
+      updateView();
+      moreBtn.style.display = '';
+
+      moreBtn.onclick = () => {
+        expanded = !expanded;
+        updateView();
+      };
+    } else if (moreBtn) {
+      moreBtn.style.display = 'none';
+    }
+
+    observeTimeline();
+  } catch (err) {
+    console.error('[Timeline]', err);
+    wrap.innerHTML = '<p style="color:var(--clr-danger);">Events konnten nicht geladen werden.</p>';
+  }
 }
 
 function observeTimeline() {
@@ -96,22 +200,64 @@ function observeTimeline() {
   items.forEach((item) => observer.observe(item));
 }
 
-/* ── 6. Header Banner (from Admin Settings) ───────────────── */
+/* ── 6. Header Banner (from Admin Settings) ───────────────────────────── */
 async function renderHeaderBanner() {
   const section = $('#header-banner');
-  const img = $('#header-banner-img');
+  const img     = $('#header-banner-img');
   if (!section || !img) return;
-  // … (originaler Code von renderHeaderBanner)
+
+  try {
+    const res = await fetch('/api/settings');
+    if (!res.ok) return;
+    const settings = await res.json();
+
+    if (settings.bannerUrl) {
+      const imgUrl = settings.bannerUrl === '/api/banner-image'
+        ? settings.bannerUrl + '?t=' + Math.floor(Date.now() / 60000)
+        : settings.bannerUrl;
+
+      img.src = imgUrl;
+      img.onload = () => { section.style.display = ''; };
+      img.onerror = () => { section.style.display = 'none'; };
+    } else {
+      section.style.display = 'none';
+    }
+  } catch (err) {
+    console.warn('[Banner]', err.message);
+  }
 }
 
-/* ── 7. Video Gallery Rendering ──────────────────────────── */
+/* ── 7. Video Gallery Rendering ─────────────────────────────────────── */
 async function renderVideoGallery() {
   const grid = $('#video-gallery-grid');
   if (!grid) return;
-  // … (originaler Code von renderVideoGallery)
+
+  try {
+    const res = await fetch(SITE_CONFIG.videosApi || '/api/videos');
+    if (!res.ok) throw new Error(`Videos fetch ${res.status}`);
+    const videos = await res.json();
+
+    if (videos.length === 0) {
+      grid.innerHTML = '<p style="color:var(--clr-text-muted);text-align:center;font-family:var(--ff-mono);font-size:.9rem;">Noch keine Videos vorhanden.</p>';
+      return;
+    }
+
+    grid.innerHTML = videos.map(v => `
+      <a class="video-card" href="https://www.youtube.com/watch?v=${v.videoId}" target="_blank" rel="noopener">
+        <div class="video-card__thumb-wrap">
+          <img class="video-card__thumb" src="${v.thumbnail}" alt="${v.title}" loading="lazy">
+          <div class="video-card__play">&#9654;</div>
+        </div>
+        <h3 class="video-card__title">${v.title}</h3>
+      </a>
+    `).join('');
+  } catch (err) {
+    console.error('[Videos]', err);
+    grid.innerHTML = '';
+  }
 }
 
-/* ── 8. Mikro‑Interaktionen ──────────────────────────────── */
+/* ── 8. Mikro‑Interaktionen ───────────────────────────────────────────── */
 function initRipple() {
   $$('.btn').forEach((btn) => {
     if (btn.type === 'submit') return;
@@ -129,7 +275,7 @@ function initRipple() {
   });
 }
 
-/* ── 9. Navbar Mobile Toggle ─────────────────────────────── */
+/* ── 9. Navbar Mobile Toggle ───────────────────────────────────────── */
 function initNavbar() {
   const toggle = $('#nav-toggle');
   const links  = $('#nav-links');
@@ -146,13 +292,13 @@ function initNavbar() {
   });
 }
 
-/* ── 10. Live‑Update Intervalle ───────────────────────────── */
+/* ── 10. Live‑Update Intervalle ─────────────────────────────────────── */
 function startLiveUpdates() {
   setInterval(fetchDiscordStatus, SITE_CONFIG.discordRefreshInterval);
   setInterval(fetchTwitchStatus, SITE_CONFIG.twitchRefreshInterval);
 }
 
-/* ── 11. Smooth scroll for anchor links ────────────────────── */
+/* ── 11. Smooth scroll for anchor links ─────────────────────────────── */
 function initSmoothScroll() {
   $$('a[href^="#"]').forEach((a) => {
     a.addEventListener('click', (e) => {
@@ -165,14 +311,14 @@ function initSmoothScroll() {
   });
 }
 
-/* ── 12. Event‑Anmeldung Formular ─────────────────────────── */
+/* ── 12. Event‑Anmeldung Formular ───────────────────────────────────── */
 function initEventForm() {
   const form = $('#event-form');
   if (!form) return;
   // … (originaler Code von initEventForm)
 }
 
-/* ── 13. Clan News Ticker (rotierende Kurz‑News aus news.json) ── */
+/* ── 13. Clan News Ticker (rotierende Kurz‑News aus news.json) ──────── */
 const TICKER_INTERVAL = 7000; // 7 s
 
 async function initClanNewsTicker() {
@@ -205,7 +351,7 @@ async function initClanNewsTicker() {
   }
 }
 
-/* ── 14. Öffentliches Roster (UI‑Rendering) ────────────────── */
+/* ── 14. Öffentliches Roster (UI‑Rendering) ───────────────────────────── */
 async function loadPublicRoster() {
   const container = document.getElementById('roster-grid');
   if (!container) return;
@@ -319,7 +465,7 @@ function initRosterToggle(container) {
   });
 }
 
-/* ── 15. Initialisierung – Alles starten wenn DOM bereit ──────── */
+/* ── 15. Initialisierung – Alles starten wenn DOM bereit ──────────────── */
 document.addEventListener('DOMContentLoaded', () => {
   initVideos();
   initNavbar();
@@ -327,12 +473,12 @@ document.addEventListener('DOMContentLoaded', () => {
   initRipple();
   initEventForm();
 
-  /* NEU: Bewerbungs- und Event‑Form -> Discord */
+  /* NEU: Bewerbungs‑ und Event‑Form → Discord */
   initRecruitFormDiscord();
   initEventSignupDiscord();
 
   /* Daten laden */
-  // renderRoster();        // <-- Entfernt: Du nutzt loadPublicRoster() anstatt renderRoster()
+  // renderRoster(); // <-- Entfernt: Du nutzt loadPublicRoster() anstatt renderRoster()
   renderTimeline();
   renderVideoGallery();
   renderHeaderBanner();
@@ -349,7 +495,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadPublicRoster();
 });
 
-/* ── 16. Bewerbungen über Discord (Netlify Form + Webhook) ────── */
+/* ── 16. Bewerbungen über Discord (Netlify Form + Webhook) ────────────── */
 function initRecruitFormDiscord() {
   const recruitForm = document.getElementById("recruit-form");
   if (!recruitForm) return;
@@ -400,7 +546,7 @@ function initRecruitFormDiscord() {
   });
 }
 
-/* ── 17. Event‑Anmeldungen über Discord (Netlify Form + Webhook) ────── */
+/* ── 17. Event‑Anmeldungen über Discord (Netlify Form + Webhook) ──────── */
 function initEventSignupDiscord() {
   const eventForm = document.getElementById("event-form");
   if (!eventForm) return;
