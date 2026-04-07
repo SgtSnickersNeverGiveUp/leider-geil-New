@@ -419,20 +419,22 @@ function renderPublicRosterCard(m) {
     : "";
 
   const gamesHtml = (m.games || [])
-  .map((g) => {
-    const lower = (g || "").toLowerCase();
-    let cls = "roster-card__tag roster-card__tag--other";
-    if (lower.includes("pubg")) cls = "roster-card__tag roster-card__tag--pubg";
-    if (lower.includes("arc"))  cls = "roster-card__tag roster-card__tag--arc";
-    return `<span class="${cls}">${escapeHtml(g)}</span>`;
-  })
-  .join("");
+    .map((g) => {
+      const lower = (g || "").toLowerCase();
+      let cls = "roster-card__tag roster-card__tag--other";
+      if (lower.includes("pubg")) cls = "roster-card__tag roster-card__tag--pubg";
+      if (lower.includes("arc"))  cls = "roster-card__tag roster-card__tag--arc";
+      return `<span class="${cls}">${escapeHtml(g)}</span>`;
+    })
+    .join("");
 
   const bio = m.bio || "";
-
   const funTagsHtml = (m.funTags || [])
     .map((t) => `<span class="roster-card-fun-tag">${escapeHtml(t)}</span>`)
     .join("");
+
+  // WICHTIG: nur EINE Zeile für Rolle anzeigen
+  const displayRole = clanRole || m.role || "";
 
   return `
     <article class="roster-card">
@@ -441,13 +443,12 @@ function renderPublicRosterCard(m) {
         <div>
           <div class="roster-card-name-row">
             <span class="roster-card-name">${escapeHtml(m.name)}</span>
-            <span class="badge badge--clan-role">${escapeHtml(clanRole)}</span>
             ${genderBadge}
           </div>
-          <div class="roster-card-role">${escapeHtml(m.role || "")}</div>
+          <div class="roster-card-role">${escapeHtml(displayRole)}</div>
           <div class="roster-card__games">
-  ${gamesHtml}
-</div>
+            ${gamesHtml}
+          </div>
         </div>
       </header>
 
