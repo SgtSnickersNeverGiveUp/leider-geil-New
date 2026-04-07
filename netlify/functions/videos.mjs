@@ -6,10 +6,11 @@ export default async (req) => {
   const store = getStore(STORE_NAME);
 
   // POST – Add new video
+    // POST – Add new video
   if (req.method === "POST") {
     try {
       const body = await req.json();
-      const { url, title } = body;
+      const { url, title, platform: rawPlatform } = body;
 
       if (!url || !title) {
         return new Response(JSON.stringify({ error: "URL und Titel sind Pflichtfelder." }), {
@@ -18,21 +19,53 @@ export default async (req) => {
         });
       }
 
-      // Extract YouTube video ID from various URL formats
-      let videoId = null;
-      try {
-        const parsed = new URL(url);
-        if (parsed.hostname.includes("youtu.be")) {
-          videoId = parsed.pathname.slice(1);
-        } else if (parsed.hostname.includes("youtube.com")) {
-          videoId = parsed.searchParams.get("v") || parsed.pathname.split("/").pop();
-        }
-      } catch {
-        // not a valid URL
-      }
+      const platform = (rawPlatform || "youtube").toLowerCase();
 
-      if (!videoId) {
-        return new Response(JSON.stringify({ error: "Ungültiger YouTube-Link." }), {
+      let videoId = null;
+      let thumbnail = "";
+      
+      if (platform === "youtube") {
+        // YouTube: wie bisher ID + Thumbnail aus der URL ziehen
+        try {
+          const parsed = new URL(url);
+          if (parsed.hostname.includes("youtu.be")) {
+            videoId = parsed.pathname.slice(1);
+          } else if (parsed.hostname.includes("youtube.com")) {
+            videoId = parsed.searchParams.get("v") || parsed.pathname.split("/").pop();
+          }
+        } catch {
+          // not a valid URL
+        }
+
+        if (!videoId) {
+          return new Response(JSON.stringify({ error: "Ungültiger YouTube-Link." }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+
+        thumbnail = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+      } else if (platform === "twitch") {
+        // Twitch: keine YouTube-Prüfung, nur grob checken, dass es ein Twitch-Link ist
+        try {
+          const parsed = new URL(url);
+          if (!parsed.hostname.includes("twitch.tv")) {
+            return new Response(JSON.stringify({ error: "Ungültiger Twitch-Link." }), {
+              status: 400,
+              headers: { "Content-Type": "application/json" },
+            });
+          }
+        } catch {
+          return new Response(JSON.stringify({ error: "Ungültiger Twitch-Link." }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+
+        videoId = null; // für Twitch nicht benötigt
+        thumbnail = ""; // kannst du später mit Twitch API befüllen, jetzt leer lassen
+      } else {
+        return new Response(JSON.stringify({ error: "Unbekannte Plattform." }), {
           status: 400,
           headers: { "Content-Type": "application/json" },
         });
@@ -43,8 +76,9 @@ export default async (req) => {
         id,
         title,
         url,
+        platform,
         videoId,
-        thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+        thumbnail,
         createdAt: new Date().toISOString(),
       };
 
