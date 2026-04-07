@@ -45,6 +45,4 @@ const SITE_CONFIG = {
   twitchRefreshInterval: 60000,
 };
 
-// Discord Webhooks (für Browser-Formulare)
-const DISCORD_WEBHOOK_BEWERBUNG = "https://discord.com/api/webhooks/1486372103442665552/v4qojRqoBc-oSrf9PrqxN2CxJIXRjXrQoHqqKmfJ2urJOIrikdQuMG4BPLw4dmAw_o9y";
-const DISCORD_WEBHOOK_EVENT = "https://discord.com/api/webhooks/1486372248322310195/_Uk9DnxpyP2UtyuG0OYdgQJyyjEtmkQJt6MGiLbwgPBRtdsR57iZaUIeVof0J_wznVCk";
+
