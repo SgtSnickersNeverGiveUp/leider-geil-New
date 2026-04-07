@@ -242,15 +242,33 @@ async function renderVideoGallery() {
       return;
     }
 
-    grid.innerHTML = videos.map(v => `
-      <a class="video-card" href="https://www.youtube.com/watch?v=${v.videoId}" target="_blank" rel="noopener">
-        <div class="video-card__thumb-wrap">
-          <img class="video-card__thumb" src="${v.thumbnail}" alt="${v.title}" loading="lazy">
-          <div class="video-card__play">&#9654;</div>
-        </div>
-        <h3 class="video-card__title">${v.title}</h3>
-      </a>
-    `).join('');
+        grid.innerHTML = videos.map(v => {
+      const platform = (v.platform || 'youtube').toLowerCase();
+
+      const targetUrl =
+        platform === 'twitch'
+          ? v.url
+          : (v.url || `https://www.youtube.com/watch?v=${v.videoId}`);
+
+      const thumb = v.thumbnail && v.thumbnail.trim()
+        ? v.thumbnail
+        : (platform === 'twitch'
+            ? '/assets/img/twitch-placeholder.jpg'
+            : '/assets/img/youtube-placeholder.jpg');
+
+      const platformLabel = platform === 'twitch' ? 'Twitch' : 'YouTube';
+
+      return `
+        <a class="video-card" href="${targetUrl}" target="_blank" rel="noopener">
+          <div class="video-card__thumb-wrap">
+            <img class="video-card__thumb" src="${thumb}" alt="${v.title || ''}" loading="lazy">
+            <div class="video-card__play">&#9654;</div>
+            <span class="video-card__platform">${platformLabel}</span>
+          </div>
+          <h3 class="video-card__title">${v.title || ''}</h3>
+        </a>
+      `;
+    }).join('');
   } catch (err) {
     console.error('[Videos]', err);
     grid.innerHTML = '';
