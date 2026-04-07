@@ -1,10 +1,3 @@
-Hier die **bereinigte Version** des Skripts.  
-Alle Probleme sind behoben:
-
-* **Fehlende Klammer** in `escapeHtml` – jetzt korrekt geschlossen.  
-* **Duplicate Roster‑Initialisierung** – die Aufrufe von `renderRoster()` wurden entfernt, weil du bereits `loadPublicRoster()` verwendest.  
-* Unbenutzte Funktion `renderRoster()` (für interne Nutzung) bleibt im Code, ist aber **kommentiert**. Du kannst sie bei Bedarf wieder aktivieren, wenn du zwei unterschiedliche Roster‑Render‑Logiken brauchst.
-
 ```js
 /* ── Roster Grid ──────────────────────────────────────── */
 'use strict';
