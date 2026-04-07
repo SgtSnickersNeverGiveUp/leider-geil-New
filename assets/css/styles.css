@@ -696,16 +696,16 @@ img { max-width: 100%; display: block; }
 }
 
 /* ── Fun‑Tags ─────────────────────────────────────────────────────────────────────── */
-.roster-card__fun-tags {
+.roster-card-fun-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem;
-  margin-top: var(--sp-sm);
+  margin-top: 0.5rem;
 }
 
-.roster-card__fun-tag {
+.roster-card-fun-tag {
   font-family: var(--ff-mono);
-  font-size: .65rem;
+  font-size: 0.7rem;
   padding: 2px 8px;
   border-radius: 4px;
   color: var(--clr-accent-pubg);
@@ -713,7 +713,6 @@ img { max-width: 100%; display: block; }
   border: 1px solid rgba(255, 156, 67, .25);
   white-space: nowrap;
 }
-
 /* ── Toggle‑Button & More‑Section (from second block) ─────────────────────────────── */
 .roster-toggle-btn {
   align-self: center;          /* statt align-self: flex-start */
