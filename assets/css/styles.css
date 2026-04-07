@@ -618,7 +618,7 @@ img { max-width: 100%; display: block; }
 .roster-card:hover::before { opacity: 1; }
 
 /* ── Roster Card – Avatar ────────────────────────────────────────────────────────────── */
-.roster-card__avatar {
+.roster-card-avatar {
   width: 100px;
   height: 100px;
   border-radius: 50%;
@@ -628,12 +628,12 @@ img { max-width: 100%; display: block; }
   transition: border-color .3s var(--ease);
 }
 
-.roster-card:hover .roster-card__avatar {
+.roster-card:hover .roster-card-avatar {
   border-color: var(--clr-accent-arc);
 }
 
 /* ── Roster Card – Name & Role ─────────────────────────────────────────────────────── */
-.roster-card__name {
+.roster-card-name {
   font-family: var(--ff-heading);
   font-size: 1.3rem;
   font-weight: 700;
@@ -641,20 +641,20 @@ img { max-width: 100%; display: block; }
   letter-spacing: .06em;
 }
 
-.roster-card__role {
+.roster-card-role {
   font-size: .8rem;
   color: var(--clr-text-muted);
   margin-bottom: var(--sp-md);
 }
 
 /* ── Game Tags ─────────────────────────────────────────────────────────────────────── */
-.roster-card__games {
+.roster-card-games {
   display: flex;
   justify-content: center;
   gap: var(--sp-xs);
 }
 
-.roster-card__tag {
+.roster-card-tag {
   font-family: var(--ff-mono);
   font-size: .7rem;
   padding: 2px 8px;
@@ -663,9 +663,9 @@ img { max-width: 100%; display: block; }
   letter-spacing: .04em;
 }
 
-.roster-card__tag--pubg  { color: var(--clr-accent-pubg);  border: 1px solid var(--clr-accent-pubg); }
-.roster-card__tag--arc   { color: var(--clr-accent-arc);   border: 1px solid var(--clr-accent-arc); }
-.roster-card__tag--other { color: var(--clr-text-muted);   border: 1px solid var(--clr-border); }
+.roster-card-tag--pubg  { color: var(--clr-accent-pubg);  border: 1px solid var(--clr-accent-pubg); }
+.roster-card-tag--arc   { color: var(--clr-accent-arc);   border: 1px solid var(--clr-accent-arc); }
+.roster-card-tag--other { color: var(--clr-text-muted);   border: 1px solid var(--clr-border); }
 
 /* ── Clan‑Rolle Badge ─────────────────────────────────────────────────────────────── */
 .roster-card__clan-role {
