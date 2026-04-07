@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   Promise.all([
     fetch('/api/settings').then((r) => r.json()),
-    fetch('assets/data/news.json').then((r) => r.json())
+    fetch('/.netlify/functions/news').then((r) => r.json())
   ])
     .then(([settings, items]) => {
       if (!Array.isArray(items) || items.length === 0) return;
@@ -18,8 +18,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const separator = settings.tickerSeparator || '   ●   ';
 
       tickerItemsEl.innerHTML = texts.join(separator);
-
-      // Dauer aus Settings → passt zu deinem CSS (animation-name, -timing, -iteration)
       tickerItemsEl.style.animationDuration = `${speedSeconds}s`;
     })
     .catch((err) => {
