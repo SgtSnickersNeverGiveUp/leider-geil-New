@@ -1,8 +1,6 @@
 // netlify/functions/news.js
 
-const { getStore } = require('@netlify/blobs');
-
-const store = getStore({ name: 'clan-news' });
+const { getStore, connectLambda } = require('@netlify/blobs');
 
 function getCorsHeaders() {
   return {
@@ -13,9 +11,14 @@ function getCorsHeaders() {
   };
 }
 
-async function readNews(event) {
+// Holt den Store, aber erst NACH connectLambda
+async function getNewsStore() {
+  return getStore({ name: 'clan-news' });
+}
+
+async function readNews() {
   try {
-    const store = await getNewsStore(event);
+    const store = await getNewsStore();
     const blob = await store.get('news.json');
 
     if (!blob || blob.length === 0) {
@@ -31,6 +34,7 @@ async function readNews(event) {
 }
 
 async function writeNews(newsArray) {
+  const store = await getNewsStore();
   await store.set('news.json', JSON.stringify(newsArray, null, 2), {
     metadata: { type: 'clan-news' },
   });
@@ -38,6 +42,9 @@ async function writeNews(newsArray) {
 
 exports.handler = async (event, context) => {
   const headers = getCorsHeaders();
+
+  // Hier: Blobs-Umgebung initialisieren (Lambda-Kompatibilitätsmodus)
+  connectLambda(event);
 
   // Preflight
   if (event.httpMethod === 'OPTIONS') {
@@ -79,7 +86,6 @@ exports.handler = async (event, context) => {
     }
   }
 
-  // Fallback für andere Methoden
   return {
     statusCode: 405,
     headers,
