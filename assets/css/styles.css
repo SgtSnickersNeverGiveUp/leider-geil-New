@@ -579,13 +579,14 @@ img { max-width: 100%; display: block; }
   animation: pulse 1.5s infinite;
 }
 
-/* ── Roster Grid ───────────────────────────────────────── */
+/* ── Roster Grid ──────────────────────────────────────────────────────────────────────── */
 .roster-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: var(--sp-lg);
 }
 
+/* ── Roster Card – Base (Glass‑style) ───────────────────────────────────────────────── */
 .roster-card {
   background: var(--clr-glass);
   backdrop-filter: blur(12px);
@@ -616,6 +617,7 @@ img { max-width: 100%; display: block; }
 
 .roster-card:hover::before { opacity: 1; }
 
+/* ── Roster Card – Avatar ────────────────────────────────────────────────────────────── */
 .roster-card__avatar {
   width: 100px;
   height: 100px;
@@ -630,6 +632,7 @@ img { max-width: 100%; display: block; }
   border-color: var(--clr-accent-arc);
 }
 
+/* ── Roster Card – Name & Role ─────────────────────────────────────────────────────── */
 .roster-card__name {
   font-family: var(--ff-heading);
   font-size: 1.3rem;
@@ -644,7 +647,7 @@ img { max-width: 100%; display: block; }
   margin-bottom: var(--sp-md);
 }
 
-/* Game-Tags */
+/* ── Game Tags ─────────────────────────────────────────────────────────────────────── */
 .roster-card__games {
   display: flex;
   justify-content: center;
@@ -660,11 +663,11 @@ img { max-width: 100%; display: block; }
   letter-spacing: .04em;
 }
 
-.roster-card__tag--pubg  { color: var(--clr-accent-pubg); border: 1px solid var(--clr-accent-pubg); }
-.roster-card__tag--arc   { color: var(--clr-accent-arc);  border: 1px solid var(--clr-accent-arc);  }
-.roster-card__tag--other { color: var(--clr-text-muted);  border: 1px solid var(--clr-border); }
+.roster-card__tag--pubg  { color: var(--clr-accent-pubg);  border: 1px solid var(--clr-accent-pubg); }
+.roster-card__tag--arc   { color: var(--clr-accent-arc);   border: 1px solid var(--clr-accent-arc); }
+.roster-card__tag--other { color: var(--clr-text-muted);   border: 1px solid var(--clr-border); }
 
-/* Clan-Rolle Badge */
+/* ── Clan‑Rolle Badge ─────────────────────────────────────────────────────────────── */
 .roster-card__clan-role {
   display: inline-block;
   font-family: var(--ff-mono);
@@ -679,7 +682,7 @@ img { max-width: 100%; display: block; }
   background: rgba(15, 242, 169, .08);
 }
 
-/* Bio/Text */
+/* ── Bio/Text ─────────────────────────────────────────────────────────────────────── */
 .roster-card__bio {
   font-size: .8rem;
   color: var(--clr-text-muted);
@@ -692,7 +695,7 @@ img { max-width: 100%; display: block; }
   background: rgba(20, 20, 28, 0.7);
 }
 
-/* Fun-Tags */
+/* ── Fun‑Tags ─────────────────────────────────────────────────────────────────────── */
 .roster-card__fun-tags {
   display: flex;
   justify-content: center;
@@ -710,112 +713,20 @@ img { max-width: 100%; display: block; }
   background: rgba(255, 156, 67, .08);
   border: 1px solid rgba(255, 156, 67, .25);
 }
-/* Öffentliche Roster-Grid */
-.roster-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 1.5rem;
-}
 
-/* Öffentliche Roster-Karte */
-.roster-card {
-  background: var(--clr-surface-alt);
-  border: 1px solid var(--clr-border);
-  border-radius: var(--radius-lg);
-  padding: 1rem 1.25rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-/* Header mit Avatar + Name */
-.roster-card-header {
-  display: flex;
-  gap: 0.85rem;
-}
-
-.roster-card-avatar {
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid var(--clr-accent-arc);
-  flex-shrink: 0;
-}
-
-.roster-card-name-row {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  flex-wrap: wrap;
-}
-
-.roster-card-name {
-  font-family: var(--ff-heading);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.roster-card-role {
-  font-family: var(--ff-mono);
-  font-size: 0.8rem;
-  color: var(--clr-text-muted);
-  margin-top: 0.15rem;
-}
-
-/* Badges */
-.badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--ff-mono);
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  padding: 0.15rem 0.5rem;
-  border-radius: 999px;
-  border: 1px solid var(--clr-border);
-}
-
-.badge--clan-role {
-  border-color: var(--clr-accent-arc);
-  color: var(--clr-accent-arc);
-}
-
-.badge--gender {
-  border-color: var(--clr-accent-pubg);
-  color: var(--clr-accent-pubg);
-}
-
-/* Game-Badges */
-.badge--game {
-  font-size: 0.7rem;
-  padding: 0.15rem 0.45rem;
-  border-radius: 999px;
-  border: 1px solid var(--clr-border);
-  background: rgba(255, 255, 255, 0.02);
-}
-
-.roster-card-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem;
-  margin-top: 0.35rem;
-}
-
-/* Mehr Infos Bereich */
+/* ── Toggle‑Button & More‑Section (from second block) ─────────────────────────────── */
 .roster-toggle-btn {
-  align-self: flex-start;
+  align-self: center;          /* statt align-self: flex-start */
+  margin-top: var(--sp-sm);
   font-family: var(--ff-mono);
-  font-size: 0.75rem;
-  padding: 0.25rem 0.8rem;
+  font-size: .75rem;
+  padding: .25rem .8rem;
   border-radius: var(--radius);
   border: 1px solid var(--clr-border);
   background: transparent;
   color: var(--clr-text-muted);
   cursor: pointer;
-  transition: all 0.2s var(--ease);
+  transition: all .2s var(--ease);
 }
 
 .roster-toggle-btn:hover {
@@ -828,7 +739,8 @@ img { max-width: 100%; display: block; }
   overflow: hidden;
   opacity: 0;
   transform: translateY(-4px);
-  transition: all 0.25s var(--ease);
+  transition: all .25s var(--ease);
+  margin-top: var(--sp-sm);   /* optional, keeps spacing */
 }
 
 .roster-card-more.open {
@@ -837,39 +749,16 @@ img { max-width: 100%; display: block; }
   transform: translateY(0);
 }
 
-.roster-card-bio {
-  font-size: 0.85rem;
-  color: var(--clr-text-muted);
-  line-height: 1.5;
-  margin-bottom: 0.35rem;
-}
-
-/* Fun-Tags */
-.roster-card-fun-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem;
-}
-
-.roster-card-fun-tag {
-  font-family: var(--ff-mono);
-  font-size: 0.7rem;
-  padding: 0.1rem 0.45rem;
-  border-radius: 999px;
-  color: var(--clr-accent-pubg);
-  background: rgba(255, 156, 67, 0.1);
-  border: 1px solid rgba(255, 156, 67, 0.3);
-}
-
-/* Loading / Empty-State (Frontend) */
+/* ── Loading / Empty‑State (Frontend) ─────────────────────────────────────────────── */
 .section .loading,
 .section .empty-state {
   text-align: center;
   padding: 2rem 1rem;
   font-family: var(--ff-mono);
-  font-size: 0.85rem;
+  font-size: .85rem;
   color: var(--clr-text-muted);
 }
+
 
 /* ── Event Timeline ────────────────────────────────────── */
 #events {
