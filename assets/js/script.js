@@ -667,6 +667,8 @@ function escapeHtml(str) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+}
+
 function renderPublicRosterCard(m) {
   const avatarSrc = m.avatar ? escapeHtml(m.avatar) : "assets/img/default-avatar.png";
 
@@ -685,11 +687,31 @@ function renderPublicRosterCard(m) {
     .map((g) => `<span class="badge badge--game">${escapeHtml(g)}</span>`)
     .join("");
 
+  const funTagsHtml = (m.funTags || [])
+  .map((t) => `<span class="roster-card-fun-tag">${escapeHtml(t)}</span>`)
+  .join("");
+
+const moreHtml = `
+  <div class="roster-card-more">
+    <p class="roster-card-bio">${escapeHtml(m.bio || "")}</p>
+    <div class="roster-card-fun-tags">
+      <span class="roster-card-fun-label">Fun-Tags:</span>
+      ${funTagsHtml}
+    </div>
+  </div>
+`;
+
   const bio = m.bio || "";
 
-  const funTagsHtml = (m.funTags || [])
-    .map((t) => `<span class="roster-card-fun-tag">${escapeHtml(t)}</span>`)
-    .join("");
+const moreHtml = `
+  <div class="roster-card-more">
+    <p class="roster-card-bio">${escapeHtml(bio)}</p>
+    <div class="roster-card-fun-tags">
+      <span class="roster-card-fun-label">Fun-Tags:</span>
+      ${funTagsHtml}
+    </div>
+  </div>
+`;
 
   return `
     <article class="roster-card">
@@ -718,14 +740,7 @@ function renderPublicRosterCard(m) {
             ? `<p class="roster-card-bio">${escapeHtml(bio)}</p>`
             : `<p class="roster-card-bio">Noch keine Beschreibung.</p>`
         }
-        ${
-          funTagsHtml
-            ? `<div class="roster-card-fun-tags">
-                 <span class="roster-card-fun-label">Fun-Tags:</span>
-                 ${funTagsHtml}
-               </div>`
-            : ""
-        }
+        ${funTagsHtml ? `<div class="roster-card-fun-tags">${funTagsHtml}</div>` : ""}
       </div>
     </article>
   `;
