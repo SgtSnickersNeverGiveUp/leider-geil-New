@@ -401,8 +401,14 @@ function renderPublicRosterCard(m) {
     : "";
 
   const gamesHtml = (m.games || [])
-    .map((g) => `<span class="badge badge--game">${escapeHtml(g)}</span>`)
-    .join("");
+  .map((g) => {
+    const lower = (g || "").toLowerCase();
+    let cls = "roster-card__tag roster-card__tag--other";
+    if (lower.includes("pubg")) cls = "roster-card__tag roster-card__tag--pubg";
+    if (lower.includes("arc"))  cls = "roster-card__tag roster-card__tag--arc";
+    return `<span class="${cls}">${escapeHtml(g)}</span>`;
+  })
+  .join("");
 
   const bio = m.bio || "";
 
@@ -421,7 +427,9 @@ function renderPublicRosterCard(m) {
             ${genderBadge}
           </div>
           <div class="roster-card-role">${escapeHtml(m.role || "")}</div>
-          <div class="roster-card-tags">${gamesHtml}</div>
+          <div class="roster-card__games">
+  ${gamesHtml}
+</div>
         </div>
       </header>
 
