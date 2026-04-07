@@ -1,4 +1,3 @@
-```js
 /* ── Roster Grid ──────────────────────────────────────── */
 'use strict';
 
@@ -452,4 +451,3 @@ function initEventSignupDiscord() {
     if (status) status.style.display = "block";
   });
 }
-```
