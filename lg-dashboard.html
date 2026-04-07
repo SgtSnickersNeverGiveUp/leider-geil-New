@@ -1748,15 +1748,23 @@ function renderRosterAdmin(members) {
 
   body.innerHTML = `<div class="admin-roster-grid">${members.map(m => {
     const avatarSrc = m.avatar ? escapeHtml(m.avatar) + (m.avatar.startsWith('/api/roster-avatar') ? '&t=' + Math.floor(Date.now() / 60000) : '') : '';
+
     const gamesHtml = (m.games || []).map(g => {
       const cls = g === 'PUBG' ? 'pubg' : g === 'ARC Raiders' ? 'arc' : 'other';
       return `<span class="admin-roster-card__tag admin-roster-card__tag--${cls}">${escapeHtml(g)}</span>`;
     }).join('');
-    const clanRoleHtml = m.clanRole ? `<div class="admin-roster-card__clan-role">${escapeHtml(m.clanRole)}</div>` : '';
+
+    // Nur anzeigen, wenn clanRole vorhanden UND anders als role
+    const showClanRole = m.clanRole && m.clanRole !== m.role;
+    const clanRoleHtml = showClanRole
+      ? `<div class="admin-roster-card__clan-role">${escapeHtml(m.clanRole)}</div>`
+      : '';
+
     const bioHtml = m.bio ? `<div class="admin-roster-card__bio">${escapeHtml(m.bio)}</div>` : '';
     const funTagsHtml = (m.funTags || []).length > 0
       ? `<div class="admin-roster-card__fun-tags">${m.funTags.map(t => `<span class="admin-roster-card__fun-tag">${escapeHtml(t)}</span>`).join('')}</div>`
       : '';
+
     return `
     <div class="admin-roster-card" data-id="${escapeHtml(m.id)}">
       <button class="btn-sm admin-roster-card__edit" onclick="openEditMember('${escapeHtml(m.id)}')">&#9998;</button>
