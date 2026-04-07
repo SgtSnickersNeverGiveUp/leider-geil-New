@@ -13,10 +13,15 @@ function getCorsHeaders() {
   };
 }
 
-async function readNews() {
+async function readNews(event) {
   try {
+    const store = await getNewsStore(event);
     const blob = await store.get('news.json');
-    if (!blob) return [];
+
+    if (!blob || blob.length === 0) {
+      return [];
+    }
+
     const json = JSON.parse(blob);
     return Array.isArray(json) ? json : [];
   } catch (err) {
