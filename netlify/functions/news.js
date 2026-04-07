@@ -43,7 +43,7 @@ async function writeNews(newsArray) {
 exports.handler = async (event, context) => {
   const headers = getCorsHeaders();
 
-  // Hier: Blobs-Umgebung initialisieren (Lambda-Kompatibilitätsmodus)
+  // Blobs-Umgebung initialisieren (Lambda-Kompatibilitätsmodus)
   connectLambda(event);
 
   // Preflight
