@@ -635,3 +635,114 @@ function initEventSignupDiscord() {
     if (status) status.style.display = "block";
   });
 }
+async function loadPublicRoster() {
+  const container = document.getElementById("roster-grid");
+  if (!container) return;
+
+  container.innerHTML = '<div class="loading">Lade Clan Roster...</div>';
+
+  try {
+    const res = await fetch(SITE_CONFIG.rosterApi || "/api/roster");
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const members = await res.json();
+
+    if (!Array.isArray(members) || members.length === 0) {
+      container.innerHTML = '<div class="empty-state">Noch keine Mitglieder eingetragen.</div>';
+      return;
+    }
+
+    container.innerHTML = members.map((m) => renderPublicRosterCard(m)).join("");
+    initRosterToggle(container);
+  } catch (err) {
+    console.error("Public roster load failed:", err);
+    container.innerHTML = '<div class="empty-state">Fehler beim Laden des Rosters.</div>';
+  }
+}
+
+function escapeHtml(str) {
+  if (!str) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function renderPublicRosterCard(m) {
+  const avatarSrc = m.avatar ? escapeHtml(m.avatar) : "assets/img/default-avatar.png";
+
+  const clanRole = m.clanRole || "Member";
+  const gender = m.gender || "";
+  let genderLabel = "";
+  if (gender === "m") genderLabel = "M";
+  if (gender === "w") genderLabel = "W";
+  if (gender === "d") genderLabel = "D";
+
+  const genderBadge = genderLabel
+    ? `<span class="badge badge--gender">${genderLabel}</span>`
+    : "";
+
+  const gamesHtml = (m.games || [])
+    .map((g) => `<span class="badge badge--game">${escapeHtml(g)}</span>`)
+    .join("");
+
+  const funTagsHtml = (m.funTags || [])
+    .map((t) => `<span class="roster-card-fun-tag">${escapeHtml(t)}</span>`)
+    .join("");
+
+  const bio = m.bio || "";
+
+  return `
+    <article class="roster-card">
+      <header class="roster-card-header">
+        <img class="roster-card-avatar" src="${avatarSrc}" alt="${escapeHtml(m.name)}" loading="lazy">
+        <div>
+          <div class="roster-card-name-row">
+            <span class="roster-card-name">${escapeHtml(m.name)}</span>
+            <span class="badge badge--clan-role">${escapeHtml(clanRole)}</span>
+            ${genderBadge}
+          </div>
+          <div class="roster-card-role">${escapeHtml(m.role || "")}</div>
+          <div class="roster-card-tags">
+            ${gamesHtml}
+          </div>
+        </div>
+      </header>
+
+      <button type="button" class="btn-sm roster-toggle-btn" data-toggle="more">
+        Mehr Infos
+      </button>
+
+      <div class="roster-card-more">
+        ${
+          bio
+            ? `<p class="roster-card-bio">${escapeHtml(bio)}</p>`
+            : `<p class="roster-card-bio">Noch keine Beschreibung.</p>`
+        }
+        ${funTagsHtml ? `<div class="roster-card-fun-tags">${funTagsHtml}</div>` : ""}
+      </div>
+    </article>
+  `;
+}
+
+function initRosterToggle(container) {
+  container.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-toggle='more']");
+    if (!btn) return;
+
+    const card = btn.closest(".roster-card");
+    if (!card) return;
+
+    const more = card.querySelector(".roster-card-more");
+    if (!more) return;
+
+    const isOpen = more.classList.contains("open");
+    more.classList.toggle("open", !isOpen);
+    btn.textContent = isOpen ? "Mehr Infos" : "Weniger Infos";
+  });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  loadPublicRoster();
+});
