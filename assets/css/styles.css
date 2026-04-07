@@ -698,10 +698,10 @@ img { max-width: 100%; display: block; }
 /* ── Fun‑Tags ─────────────────────────────────────────────────────────────────────── */
 .roster-card__fun-tags {
   display: flex;
-  justify-content: center;
   flex-wrap: wrap;
-  gap: var(--sp-xs);
+  gap: 0.35rem;              /* etwas mehr Abstand */
   margin-top: var(--sp-sm);
+  justify-content: flex-start;
 }
 
 .roster-card__fun-tag {
@@ -712,6 +712,9 @@ img { max-width: 100%; display: block; }
   color: var(--clr-accent-pubg);
   background: rgba(255, 156, 67, .08);
   border: 1px solid rgba(255, 156, 67, .25);
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;       /* nichts bricht mitten im Wort */
 }
 
 /* ── Toggle‑Button & More‑Section (from second block) ─────────────────────────────── */
