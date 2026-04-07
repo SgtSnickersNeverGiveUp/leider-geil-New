@@ -1370,16 +1370,27 @@
         </div>
         <div class="panel__body">
           <form class="admin-form" id="videos-form">
-            <div class="admin-form__group">
-              <label class="admin-form__label" for="video-title">Titel</label>
-              <input class="admin-form__input" type="text" id="video-title" placeholder="Video-Titel" required>
-            </div>
-            <div class="admin-form__group">
-              <label class="admin-form__label" for="video-url">YouTube-Link</label>
-              <input class="admin-form__input" type="url" id="video-url" placeholder="https://www.youtube.com/watch?v=..." required>
-            </div>
-            <button type="submit" class="admin-form__submit" id="videos-submit">+ Video hinzufügen</button>
-          </form>
+  <div class="admin-formgroup">
+    <label class="admin-formlabel" for="video-title">Titel</label>
+    <input class="admin-forminput" type="text" id="video-title" placeholder="Video-Titel" required>
+  </div>
+
+  <div class="admin-formgroup">
+    <label class="admin-formlabel" for="video-platform">Plattform</label>
+    <select class="admin-formselect" id="video-platform" required>
+      <option value="" disabled selected>Plattform wählen</option>
+      <option value="youtube">YouTube</option>
+      <option value="twitch">Twitch</option>
+    </select>
+  </div>
+
+  <div class="admin-formgroup">
+    <label class="admin-formlabel" for="video-url">Video-Link</label>
+    <input class="admin-forminput" type="url" id="video-url" placeholder="https://www.youtube.com/watch?v=... oder https://www.twitch.tv/videos/..." required>
+  </div>
+
+  <button type="submit" class="admin-formsubmit" id="videos-submit">Video hinzufügen</button>
+</form>
         </div>
       </section>
 
