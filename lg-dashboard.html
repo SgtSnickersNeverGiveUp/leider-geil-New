@@ -1845,6 +1845,16 @@ function openEditMember(id) {
             <input class="admin-form__input" type="text" id="edit-member-name" value="${escapeHtml(m.name)}" required>
           </div>
           <div class="admin-form__group">
+            <label class="admin-form__label">Rolle / Position</label>
+            <input
+              class="admin-form__input"
+              type="text"
+              id="edit-member-role"
+              value="${escapeHtml(m.role || '')}"
+              required
+            >
+          </div>
+          <div class="admin-form__group">
             <label class="admin-form__label">Rang im Clan</label>
             <select class="admin-form__input admin-form__select" id="edit-member-clan-role">
               <option value="Leader" ${clanRole === 'Leader' ? 'selected' : ''}>Leader</option>
@@ -1880,8 +1890,13 @@ function openEditMember(id) {
             <label class="admin-form__label">Profilbild</label>
             <div class="admin-form__hint">Empfehlung: Quadratisch oder 4:5, ca. 500–800 px breit.</div>
             <div class="avatar-upload-area" id="edit-avatar-area" onclick="document.getElementById('edit-avatar-file').click()">
-              <img class="avatar-upload-area__preview" id="edit-avatar-preview" src="${escapeHtml(avatarSrc)}" alt="Vorschau"
-                   onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect fill=%27%231a1a2e%27 width=%2764%27 height=%2764%27/%3E%3Ctext x=%2750%25%27 y=%2755%25%27 text-anchor=%27middle%27 fill=%27%237a7a8e%27 font-size=%2722%27%3E%3F%3C/text%3E%3C/svg%3E'">
+              <img
+                class="avatar-upload-area__preview"
+                id="edit-avatar-preview"
+                src="${escapeHtml(avatarSrc)}"
+                alt="Vorschau"
+                onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect fill=%27%231a1a2e%27 width=%2764%27 height=%2764%27/%3E%3Ctext x=%2750%25%27 y=%2755%25%27 text-anchor=%27middle%27 fill=%27%237a7a8e%27 font-size=%2722%27%3E%3F%3C/text%3E%3C/svg%3E'"
+              >
               <div class="avatar-upload-area__text">
                 <strong>Klicken</strong> um ein neues Bild auszuwählen
               </div>
@@ -1889,7 +1904,14 @@ function openEditMember(id) {
             <input type="file" id="edit-avatar-file" accept="image/jpeg,image/png,image/webp" style="display:none">
             <div class="avatar-upload-status" id="edit-avatar-status"></div>
             <div class="avatar-upload-actions">
-              <button type="button" class="btn-sm" id="edit-avatar-remove" style="color:var(--clr-danger);border-color:var(--clr-danger);">Bild entfernen</button>
+              <button
+                type="button"
+                class="btn-sm"
+                id="edit-avatar-remove"
+                style="color:var(--clr-danger);border-color:var(--clr-danger);"
+              >
+                Bild entfernen
+              </button>
             </div>
           </div>
           <div class="edit-modal__footer">
@@ -1939,11 +1961,11 @@ function openEditMember(id) {
       editArea.style.borderColor = '';
       const file = e.dataTransfer.files[0];
       if (file) {
-        // Trigger the same logic as file input change
         const dt = new DataTransfer();
         dt.items.add(file);
-        document.getElementById('edit-avatar-file').files = dt.files;
-        document.getElementById('edit-avatar-file').dispatchEvent(new Event('change'));
+        const inp = document.getElementById('edit-avatar-file');
+        inp.files = dt.files;
+        inp.dispatchEvent(new Event('change'));
       }
     });
 
@@ -1951,9 +1973,11 @@ function openEditMember(id) {
     document.getElementById('edit-avatar-remove').addEventListener('click', () => {
       editRemoveAvatar = true;
       editAvatarFile = null;
-      document.getElementById('edit-avatar-preview').src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect fill='%231a1a2e' width='64' height='64'/%3E%3Ctext x='50%25' y='55%25' text-anchor='middle' fill='%237a7a8e' font-size='22'%3E%3F%3C/text%3E%3C/svg%3E";
-      document.getElementById('edit-avatar-status').textContent = 'Bild wird beim Speichern entfernt.';
-      document.getElementById('edit-avatar-status').style.color = 'var(--clr-accent-pubg)';
+      document.getElementById('edit-avatar-preview').src =
+        "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect fill='%231a1a2e' width='64' height='64'/%3E%3Ctext x='50%25' y='55%25' text-anchor='middle' fill='%237a7a8e' font-size='22'%3E%3F%3C/text%3E%3C/svg%3E";
+      const status = document.getElementById('edit-avatar-status');
+      status.textContent = 'Bild wird beim Speichern entfernt.';
+      status.style.color = 'var(--clr-accent-pubg)';
     });
 
     // Save
@@ -1966,11 +1990,15 @@ function openEditMember(id) {
       try {
         const memberId = document.getElementById('edit-member-id').value;
         const name = document.getElementById('edit-member-name').value.trim();
-        const role = document.getElementById('edit-member-role').value.trim();
+        const roleEl = document.getElementById('edit-member-role');
+        const role = roleEl ? roleEl.value.trim() : m.role;
         const editGames = [...document.querySelectorAll('input[name="edit-games"]:checked')].map(c => c.value);
         const editClanRole = document.getElementById('edit-member-clan-role').value;
         const editBio = document.getElementById('edit-member-bio').value.trim();
-        const editFunTags = document.getElementById('edit-member-fun-tags').value.split(',').map(t => t.trim()).filter(Boolean);
+        const editFunTags = document.getElementById('edit-member-fun-tags').value
+          .split(',')
+          .map(t => t.trim())
+          .filter(Boolean);
 
         let avatarUrl = m.avatar;
 
@@ -1981,14 +2009,23 @@ function openEditMember(id) {
         } else if (editRemoveAvatar) {
           // Delete avatar from store
           await fetch(`${ROSTER_AVATAR_API}?id=${encodeURIComponent(memberId)}`, { method: 'DELETE' });
-          avatarUrl = `https://via.placeholder.com/160/1a1a2e/0FF2A9?text=${encodeURIComponent(name.slice(0, 2).toUpperCase())}`;
+          avatarUrl = null;
         }
 
         // Update member data
         const updateRes = await fetch(ROSTER_API, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: memberId, name, role, avatar: avatarUrl, games: editGames, clanRole: editClanRole, bio: editBio, funTags: editFunTags }),
+          body: JSON.stringify({
+            id: memberId,
+            name,
+            role,
+            avatar: avatarUrl,
+            games: editGames,
+            clanRole: editClanRole,
+            bio: editBio,
+            funTags: editFunTags,
+          }),
         });
         if (!updateRes.ok) {
           const data = await updateRes.json();
