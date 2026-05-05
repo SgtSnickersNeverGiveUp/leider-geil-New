@@ -336,37 +336,142 @@ function initEventForm() {
   // … (originaler Code von initEventForm)
 }
 
-/* ── 13. Clan News Ticker (rotierende Kurz‑News aus news.json) ──────── */
-const TICKER_INTERVAL = 7000; // 7 s
+// ══════════════════════════════════════════════════════════
+// CLAN NEWS Ticker
+// ══════════════════════════════════════════════════════════
+async function loadNewsIntoAdmin() {
+  const listEl = document.getElementById('news-list');
+  const statusEl = document.getElementById('news-status');
+  if (!listEl) return;
 
-async function initClanNewsTicker() {
-  const bar = document.getElementById('lg-news-bar');
-  const itemEl = document.getElementById('lg-news-item');
-  if (!bar || !itemEl) return;
-
+  statusEl.textContent = 'Lade News...';
   try {
-    const res = await fetch('/assets/data/news.json');
-    if (!res.ok) throw new Error('News JSON not found');
-    const news = await res.json();
-    if (!Array.isArray(news) || news.length === 0) return;
-
-    let index = 0;
-    const showItem = () => {
-      const entry = news[index];
-      itemEl.classList.remove('lg-news-item--visible');
-      setTimeout(() => {
-        itemEl.textContent = entry.text;
-        itemEl.classList.add('lg-news-item--visible');
-      }, 200);
-      index = (index + 1) % news.length;
-    };
-
-    bar.style.display = '';
-    showItem();
-    setInterval(showItem, TICKER_INTERVAL);
+    const res = await fetch(NEWS_API_URL);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    window._lgNews = Array.isArray(data) ? data : [];
+    renderNewsAdmin();
+    statusEl.textContent = '';
   } catch (err) {
-    console.warn('[Clan News Ticker]', err.message);
+    console.error('[News Admin] load', err);
+    statusEl.textContent = 'Fehler beim Laden der News.';
   }
+}
+
+function renderNewsAdmin() {
+  const listEl = document.getElementById('news-list');
+  if (!listEl) return;
+  const news = window._lgNews || [];
+
+  listEl.innerHTML = news.map((n, i) => {
+    const type = n.type || 'info';
+    return `
+      <div class="admin-form__group news-item">
+        <label class="admin-form__label">Eintrag ${i + 1}</label>
+        <div style="display:flex;flex-direction:column;gap:.25rem;">
+          <textarea class="admin-form__textarea"
+                    data-index="${i}"
+                    rows="2"
+                    placeholder="Ticker-Text...">${n.text || ''}</textarea>
+          <div style="display:flex;align-items:center;gap:.5rem;">
+            <select class="admin-form__select" data-type-index="${i}">
+              <option value="birthday" ${type === 'birthday' ? 'selected' : ''}>Birthday</option>
+              <option value="member"   ${type === 'member'   ? 'selected' : ''}>Member</option>
+              <option value="event"    ${type === 'event'    ? 'selected' : ''}>Event</option>
+              <option value="info"     ${type === 'info'     ? 'selected' : ''}>Info</option>
+              <option value="ranked"   ${type === 'ranked'   ? 'selected' : ''}>Ranked</option>
+            </select>
+            <button type="button"
+                    class="btn-sm btn-sm--danger"
+                    data-news-remove="${i}">Löschen</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function initNewsAdmin() {
+  const addBtn = document.getElementById('news-add');
+  const saveBtn = document.getElementById('news-save');
+  const listEl = document.getElementById('news-list');
+  const statusEl = document.getElementById('news-status');
+  if (!addBtn || !saveBtn || !listEl) return;
+
+  // Initial laden
+  loadNewsIntoAdmin();
+
+  // Eintrag hinzufügen
+  addBtn.addEventListener('click', () => {
+    window._lgNews = window._lgNews || [];
+    window._lgNews.push({ text: '', type: 'info' });
+    renderNewsAdmin();
+  });
+
+  // Textänderungen
+  listEl.addEventListener('input', (e) => {
+    const idx = e.target.getAttribute('data-index');
+    if (idx !== null) {
+      window._lgNews[Number(idx)].text = e.target.value;
+    }
+  });
+
+  // Typänderungen
+  listEl.addEventListener('change', (e) => {
+    const idx = e.target.getAttribute('data-type-index');
+    if (idx !== null) {
+      window._lgNews[Number(idx)].type = e.target.value;
+    }
+  });
+
+  // Löschen
+  listEl.addEventListener('click', (e) => {
+    const idx = e.target.getAttribute('data-news-remove');
+    if (idx !== null) {
+      window._lgNews.splice(Number(idx), 1);
+      renderNewsAdmin();
+    }
+  });
+
+  // Speichern: News + Ticker Settings
+  saveBtn.addEventListener('click', async () => {
+    statusEl.textContent = 'Speichern...';
+
+    const speedInput = document.getElementById('ticker-speed');
+    const sepInput = document.getElementById('ticker-separator');
+
+    const tickerSpeedSeconds = speedInput ? Number(speedInput.value) || 40 : 40;
+    // Separator ohne Punkt, Punkt kommt aus CSS (span + span::before)
+    const tickerSeparator = sepInput ? (sepInput.value || '   ') : '   ';
+
+    try {
+      const newsToSave = Array.isArray(window._lgNews) ? window._lgNews : [];
+
+      // 1) News speichern
+      const resNews = await fetch(NEWS_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newsToSave),
+      });
+      if (!resNews.ok) throw new Error('News HTTP ' + resNews.status);
+
+      // 2) Ticker Settings speichern
+      const resSettings = await fetch(SETTINGS_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tickerSpeedSeconds,
+          tickerSeparator,
+        }),
+      });
+      if (!resSettings.ok) throw new Error('Settings HTTP ' + resSettings.status);
+
+      statusEl.textContent = 'Gespeichert';
+    } catch (err) {
+      console.error('News/Ticker save', err);
+      statusEl.textContent = 'Fehler beim Speichern';
+    }
+  });
 }
 
 /* ── 14. Öffentliches Roster (UI‑Rendering) ───────────────────────────── */
