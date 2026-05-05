@@ -15,9 +15,16 @@ document.addEventListener('DOMContentLoaded', () => {
       if (texts.length === 0) return;
 
       const speedSeconds = Number(settings.tickerSpeedSeconds) || 40;
-      const separator = settings.tickerSeparator || '   ●   ';
 
-      tickerItemsEl.innerHTML = texts.join(separator);
+      // Separator nur als Abstand, Punkt kommt per CSS (span + span::before)
+      const separator = settings.tickerSeparator || '   ';
+
+      // Texte in Spans packen, Separator als normaler Abstand dazwischen
+      const html = texts
+        .map((t) => `<span>${t}</span>`)
+        .join(separator);
+
+      tickerItemsEl.innerHTML = html;
       tickerItemsEl.style.animationDuration = `${speedSeconds}s`;
     })
     .catch((err) => {
