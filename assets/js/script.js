@@ -1,4 +1,4 @@
-/* ── Roster Grid ────────────────────────────────────────────────────── */
+/* ── Public site interactions ───────────────────────────────────────── */
 'use strict';
 
 /* ── Helper: DOM‑Abfrage ───────────────────────────────────────────── */
@@ -63,16 +63,7 @@ async function fetchTwitchStatus() {
   }
 }
 
-/* ── 4. Roster Rendering (internal) ──────────────────────────────────── */
-/*
-async function renderRoster() {
-  const grid = $('#roster-grid');
-  if (!grid) return;
-  // … (originaler Code von renderRoster)
-}
-*/
-
-/* ── 5. Event Timeline Rendering + IntersectionObserver ─────────────── */
+/* ── 4. Event Timeline Rendering + IntersectionObserver ─────────────── */
 async function renderTimeline() {
   const wrap = $('#timeline');
   if (!wrap) return;
@@ -200,7 +191,7 @@ function observeTimeline() {
   items.forEach((item) => observer.observe(item));
 }
 
-/* ── 6. Header Banner ─────────────────────────────────────────────────── */
+/* ── 5. Header Banner ─────────────────────────────────────────────────── */
 async function renderHeaderBanner() {
   const section = $('#header-banner');
   const img     = $('#header-banner-img');
@@ -227,7 +218,7 @@ async function renderHeaderBanner() {
   }
 }
 
-/* ── 7. Video Gallery Rendering ─────────────────────────────────────── */
+/* ── 6. Video Gallery Rendering ─────────────────────────────────────── */
 async function renderVideoGallery() {
   const grid = $('#video-gallery-grid');
   if (!grid) return;
@@ -275,7 +266,7 @@ async function renderVideoGallery() {
   }
 }
 
-/* ── 8. Mikro‑Interaktionen ───────────────────────────────────────────── */
+/* ── 7. Mikro‑Interaktionen ───────────────────────────────────────────── */
 function initRipple() {
   $$('.btn').forEach((btn) => {
     if (btn.type === 'submit') return;
@@ -293,7 +284,7 @@ function initRipple() {
   });
 }
 
-/* ── 9. Navbar Mobile Toggle ───────────────────────────────────────── */
+/* ── 8. Navbar Mobile Toggle ───────────────────────────────────────── */
 function initNavbar() {
   const toggle = $('#nav-toggle');
   const links  = $('#nav-links');
@@ -310,13 +301,13 @@ function initNavbar() {
   });
 }
 
-/* ── 10. Live‑Update Intervalle ─────────────────────────────────────── */
+/* ── 9. Live‑Update Intervalle ─────────────────────────────────────── */
 function startLiveUpdates() {
   setInterval(fetchDiscordStatus, SITE_CONFIG.discordRefreshInterval);
   setInterval(fetchTwitchStatus, SITE_CONFIG.twitchRefreshInterval);
 }
 
-/* ── 11. Smooth scroll for anchor links ─────────────────────────────── */
+/* ── 10. Smooth scroll for anchor links ─────────────────────────────── */
 function initSmoothScroll() {
   $$('a[href^="#"]').forEach((a) => {
     a.addEventListener('click', (e) => {
@@ -329,138 +320,14 @@ function initSmoothScroll() {
   });
 }
 
-/* ── 12. Event‑Anmeldung Formular ───────────────────────────────────── */
+/* ── 11. Event‑Anmeldung Formular ───────────────────────────────────── */
 function initEventForm() {
   const form = $('#event-form');
   if (!form) return;
   // … (originaler Code von initEventForm)
 }
 
-/* ── 13. Öffentliches Roster (UI‑Rendering) ───────────────────────────── */
-async function loadPublicRoster() {
-  const container = document.getElementById('roster-grid');
-  if (!container) return;
-
-  container.innerHTML = '<div class="loading">Lade Clan Roster...</div>';
-
-  try {
-    const res = await fetch(SITE_CONFIG.rosterApi || '/api/roster');
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const members = await res.json();
-
-    if (!Array.isArray(members) || members.length === 0) {
-      container.innerHTML = '<div class="empty-state">Noch keine Mitglieder eingetragen.</div>';
-      return;
-    }
-
-    container.innerHTML = members.map((m) => renderPublicRosterCard(m)).join('');
-    initRosterToggle(container);
-  } catch (err) {
-    console.error('Public roster load failed:', err);
-    container.innerHTML = '<div class="empty-state">Fehler beim Laden des Rosters.</div>';
-  }
-}
-
-function escapeHtml(str) {
-  if (!str) return "";
-  return String(str)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-function renderPublicRosterCard(m) {
-  const avatarSrc = m.avatar ? escapeHtml(m.avatar) : "assets/img/default-avatar.png";
-
-  const clanRole = m.clanRole || "Member";
-  const gender = m.gender || "";
-  let genderLabel = "";
-  if (gender === "m") genderLabel = "M";
-  if (gender === "w") genderLabel = "W";
-  if (gender === "d") genderLabel = "D";
-
-  const genderBadge = genderLabel
-    ? `<span class="badge badge--gender">${genderLabel}</span>`
-    : "";
-
-  const gamesHtml = (m.games || [])
-  .map((g) => {
-    const lower = (g || "").toLowerCase();
-    let cls = "roster-card__tag roster-card__tag--other";
-    if (lower.includes("pubg")) cls = "roster-card__tag roster-card__tag--pubg";
-    if (lower.includes("arc"))  cls = "roster-card__tag roster-card__tag--arc";
-    return `<span class="${cls}">${escapeHtml(g)}</span>`;
-  })
-  .join("");
-
-  const bio = m.bio || "";
-
-  const funTagsHtml = (m.funTags || [])
-    .map((t) => `<span class="roster-card-fun-tag">${escapeHtml(t)}</span>`)
-    .join("");
-
-  return `
-    <article class="roster-card">
-      <header class="roster-card-header">
-        <img class="roster-card-avatar" src="${avatarSrc}" alt="${escapeHtml(m.name)}" loading="lazy">
-        <div>
-          <div class="roster-card-name-row">
-            <span class="roster-card-name">${escapeHtml(m.name)}</span>
-            <span class="badge badge--clan-role">${escapeHtml(clanRole)}</span>
-            ${genderBadge}
-          </div>
-          <div class="roster-card-role">${escapeHtml(m.role || "")}</div>
-          <div class="roster-card-games">
-  ${gamesHtml}
-</div>
-  ${gamesHtml}
-</div>
-        </div>
-      </header>
-
-      <button type="button" class="btn-sm roster-toggle-btn" data-toggle="more">
-        Mehr Infos
-      </button>
-
-      <div class="roster-card-more">
-        ${
-          bio
-            ? `<p class="roster-card-bio">${escapeHtml(bio)}</p>`
-            : `<p class="roster-card-bio">Noch keine Beschreibung.</p>`
-        }
-        ${
-          funTagsHtml
-            ? `<div class="roster-card-fun-tags">
-                 <span class="roster-card-fun-label">Fun‑Tags:</span>
-                 ${funTagsHtml}
-               </div>`
-            : ""
-        }
-      </div>
-    </article>
-  `;
-}
-
-function initRosterToggle(container) {
-  container.addEventListener("click", (e) => {
-    const btn = e.target.closest("[data-toggle='more']");
-    if (!btn) return;
-
-    const card = btn.closest(".roster-card");
-    if (!card) return;
-
-    const more = card.querySelector(".roster-card-more");
-    if (!more) return;
-
-    const isOpen = more.classList.contains("open");
-    more.classList.toggle("open", !isOpen);
-    btn.textContent = isOpen ? "Mehr Infos" : "Weniger Infos";
-  });
-}
-
-/* ── 14. Initialisierung – Alles starten wenn DOM bereit ──────────────── */
+/* ── 12. Initialisierung – Alles starten wenn DOM bereit ──────────────── */
 document.addEventListener('DOMContentLoaded', () => {
   initVideos();
   initNavbar();
@@ -473,7 +340,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initEventSignupDiscord();
 
   /* Daten laden */
-  // renderRoster(); // <-- Entfernt: Du nutzt loadPublicRoster() anstatt renderRoster()
   renderTimeline();
   renderVideoGallery();
   renderHeaderBanner();
@@ -482,12 +348,9 @@ document.addEventListener('DOMContentLoaded', () => {
   fetchDiscordStatus();
   fetchTwitchStatus();
   startLiveUpdates();
-
-  /* Öffentliches Roster (nur für Seiten, die es brauchen) */
-  loadPublicRoster();
 });
 
-/* ── 15. Bewerbungen über Discord (Netlify Form + Webhook) ────────────── */
+/* ── 13. Bewerbungen über Discord (Netlify Form + Webhook) ────────────── */
 function initRecruitFormDiscord() {
   const recruitForm = document.getElementById("recruit-form");
   if (!recruitForm) return;
@@ -538,7 +401,7 @@ function initRecruitFormDiscord() {
   });
 }
 
-/* ── 16. Event‑Anmeldungen über Discord (Netlify Form + Webhook) ──────── */
+/* ── 14. Event‑Anmeldungen über Discord (Netlify Form + Webhook) ──────── */
 function initEventSignupDiscord() {
   const eventForm = document.getElementById("event-form");
   if (!eventForm) return;
