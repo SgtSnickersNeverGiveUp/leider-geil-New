@@ -2,9 +2,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const tickerItemsEl = document.querySelector('#clan-news-ticker .items');
   if (!tickerItemsEl) return;
 
+  const settingsApi = SITE_CONFIG.settingsApi || '/api/settings';
+  const newsApi = SITE_CONFIG.newsApi || '/api/news';
+
   Promise.all([
-    fetch('/api/settings').then((r) => r.json()),
-    fetch('/.netlify/functions/news').then((r) => r.json())
+    fetch(settingsApi).then((r) => r.json()),
+    fetch(newsApi).then((r) => r.json())
   ])
     .then(([settings, items]) => {
       if (!Array.isArray(items) || items.length === 0) return;

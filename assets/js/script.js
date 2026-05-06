@@ -200,14 +200,14 @@ function observeTimeline() {
   items.forEach((item) => observer.observe(item));
 }
 
-/* ── 6. Header Banner (from Admin Settings) ───────────────────────────── */
+/* ── 6. Header Banner ─────────────────────────────────────────────────── */
 async function renderHeaderBanner() {
   const section = $('#header-banner');
   const img     = $('#header-banner-img');
   if (!section || !img) return;
 
   try {
-    const res = await fetch('/api/settings');
+    const res = await fetch(SITE_CONFIG.settingsApi || '/api/settings');
     if (!res.ok) return;
     const settings = await res.json();
 
@@ -336,40 +336,7 @@ function initEventForm() {
   // … (originaler Code von initEventForm)
 }
 
-/* ── 13. Clan News Ticker (rotierende Kurz‑News aus news.json) ──────── */
-const TICKER_INTERVAL = 7000; // 7 s
-
-async function initClanNewsTicker() {
-  const bar = document.getElementById('lg-news-bar');
-  const itemEl = document.getElementById('lg-news-item');
-  if (!bar || !itemEl) return;
-
-  try {
-    const res = await fetch('/assets/data/news.json');
-    if (!res.ok) throw new Error('News JSON not found');
-    const news = await res.json();
-    if (!Array.isArray(news) || news.length === 0) return;
-
-    let index = 0;
-    const showItem = () => {
-      const entry = news[index];
-      itemEl.classList.remove('lg-news-item--visible');
-      setTimeout(() => {
-        itemEl.textContent = entry.text;
-        itemEl.classList.add('lg-news-item--visible');
-      }, 200);
-      index = (index + 1) % news.length;
-    };
-
-    bar.style.display = '';
-    showItem();
-    setInterval(showItem, TICKER_INTERVAL);
-  } catch (err) {
-    console.warn('[Clan News Ticker]', err.message);
-  }
-}
-
-/* ── 14. Öffentliches Roster (UI‑Rendering) ───────────────────────────── */
+/* ── 13. Öffentliches Roster (UI‑Rendering) ───────────────────────────── */
 async function loadPublicRoster() {
   const container = document.getElementById('roster-grid');
   if (!container) return;
@@ -493,7 +460,7 @@ function initRosterToggle(container) {
   });
 }
 
-/* ── 15. Initialisierung – Alles starten wenn DOM bereit ──────────────── */
+/* ── 14. Initialisierung – Alles starten wenn DOM bereit ──────────────── */
 document.addEventListener('DOMContentLoaded', () => {
   initVideos();
   initNavbar();
@@ -516,14 +483,11 @@ document.addEventListener('DOMContentLoaded', () => {
   fetchTwitchStatus();
   startLiveUpdates();
 
-  /* Clan News Ticker starten */
-  initClanNewsTicker();
-
   /* Öffentliches Roster (nur für Seiten, die es brauchen) */
   loadPublicRoster();
 });
 
-/* ── 16. Bewerbungen über Discord (Netlify Form + Webhook) ────────────── */
+/* ── 15. Bewerbungen über Discord (Netlify Form + Webhook) ────────────── */
 function initRecruitFormDiscord() {
   const recruitForm = document.getElementById("recruit-form");
   if (!recruitForm) return;
@@ -574,7 +538,7 @@ function initRecruitFormDiscord() {
   });
 }
 
-/* ── 17. Event‑Anmeldungen über Discord (Netlify Form + Webhook) ──────── */
+/* ── 16. Event‑Anmeldungen über Discord (Netlify Form + Webhook) ──────── */
 function initEventSignupDiscord() {
   const eventForm = document.getElementById("event-form");
   if (!eventForm) return;

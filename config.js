@@ -33,6 +33,7 @@ const SITE_CONFIG = {
   eventsApi: "/api/events",
   eventImageApi: "/api/event-image",
   videosApi: "/api/videos",
+  newsApi: "/api/news",
   settingsApi: "/api/settings",
   eventRegistrationsApi: "/api/event-registrations",
 
