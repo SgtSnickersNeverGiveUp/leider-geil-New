@@ -15,42 +15,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (texts.length === 0) return;
 
       const speedSeconds = Number(settings.tickerSpeedSeconds) || 40;
+      const separator = settings.tickerSeparator || '   ●   ';
 
-      // Separator nur als Abstand, Punkt kommt per CSS (span + span::before)
-      const separator = settings.tickerSeparator || '   ';
-
-      // Texte in einzelne <span>-Items umwandeln,
-      // [PUBG] / [ARC] am Anfang erkennen und als farbigen Tag ausgeben
-      const html = texts
-        .map((raw) => {
-          let text = String(raw).trim();
-          let gameClass = '';
-          let gameLabel = '';
-
-          if (/^\[PUBG\]/i.test(text)) {
-            gameClass = 'tag-pubg';
-            gameLabel = 'PUBG';
-            text = text.replace(/^\[PUBG\]\s*/i, '');
-          } else if (/^\[ARC\]/i.test(text)) {
-            gameClass = 'tag-arc';
-            gameLabel = 'ARC Raiders';
-            text = text.replace(/^\[ARC\]\s*/i, '');
-          }
-
-          // Aufbau:
-          // <span>
-          //   (optional) <span class="tag-pubg">PUBG</span>
-          //   eigentlicher Text
-          // </span>
-          const tagPart = gameClass
-            ? `<span class="${gameClass}">${gameLabel}</span>&nbsp;`
-            : '';
-
-          return `<span>${tagPart}${text}</span>`;
-        })
-        .join(separator);
-
-      tickerItemsEl.innerHTML = html;
+      tickerItemsEl.innerHTML = texts.join(separator);
       tickerItemsEl.style.animationDuration = `${speedSeconds}s`;
     })
     .catch((err) => {
