@@ -2,7 +2,7 @@
 
 const ROSTER_API = '/api/roster';
 const ROSTER_AVATAR_API = '/api/roster-avatar';
-const SETTINGS_API = '/api/settings';
+const ROSTER_SETTINGS_API = '/api/settings';
 
 // ══════════════════════════════════════════════════════════
 // CLAN ROSTER
@@ -131,7 +131,7 @@ function getDefaultRosterSlideshowSettings() {
 
 async function loadRosterSlideshowSettings() {
   try {
-    const res = await fetch(SETTINGS_API);
+    const res = await fetch(ROSTER_SETTINGS_API);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const settings = await res.json();
     currentRosterSlideshowSettings = normalizeRosterSlideshowSettings(settings.rosterSlideshow);
@@ -272,7 +272,7 @@ async function saveRosterSlideshowSettings() {
 
   try {
     const rosterSlideshow = collectRosterSlideshowSettingsFromForm();
-    const res = await fetch(SETTINGS_API, {
+    const res = await fetch(ROSTER_SETTINGS_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ rosterSlideshow }),
