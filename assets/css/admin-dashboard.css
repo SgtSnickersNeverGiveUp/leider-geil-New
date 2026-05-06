@@ -798,6 +798,95 @@
       margin-top: .5rem;
     }
 
+    .roster-slideshow-admin {
+      display: grid;
+      gap: 1.25rem;
+    }
+
+    .roster-slideshow-admin__grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+    }
+
+    .admin-form__check {
+      display: flex;
+      align-items: center;
+      gap: .55rem;
+      font-family: var(--ff-mono);
+      font-size: .85rem;
+      color: var(--clr-text);
+      cursor: pointer;
+    }
+
+    .admin-form__check input {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--clr-accent-arc);
+    }
+
+    .roster-slideshow-admin__add {
+      display: flex;
+      gap: .6rem;
+      align-items: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .roster-slideshow-admin__add .admin-form__group {
+      flex: 1 1 260px;
+    }
+
+    .roster-slideshow-admin__list {
+      display: grid;
+      gap: .75rem;
+    }
+
+    .roster-slideshow-admin__item {
+      display: grid;
+      grid-template-columns: 56px minmax(0, 1fr) auto;
+      gap: .85rem;
+      align-items: start;
+      padding: .85rem;
+      border: 1px solid var(--clr-border);
+      border-radius: var(--radius);
+      background: rgba(13, 13, 18, .45);
+    }
+
+    .roster-slideshow-admin__avatar {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--clr-accent-arc);
+      background: var(--clr-surface-alt);
+    }
+
+    .roster-slideshow-admin__name {
+      font-family: var(--ff-heading);
+      font-size: 1.05rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .roster-slideshow-admin__meta {
+      font-family: var(--ff-mono);
+      font-size: .72rem;
+      color: var(--clr-text-muted);
+      margin-bottom: .55rem;
+    }
+
+    @media (max-width: 700px) {
+      .roster-slideshow-admin__item {
+        grid-template-columns: 44px minmax(0, 1fr);
+      }
+
+      .roster-slideshow-admin__item .btn-delete {
+        grid-column: 1 / -1;
+        width: fit-content;
+      }
+    }
+
     /* ── Games Checkboxes ─── */
     .games-checkboxes {
       display: flex;
