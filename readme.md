@@ -15,7 +15,7 @@ Willkommen bei **Clan Leider‑Geil** – deine zentrale Anlaufstelle für Gamin
 - [Twitch‑Channel](https://www.twitch.tv/sgtsnickersnevergiveup)  
 - [YouTube](https://www.youtube.com)  
 
-> **Hinweis** – Alle Inhalte können über das GitHub‑Pages‑ oder Netlify‑CMS später über die Admin‑UI gepflegt werden.
+> **Hinweis** – Inhalte werden über die getrennten Pflegeoberflächen und API-Endpunkte verwaltet.
 
 ---
 

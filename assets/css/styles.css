@@ -449,7 +449,7 @@ img { max-width: 100%; display: block; }
 .hero__cta { margin-top: var(--sp-xl); }
 
 
-/* ── Header Banner (Admin-managed) ────────────────────── */
+/* ── Header Banner ────────────────────────────────────── */
 .header-banner {
   background: var(--clr-surface);
   padding: var(--sp-lg) 0;

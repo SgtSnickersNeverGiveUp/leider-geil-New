@@ -1,0 +1,1431 @@
+'use strict';
+
+const API_URL = '/api/applications';
+const ROSTER_API = '/api/roster';
+const ROSTER_AVATAR_API = '/api/roster-avatar';
+const EVENTS_API = '/api/events';
+const EVENT_IMAGE_API = '/api/event-image';
+const VIDEOS_API = '/api/videos';
+const EVT_REGISTRATIONS_API = '/api/event-registrations';
+const NEWS_API_URL = '/api/news';
+const SETTINGS_API = '/api/settings';
+const BANNER_IMAGE_API = '/api/banner-image';
+async function loadTickerSettings() {
+  try {
+    const res = await fetch(SETTINGS_API);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const settings = await res.json();
+
+    const speedInput = document.getElementById('ticker-speed');
+    const sepInput = document.getElementById('ticker-separator');
+
+    if (speedInput) speedInput.value = settings.tickerSpeedSeconds ?? 40;
+    if (sepInput) sepInput.value = settings.tickerSeparator ?? '   ●   ';
+  } catch (err) {
+    console.error('Ticker Settings laden fehlgeschlagen:', err);
+  }
+}
+
+
+
+// ══════════════════════════════════════════════════════════
+// PAGE NAVIGATION
+// ══════════════════════════════════════════════════════════
+const navLinks = document.querySelectorAll('.sidebar__link[data-page]');
+const pages = document.querySelectorAll('.admin-page');
+
+function switchPage(pageId) {
+  pages.forEach(p => p.classList.remove('active'));
+  navLinks.forEach(l => l.classList.remove('sidebar__link--active'));
+
+  const page = document.getElementById(pageId);
+  const link = document.querySelector(`.sidebar__link[data-page="${pageId}"]`);
+  if (page) page.classList.add('active');
+  if (link) link.classList.add('sidebar__link--active');
+
+  // Load data for the page
+  if (pageId === 'page-bewerbungen') loadApplications();
+  if (pageId === 'page-roster') loadRoster();
+  if (pageId === 'page-events') loadEvents();
+  if (pageId === 'page-videos') loadVideos();
+  if (pageId === 'page-banner') loadBannerSettings();
+  if (pageId === 'page-event-anmeldungen') loadEventRegistrations();
+  if (pageId === 'page-news') {
+    loadTickerSettings();
+    initNewsAdmin();
+  }
+}
+
+navLinks.forEach(link => {
+  link.addEventListener('click', (e) => {
+    e.preventDefault();
+    switchPage(link.dataset.page);
+  });
+});
+// ══════════════════════════════════════════════════════════
+// BEWERBUNGEN (Applications) – KOMPLETT FUNKTIONAL
+// ══════════════════════════════════════════════════════════
+
+let currentApplications = [];
+
+async function loadApplications() {
+  const body = document.getElementById('applications-body');
+  body.innerHTML = '<div class="loading">Lade Bewerbungen</div>';
+
+  try {
+    const res = await fetch(API_URL); // '/api/applications'
+    if (!res.ok) throw new Error('API error ' + res.status);
+    currentApplications = await res.json();
+  } catch (err) {
+    console.error('[Applications] Laden fehlgeschlagen', err);
+    body.innerHTML = '<div class="empty-state__text">Fehler beim Laden der Bewerbungen.</div>';
+    return;
+  }
+
+  renderApplications();
+  updateStats();
+}
+
+
+function renderApplications() {
+  const body = document.getElementById('applications-body');
+  if (currentApplications.length === 0) {
+    body.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state__icon">📝</div>
+        <div class="empty-state__text">Noch keine Bewerbungen eingegangen.</div>
+      </div>`;
+    return;
+  }
+
+  body.innerHTML = `
+    <table class="app-table">
+      <thead>
+        <tr>
+          <th>Gaming-ID</th>
+          <th>Alter</th>
+          <th>Spiel</th>
+          <th>Rolle</th>
+          <th>Über mich</th>
+          <th>Datum</th>
+          <th>Aktionen</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${currentApplications.map(app => `
+          <tr>
+            <td><strong>${app.gamingId}</strong></td>
+            <td>${app.alter}</td>
+            <td>
+              ${app.hauptspiel === 'PUBG' ? '<span class="tag tag--pubg">PUBG</span>' : 
+                app.hauptspiel === 'ARC Raiders' ? '<span class="tag tag--arc">ARC</span>' : 
+                '<span class="tag tag--both">PUBG + ARC</span>'}
+            </td>
+            <td>${app.rolle}</td>
+            <td class="app-about">${app.ueberMich.substring(0,80)}${app.ueberMich.length > 80 ? '...' : ''}</td>
+            <td class="app-date">${new Date(app.createdAt).toLocaleString('de-DE')}</td>
+            <td>
+  <button class="btn-sm" onclick="alert('Details: ${app.gamingId} | ${app.ueberMich}')">Details</button>
+  <button class="btn-delete" onclick="deleteApplication('${app.id}')">Löschen</button>
+</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>`;
+}
+
+function updateStats() {
+  document.getElementById('stat-total').textContent = currentApplications.length;
+  document.getElementById('stat-pubg').textContent = currentApplications.filter(a => a.hauptspiel === 'PUBG' || a.hauptspiel === 'Beides').length;
+  document.getElementById('stat-arc').textContent = currentApplications.filter(a => a.hauptspiel === 'ARC Raiders' || a.hauptspiel === 'Beides').length;
+}
+
+function closeModal() {
+  // Einfache Close-Funktion
+  document.getElementById('modal-overlay')?.classList.remove('active');
+}
+// ══════════════════════════════════════════════════════════
+// CLAN ROSTER
+// ══════════════════════════════════════════════════════════
+let rosterAvatarFile = null;
+let editAvatarFile = null;
+
+// Drag & drop support for new member form
+const rosterAvatarArea = document.getElementById('roster-avatar-area');
+rosterAvatarArea.addEventListener('dragover', (e) => { e.preventDefault(); rosterAvatarArea.style.borderColor = 'var(--clr-accent-arc)'; });
+rosterAvatarArea.addEventListener('dragleave', () => { rosterAvatarArea.style.borderColor = ''; });
+rosterAvatarArea.addEventListener('drop', (e) => {
+  e.preventDefault();
+  rosterAvatarArea.style.borderColor = '';
+  const file = e.dataTransfer.files[0];
+  if (file) handleAvatarFileSelect(file);
+});
+
+document.getElementById('roster-avatar-file').addEventListener('change', (e) => {
+  if (e.target.files[0]) handleAvatarFileSelect(e.target.files[0]);
+});
+
+function handleAvatarFileSelect(file) {
+  const status = document.getElementById('roster-avatar-status');
+  const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+  if (!allowed.includes(file.type)) {
+    status.textContent = 'Nur JPEG, PNG oder WebP erlaubt.';
+    status.style.color = 'var(--clr-danger)';
+    return;
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    status.textContent = 'Datei zu groß (max. 5 MB).';
+    status.style.color = 'var(--clr-danger)';
+    return;
+  }
+  rosterAvatarFile = file;
+  const preview = document.getElementById('roster-avatar-preview');
+  preview.src = URL.createObjectURL(file);
+  status.textContent = `${file.name} (${(file.size / 1024).toFixed(0)} KB)`;
+  status.style.color = 'var(--clr-accent-arc)';
+}
+
+async function uploadAvatar(memberId, file) {
+  const res = await fetch(`${ROSTER_AVATAR_API}?id=${encodeURIComponent(memberId)}`, {
+    method: 'POST',
+    headers: { 'Content-Type': file.type },
+    body: file,
+  });
+  if (!res.ok) {
+    const data = await res.json();
+    throw new Error(data.error || `Upload fehlgeschlagen (HTTP ${res.status})`);
+  }
+  return await res.json();
+}
+
+async function loadRoster() {
+  const body = document.getElementById('roster-list-body');
+  body.innerHTML = '<div class="loading">Lade Roster</div>';
+
+  try {
+    const res = await fetch(ROSTER_API);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const members = await res.json();
+    renderRosterAdmin(members);
+  } catch (err) {
+    body.innerHTML = `<div class="empty-state"><div class="empty-state__icon">&#9888;</div><div class="empty-state__text">Fehler: ${err.message}</div></div>`;
+  }
+}
+
+function renderRosterAdmin(members) {
+  const body = document.getElementById('roster-list-body');
+
+  if (members.length === 0) {
+    body.innerHTML = `<div class="empty-state"><div class="empty-state__icon">&#128101;</div><div class="empty-state__text">Keine Mitglieder vorhanden.</div></div>`;
+    return;
+  }
+
+  body.innerHTML = `<div class="admin-roster-grid">${members.map(m => {
+    const avatarSrc = m.avatar ? escapeHtml(m.avatar) + (m.avatar.startsWith('/api/roster-avatar') ? '&t=' + Math.floor(Date.now() / 60000) : '') : '';
+
+    const gamesHtml = (m.games || []).map(g => {
+      const cls = g === 'PUBG' ? 'pubg' : g === 'ARC Raiders' ? 'arc' : 'other';
+      return `<span class="admin-roster-card__tag admin-roster-card__tag--${cls}">${escapeHtml(g)}</span>`;
+    }).join('');
+
+    // Nur anzeigen, wenn clanRole vorhanden UND anders als role
+    const showClanRole = m.clanRole && m.clanRole !== m.role;
+    const clanRoleHtml = showClanRole
+      ? `<div class="admin-roster-card__clan-role">${escapeHtml(m.clanRole)}</div>`
+      : '';
+
+    const bioHtml = m.bio ? `<div class="admin-roster-card__bio">${escapeHtml(m.bio)}</div>` : '';
+    const funTagsHtml = (m.funTags || []).length > 0
+      ? `<div class="admin-roster-card__fun-tags">${m.funTags.map(t => `<span class="admin-roster-card__fun-tag">${escapeHtml(t)}</span>`).join('')}</div>`
+      : '';
+
+    return `
+    <div class="admin-roster-card" data-id="${escapeHtml(m.id)}">
+      <button class="btn-sm admin-roster-card__edit" onclick="openEditMember('${escapeHtml(m.id)}')">&#9998;</button>
+      <button class="btn-delete admin-roster-card__delete" onclick="deleteRosterMember('${escapeHtml(m.id)}')">&#10005;</button>
+      <img class="admin-roster-cardavatar" src="${avatarSrc}" alt="${escapeHtml(m.name)}" loading="lazy"
+     onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 80 80%27%3E%3Crect fill=%27%231a1a2e%27 width=%2780%27 height=%2780%27/%3E%3Ctext x=%2750%25%27 y=%2755%25%27 text-anchor=%27middle%27 fill=%27%237a7a8e%27 font-size=%2724%27%3E${escapeHtml(m.name.slice(0,2).toUpperCase())}%3C/text%3E%3C/svg%3E'">
+      <div class="admin-roster-card__name">${escapeHtml(m.name)}</div>
+      <div class="admin-roster-card__role">
+  ${escapeHtml(m.clanRole || m.role || '')}
+</div>
+      <div class="admin-roster-card__games">${gamesHtml}</div>
+      ${funTagsHtml}
+      ${bioHtml}
+    </div>`;
+  }).join('')}</div>`;
+}
+
+// Store all members for edit lookups
+let currentRosterMembers = [];
+
+async function loadRosterForEdit() {
+  try {
+    const res = await fetch(ROSTER_API);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    currentRosterMembers = await res.json();
+  } catch { currentRosterMembers = []; }
+}
+
+function openEditMember(id) {
+  // Fetch latest data first
+  fetch(ROSTER_API).then(r => r.json()).then(members => {
+    currentRosterMembers = members;
+    const m = members.find(x => x.id === id);
+    if (!m) { alert('Mitglied nicht gefunden.'); return; }
+
+    const avatarSrc = m.avatar || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect fill='%231a1a2e' width='64' height='64'/%3E%3Ctext x='50%25' y='55%25' text-anchor='middle' fill='%237a7a8e' font-size='22'%3E%3F%3C/text%3E%3C/svg%3E";
+    const games = m.games || [];
+    const clanRole = m.clanRole || 'Member';
+    const bio = m.bio || '';
+    const funTags = (m.funTags || []).join(', ');
+
+    // Build custom game checkboxes for any game not in the default list
+    const defaultGames = ['PUBG', 'ARC Raiders'];
+    const customGames = games.filter(g => !defaultGames.includes(g));
+    const customGamesCheckboxes = customGames.map(g =>
+      `<label><input type="checkbox" name="edit-games" value="${escapeHtml(g)}" checked> ${escapeHtml(g)}</label>`
+    ).join('');
+
+    const overlay = document.createElement('div');
+    overlay.className = 'edit-overlay';
+    overlay.id = 'edit-member-overlay';
+    overlay.innerHTML = `
+      <div class="edit-modal">
+        <div class="edit-modal__title">Mitglied bearbeiten</div>
+        <form class="admin-form" id="edit-member-form">
+          <input type="hidden" id="edit-member-id" value="${escapeHtml(m.id)}">
+          <div class="admin-form__section">// Basis-Info</div>
+          <div class="admin-form__group">
+            <label class="admin-form__label">Name</label>
+            <input class="admin-form__input" type="text" id="edit-member-name" value="${escapeHtml(m.name)}" required>
+          </div>
+          <div class="admin-form__group">
+            <label class="admin-form__label">Rang im Clan</label>
+            <select class="admin-form__input admin-form__select" id="edit-member-clan-role">
+              <option value="Leader" ${clanRole === 'Leader' ? 'selected' : ''}>Leader</option>
+              <option value="Co-Leader" ${clanRole === 'Co-Leader' ? 'selected' : ''}>Co-Leader</option>
+              <option value="Officer" ${clanRole === 'Officer' ? 'selected' : ''}>Officer</option>
+              <option value="Member" ${clanRole === 'Member' ? 'selected' : ''}>Member</option>
+              <option value="Recruit" ${clanRole === 'Recruit' ? 'selected' : ''}>Recruit</option>
+            </select>
+          </div>
+          <div class="admin-form__section">// Spiele &amp; Steckbrief</div>
+          <div class="admin-form__group">
+            <label class="admin-form__label">Hauptspiele</label>
+            <div class="games-checkboxes" id="edit-games-checkboxes">
+              <label><input type="checkbox" name="edit-games" value="PUBG" ${games.includes('PUBG') ? 'checked' : ''}> PUBG</label>
+              <label><input type="checkbox" name="edit-games" value="ARC Raiders" ${games.includes('ARC Raiders') ? 'checked' : ''}> ARC Raiders</label>
+              ${customGamesCheckboxes}
+            </div>
+            <div class="custom-game-row">
+              <input class="admin-form__input" type="text" id="edit-custom-game" placeholder="Weiteres Spiel hinzufügen…">
+              <button type="button" class="btn-sm" onclick="addCustomGame('edit')">+</button>
+            </div>
+          </div>
+          <div class="admin-form__group">
+            <label class="admin-form__label">Kurzbeschreibung / Bio</label>
+            <textarea class="admin-form__textarea" id="edit-member-bio" maxlength="300">${escapeHtml(bio)}</textarea>
+          </div>
+          <div class="admin-form__group">
+            <label class="admin-form__label">Fun-Tags (kommagetrennt)</label>
+            <input class="admin-form__input" type="text" id="edit-member-fun-tags" value="${escapeHtml(funTags)}">
+          </div>
+          <div class="admin-form__section">// Profilbild</div>
+          <div class="admin-form__group">
+            <label class="admin-form__label">Profilbild</label>
+            <div class="admin-form__hint">Empfehlung: Quadratisch oder 4:5, ca. 500–800 px breit.</div>
+            <div class="avatar-upload-area" id="edit-avatar-area" onclick="document.getElementById('edit-avatar-file').click()">
+              <img class="avatar-upload-area__preview" id="edit-avatar-preview" src="${escapeHtml(avatarSrc)}" alt="Vorschau"
+                   onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect fill=%27%231a1a2e%27 width=%2764%27 height=%2764%27/%3E%3Ctext x=%2750%25%27 y=%2755%25%27 text-anchor=%27middle%27 fill=%27%237a7a8e%27 font-size=%2722%27%3E%3F%3C/text%3E%3C/svg%3E'">
+              <div class="avatar-upload-area__text">
+                <strong>Klicken</strong> um ein neues Bild auszuwählen
+              </div>
+            </div>
+            <input type="file" id="edit-avatar-file" accept="image/jpeg,image/png,image/webp" style="display:none">
+            <div class="avatar-upload-status" id="edit-avatar-status"></div>
+            <div class="avatar-upload-actions">
+              <button type="button" class="btn-sm" id="edit-avatar-remove" style="color:var(--clr-danger);border-color:var(--clr-danger);">Bild entfernen</button>
+            </div>
+          </div>
+          <div class="edit-modal__footer">
+            <button type="submit" class="admin-form__submit" id="edit-member-save">Speichern</button>
+            <button type="button" class="btn-sm" id="edit-member-cancel">Abbrechen</button>
+          </div>
+        </form>
+      </div>`;
+
+    document.body.appendChild(overlay);
+    editAvatarFile = null;
+    let editRemoveAvatar = false;
+
+    // Close on overlay click
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) closeEditModal(); });
+    document.getElementById('edit-member-cancel').addEventListener('click', closeEditModal);
+
+    // File select
+    document.getElementById('edit-avatar-file').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+      const status = document.getElementById('edit-avatar-status');
+      if (!allowed.includes(file.type)) {
+        status.textContent = 'Nur JPEG, PNG oder WebP erlaubt.';
+        status.style.color = 'var(--clr-danger)';
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        status.textContent = 'Datei zu groß (max. 5 MB).';
+        status.style.color = 'var(--clr-danger)';
+        return;
+      }
+      editAvatarFile = file;
+      editRemoveAvatar = false;
+      document.getElementById('edit-avatar-preview').src = URL.createObjectURL(file);
+      status.textContent = `${file.name} (${(file.size / 1024).toFixed(0)} KB)`;
+      status.style.color = 'var(--clr-accent-arc)';
+    });
+
+    // Drag & drop on edit area
+    const editArea = document.getElementById('edit-avatar-area');
+    editArea.addEventListener('dragover', (e) => { e.preventDefault(); editArea.style.borderColor = 'var(--clr-accent-arc)'; });
+    editArea.addEventListener('dragleave', () => { editArea.style.borderColor = ''; });
+    editArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      editArea.style.borderColor = '';
+      const file = e.dataTransfer.files[0];
+      if (file) {
+        // Trigger the same logic as file input change
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        document.getElementById('edit-avatar-file').files = dt.files;
+        document.getElementById('edit-avatar-file').dispatchEvent(new Event('change'));
+      }
+    });
+
+    // Remove avatar
+    document.getElementById('edit-avatar-remove').addEventListener('click', () => {
+      editRemoveAvatar = true;
+      editAvatarFile = null;
+      document.getElementById('edit-avatar-preview').src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect fill='%231a1a2e' width='64' height='64'/%3E%3Ctext x='50%25' y='55%25' text-anchor='middle' fill='%237a7a8e' font-size='22'%3E%3F%3C/text%3E%3C/svg%3E";
+      document.getElementById('edit-avatar-status').textContent = 'Bild wird beim Speichern entfernt.';
+      document.getElementById('edit-avatar-status').style.color = 'var(--clr-accent-pubg)';
+    });
+
+    // Save
+    document.getElementById('edit-member-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const saveBtn = document.getElementById('edit-member-save');
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Speichern...';
+
+      try {
+        const memberId = document.getElementById('edit-member-id').value;
+        const name = document.getElementById('edit-member-name').value.trim();
+        const role = document.getElementById('edit-member-role').value.trim();
+        const editGames = [...document.querySelectorAll('input[name="edit-games"]:checked')].map(c => c.value);
+        const editClanRole = document.getElementById('edit-member-clan-role').value;
+        const editBio = document.getElementById('edit-member-bio').value.trim();
+        const editFunTags = document.getElementById('edit-member-fun-tags').value.split(',').map(t => t.trim()).filter(Boolean);
+
+        let avatarUrl = m.avatar;
+
+        // Upload new avatar if selected
+        if (editAvatarFile) {
+          const uploadResult = await uploadAvatar(memberId, editAvatarFile);
+          avatarUrl = uploadResult.url;
+        } else if (editRemoveAvatar) {
+          // Delete avatar from store
+          await fetch(`${ROSTER_AVATAR_API}?id=${encodeURIComponent(memberId)}`, { method: 'DELETE' });
+          avatarUrl = `https://via.placeholder.com/160/1a1a2e/0FF2A9?text=${encodeURIComponent(name.slice(0, 2).toUpperCase())}`;
+        }
+
+        // Update member data
+        const updateRes = await fetch(ROSTER_API, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: memberId, name, role, avatar: avatarUrl, games: editGames, clanRole: editClanRole, bio: editBio, funTags: editFunTags }),
+        });
+        if (!updateRes.ok) {
+          const data = await updateRes.json();
+          throw new Error(data.error || `HTTP ${updateRes.status}`);
+        }
+
+        closeEditModal();
+        await loadRoster();
+      } catch (err) {
+        alert('Fehler: ' + err.message);
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Speichern';
+      }
+    });
+  }).catch(err => alert('Fehler beim Laden: ' + err.message));
+}
+
+function closeEditModal() {
+  const overlay = document.getElementById('edit-member-overlay');
+  if (overlay) overlay.remove();
+  editAvatarFile = null;
+}
+
+async function deleteRosterMember(id) {
+  if (!confirm('Mitglied wirklich entfernen?')) return;
+  try {
+    // Delete avatar too
+    try { await fetch(`${ROSTER_AVATAR_API}?id=${encodeURIComponent(id)}`, { method: 'DELETE' }); } catch {}
+    const res = await fetch(`${ROSTER_API}?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    await loadRoster();
+  } catch (err) {
+    alert('Fehler beim Löschen: ' + err.message);
+  }
+}
+
+// Add custom game checkbox dynamically
+function addCustomGame(prefix) {
+  const input = document.getElementById(`${prefix}-custom-game`);
+  const gameName = input.value.trim();
+  if (!gameName) return;
+  const container = document.getElementById(`${prefix}-games-checkboxes`);
+  const checkboxName = prefix === 'edit' ? 'edit-games' : 'roster-games';
+  // Avoid duplicates
+  const existing = [...container.querySelectorAll(`input[name="${checkboxName}"]`)].map(c => c.value.toLowerCase());
+  if (existing.includes(gameName.toLowerCase())) { input.value = ''; return; }
+  const label = document.createElement('label');
+  label.innerHTML = `<input type="checkbox" name="${checkboxName}" value="${escapeHtml(gameName)}" checked> ${escapeHtml(gameName)}`;
+  container.appendChild(label);
+  input.value = '';
+}
+
+document.getElementById('roster-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('roster-submit');
+  btn.disabled = true;
+  btn.textContent = 'Wird gespeichert...';
+
+  const name = document.getElementById('roster-name').value.trim();
+  const role = document.getElementById('roster-role').value.trim();
+  const games = [...document.querySelectorAll('input[name="roster-games"]:checked')].map(c => c.value);
+  const clanRole = document.getElementById('roster-clan-role').value;
+  const bio = document.getElementById('roster-bio').value.trim();
+  const funTags = document.getElementById('roster-fun-tags').value.split(',').map(t => t.trim()).filter(Boolean);
+
+  try {
+    // Create member first (to get ID)
+    const res = await fetch(ROSTER_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, role, games, clanRole, bio, funTags }),
+    });
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error || `HTTP ${res.status}`);
+    }
+    const result = await res.json();
+    const memberId = result.id;
+
+    // Upload avatar if selected
+    if (rosterAvatarFile) {
+      const uploadResult = await uploadAvatar(memberId, rosterAvatarFile);
+      // Update member with avatar URL
+      await fetch(ROSTER_API, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: memberId, avatar: uploadResult.url }),
+      });
+    }
+
+    document.getElementById('roster-form').reset();
+    document.getElementById('roster-avatar-preview').src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect fill='%231a1a2e' width='64' height='64'/%3E%3Ctext x='50%25' y='55%25' text-anchor='middle' fill='%237a7a8e' font-size='22'%3E%3F%3C/text%3E%3C/svg%3E";
+    document.getElementById('roster-avatar-status').textContent = '';
+    rosterAvatarFile = null;
+    await loadRoster();
+  } catch (err) {
+    alert('Fehler: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '+ Mitglied hinzufügen';
+  }
+});
+// ══════════════════════════════════════════════════════════
+// CLAN NEWS Ticker
+// ══════════════════════════════════════════════════════════
+async function loadNewsIntoAdmin() {
+  const listEl = document.getElementById('news-list');
+  const statusEl = document.getElementById('news-status');
+  if (!listEl) return;
+
+  statusEl.textContent = 'Lade News...';
+  try {
+    const res = await fetch(NEWS_API_URL);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    window._lgNews = Array.isArray(data) ? data : [];
+    renderNewsAdmin();
+    statusEl.textContent = '';
+  } catch (err) {
+    console.error('[News Admin] load', err);
+    statusEl.textContent = 'Fehler beim Laden der News.';
+  }
+}
+
+function renderNewsAdmin() {
+  const listEl = document.getElementById('news-list');
+  if (!listEl) return;
+  const news = window._lgNews || [];
+
+  listEl.innerHTML = news.map((n, i) => {
+    const type = n.type || 'info';
+    return `
+      <div class="admin-form__group news-item">
+        <label class="admin-form__label">Eintrag ${i + 1}</label>
+        <div style="display:flex;flex-direction:column;gap:.25rem;">
+          <textarea class="admin-form__textarea"
+                    data-index="${i}"
+                    rows="2"
+                    placeholder="Ticker-Text...">${n.text || ''}</textarea>
+          <div style="display:flex;align-items:center;gap:.5rem;">
+            <select class="admin-form__select" data-type-index="${i}">
+              <option value="birthday" ${type === 'birthday' ? 'selected' : ''}>Birthday</option>
+              <option value="member"   ${type === 'member'   ? 'selected' : ''}>Member</option>
+              <option value="event"    ${type === 'event'    ? 'selected' : ''}>Event</option>
+              <option value="info"     ${type === 'info'     ? 'selected' : ''}>Info</option>
+              <option value="ranked"   ${type === 'ranked'   ? 'selected' : ''}>Ranked</option>
+            </select>
+            <button type="button"
+                    class="btn-sm btn-sm--danger"
+                    data-news-remove="${i}">Löschen</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function initNewsAdmin() {
+  const addBtn = document.getElementById('news-add');
+  const saveBtn = document.getElementById('news-save');
+  const listEl = document.getElementById('news-list');
+  const statusEl = document.getElementById('news-status');
+  if (!addBtn || !saveBtn || !listEl) return;
+
+  // Initial laden
+  loadNewsIntoAdmin();
+
+  // Eintrag hinzufügen
+  addBtn.addEventListener('click', () => {
+    window._lgNews = window._lgNews || [];
+    window._lgNews.push({ text: '', type: 'info' });
+    renderNewsAdmin();
+  });
+
+  // Textänderungen
+  listEl.addEventListener('input', (e) => {
+    const idx = e.target.getAttribute('data-index');
+    if (idx !== null) {
+      window._lgNews[Number(idx)].text = e.target.value;
+    }
+  });
+
+  // Typänderungen
+  listEl.addEventListener('change', (e) => {
+    const idx = e.target.getAttribute('data-type-index');
+    if (idx !== null) {
+      window._lgNews[Number(idx)].type = e.target.value;
+    }
+  });
+
+  // Löschen
+  listEl.addEventListener('click', (e) => {
+    const idx = e.target.getAttribute('data-news-remove');
+    if (idx !== null) {
+      window._lgNews.splice(Number(idx), 1);
+      renderNewsAdmin();
+    }
+  });
+
+  // Speichern: News + Ticker Settings
+saveBtn.addEventListener('click', async () => {
+  statusEl.textContent = 'Speichern...';
+
+  const speedInput = document.getElementById('ticker-speed');
+  const sepInput = document.getElementById('ticker-separator');
+
+  const tickerSpeedSeconds = speedInput ? Number(speedInput.value) || 40 : 40;
+  const tickerSeparator = sepInput ? (sepInput.value || '   ●   ') : '   ●   ';
+
+  try {
+    const newsToSave = Array.isArray(window._lgNews) ? window._lgNews : [];
+
+    // 1) News speichern
+    const resNews = await fetch(NEWS_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newsToSave),
+    });
+    if (!resNews.ok) throw new Error('News HTTP ' + resNews.status);
+
+    // 2) Ticker Settings speichern
+    const resSettings = await fetch(SETTINGS_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tickerSpeedSeconds,
+        tickerSeparator,
+      }),
+    });
+    if (!resSettings.ok) throw new Error('Settings HTTP ' + resSettings.status);
+
+    statusEl.textContent = 'Gespeichert';
+  } catch (err) {
+    console.error('News/Ticker save', err);
+    statusEl.textContent = 'Fehler beim Speichern';
+  }
+});
+}
+// ══════════════════════════════════════════════════════════
+// EVENT IMAGE UPLOAD (mirrors roster avatar upload)
+// ══════════════════════════════════════════════════════════
+let eventImageFile = null;
+let editEventImageFile = null;
+
+const eventImageArea = document.getElementById('event-image-area');
+eventImageArea.addEventListener('dragover', (e) => { e.preventDefault(); eventImageArea.style.borderColor = 'var(--clr-accent-arc)'; });
+eventImageArea.addEventListener('dragleave', () => { eventImageArea.style.borderColor = ''; });
+eventImageArea.addEventListener('drop', (e) => {
+  e.preventDefault();
+  eventImageArea.style.borderColor = '';
+  const file = e.dataTransfer.files[0];
+  if (file) handleEventImageFileSelect(file);
+});
+
+document.getElementById('event-image-file').addEventListener('change', (e) => {
+  if (e.target.files[0]) handleEventImageFileSelect(e.target.files[0]);
+});
+
+function handleEventImageFileSelect(file) {
+  const status = document.getElementById('event-image-status');
+  const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+  if (!allowed.includes(file.type)) {
+    status.textContent = 'Nur JPEG, PNG oder WebP erlaubt.';
+    status.style.color = 'var(--clr-danger)';
+    return;
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    status.textContent = 'Datei zu groß (max. 5 MB).';
+    status.style.color = 'var(--clr-danger)';
+    return;
+  }
+  eventImageFile = file;
+  const preview = document.getElementById('event-image-preview');
+  preview.src = URL.createObjectURL(file);
+  status.textContent = `${file.name} (${(file.size / 1024).toFixed(0)} KB)`;
+  status.style.color = 'var(--clr-accent-arc)';
+}
+
+async function uploadEventImage(eventId, file) {
+  const res = await fetch(`${EVENT_IMAGE_API}?id=${encodeURIComponent(eventId)}`, {
+    method: 'POST',
+    headers: { 'Content-Type': file.type },
+    body: file,
+  });
+  if (!res.ok) {
+    const data = await res.json();
+    throw new Error(data.error || `Upload fehlgeschlagen (HTTP ${res.status})`);
+  }
+  return await res.json();
+}
+
+// ══════════════════════════════════════════════════════════
+// EVENTS
+// ══════════════════════════════════════════════════════════
+async function loadEvents() {
+  const body = document.getElementById('events-list-body');
+  body.innerHTML = '<div class="loading">Lade Events</div>';
+
+  try {
+    const res = await fetch(EVENTS_API);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const events = await res.json();
+    renderEventsAdmin(events);
+  } catch (err) {
+    body.innerHTML = `<div class="empty-state"><div class="empty-state__icon">&#9888;</div><div class="empty-state__text">Fehler: ${err.message}</div></div>`;
+  }
+}
+
+function renderEventsAdmin(events) {
+  const body = document.getElementById('events-list-body');
+
+  if (events.length === 0) {
+    body.innerHTML = `<div class="empty-state"><div class="empty-state__icon">&#128197;</div><div class="empty-state__text">Keine Events vorhanden.</div></div>`;
+    return;
+  }
+
+  body.innerHTML = events.map(ev => {
+    const dateStr = new Date(ev.date).toLocaleDateString('de-DE', { year: 'numeric', month: 'long', day: 'numeric' });
+    const thumbHtml = ev.image
+      ? `<img class="admin-event-thumb" src="${escapeHtml(ev.image)}${ev.image.startsWith('/api/event-image') ? (ev.image.includes('?') ? '&' : '?') + 't=' + Math.floor(Date.now() / 60000) : ''}" alt="" loading="lazy" onerror="this.style.display='none'">`
+      : '';
+    return `
+      <div class="admin-event-item">
+        ${thumbHtml}
+        <div class="admin-event-info">
+          <div class="admin-event-title">${escapeHtml(ev.title)}</div>
+          <div class="admin-event-meta">
+            <span>${dateStr}</span>
+            <span>${
+  ev.game === 'PUBG'
+    ? 'PUBG'
+    : ev.game === 'ARC Raiders'
+      ? 'ARC Raiders'
+      : 'Mixed'
+}</span>
+
+          </div>
+        </div>
+        <div class="admin-event-actions">
+          <button class="btn-sm" onclick="openEditEvent('${ev.id}')">&#9998;</button>
+          <button class="btn-delete" onclick="deleteEvent('${ev.id}')">Löschen</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+async function deleteEvent(id) {
+  if (!confirm('Event wirklich löschen?')) return;
+  try {
+    // Delete event image too
+    try { await fetch(`${EVENT_IMAGE_API}?id=${encodeURIComponent(id)}`, { method: 'DELETE' }); } catch {}
+    const res = await fetch(`${EVENTS_API}?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    await loadEvents();
+  } catch (err) {
+    alert('Fehler beim Löschen: ' + err.message);
+  }
+}
+
+function openEditEvent(id) {
+  fetch(EVENTS_API).then(r => r.json()).then(events => {
+    const ev = events.find(x => x.id === id);
+    if (!ev) { alert('Event nicht gefunden.'); return; }
+
+    const imgSrc = ev.image
+      ? escapeHtml(ev.image) + (ev.image.startsWith('/api/event-image') ? (ev.image.includes('?') ? '&' : '?') + 't=' + Math.floor(Date.now() / 60000) : '')
+      : "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 50'%3E%3Crect fill='%231a1a2e' width='80' height='50'/%3E%3Ctext x='50%25' y='55%25' text-anchor='middle' fill='%237a7a8e' font-size='14'%3E%3F%3C/text%3E%3C/svg%3E";
+
+    const overlay = document.createElement('div');
+    overlay.className = 'edit-overlay';
+    overlay.id = 'edit-event-overlay';
+    overlay.innerHTML = `
+      <div class="edit-modal">
+        <div class="edit-modal__title">Event bearbeiten</div>
+        <form class="admin-form" id="edit-event-form">
+          <input type="hidden" id="edit-event-id" value="${escapeHtml(ev.id)}">
+          <div class="admin-form__group">
+            <label class="admin-form__label">Titel</label>
+            <input class="admin-form__input" type="text" id="edit-event-title" value="${escapeHtml(ev.title)}" required>
+          </div>
+          <div class="admin-form__group">
+            <label class="admin-form__label">Datum</label>
+            <input class="admin-form__input" type="date" id="edit-event-date" value="${escapeHtml(ev.date)}" required>
+          </div>
+          <div class="admin-form__group">
+            <label class="admin-form__label">Spiel</label>
+            <select class="admin-form__select" id="edit-event-game" required>
+              <option value="PUBG" ${ev.game === 'PUBG' ? 'selected' : ''}>PUBG</option>
+              <option value="ARC Raiders" ${ev.game === 'ARC Raiders' ? 'selected' : ''}>ARC Raiders</option>
+              <option value="Mixed" ${ev.game === 'Mixed' ? 'selected' : ''}>Mixed</option>
+            </select>
+          </div>
+          <div class="admin-form__group">
+            <label class="admin-form__label">Beschreibung</label>
+            <input class="admin-form__input" type="text" id="edit-event-desc" value="${escapeHtml(ev.description || '')}">
+          </div>
+          <div class="admin-form__group">
+            <label class="admin-form__label">Bild</label>
+            <div class="image-upload-area" id="edit-event-image-area" onclick="document.getElementById('edit-event-image-file').click()">
+              <img class="image-upload-area__preview" id="edit-event-image-preview" src="${imgSrc}" alt="Vorschau"
+                   onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 80 50%27%3E%3Crect fill=%27%231a1a2e%27 width=%2780%27 height=%2750%27/%3E%3Ctext x=%2750%25%27 y=%2755%25%27 text-anchor=%27middle%27 fill=%27%237a7a8e%27 font-size=%2714%27%3E%3F%3C/text%3E%3C/svg%3E'">
+              <div class="image-upload-area__text">
+                <strong>Klicken</strong> um ein neues Bild auszuwählen
+              </div>
+            </div>
+            <input type="file" id="edit-event-image-file" accept="image/jpeg,image/png,image/webp" style="display:none">
+            <div class="avatar-upload-status" id="edit-event-image-status"></div>
+            <div class="avatar-upload-actions">
+              <button type="button" class="btn-sm" id="edit-event-image-remove" style="color:var(--clr-danger);border-color:var(--clr-danger);">Bild entfernen</button>
+            </div>
+          </div>
+          <div class="edit-modal__footer">
+            <button type="submit" class="admin-form__submit" id="edit-event-save">Speichern</button>
+            <button type="button" class="btn-sm" id="edit-event-cancel">Abbrechen</button>
+          </div>
+        </form>
+      </div>`;
+
+    document.body.appendChild(overlay);
+    editEventImageFile = null;
+    let editRemoveEventImage = false;
+
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) closeEditEvent(); });
+    document.getElementById('edit-event-cancel').addEventListener('click', closeEditEvent);
+
+    // File select
+    document.getElementById('edit-event-image-file').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+      const status = document.getElementById('edit-event-image-status');
+      if (!allowed.includes(file.type)) {
+        status.textContent = 'Nur JPEG, PNG oder WebP erlaubt.';
+        status.style.color = 'var(--clr-danger)';
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        status.textContent = 'Datei zu groß (max. 5 MB).';
+        status.style.color = 'var(--clr-danger)';
+        return;
+      }
+      editEventImageFile = file;
+      editRemoveEventImage = false;
+      document.getElementById('edit-event-image-preview').src = URL.createObjectURL(file);
+      status.textContent = `${file.name} (${(file.size / 1024).toFixed(0)} KB)`;
+      status.style.color = 'var(--clr-accent-arc)';
+    });
+
+    // Drag & drop on edit area
+    const editArea = document.getElementById('edit-event-image-area');
+    editArea.addEventListener('dragover', (e) => { e.preventDefault(); editArea.style.borderColor = 'var(--clr-accent-arc)'; });
+    editArea.addEventListener('dragleave', () => { editArea.style.borderColor = ''; });
+    editArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      editArea.style.borderColor = '';
+      const file = e.dataTransfer.files[0];
+      if (file) {
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        document.getElementById('edit-event-image-file').files = dt.files;
+        document.getElementById('edit-event-image-file').dispatchEvent(new Event('change'));
+      }
+    });
+
+    // Remove image
+    document.getElementById('edit-event-image-remove').addEventListener('click', () => {
+      editRemoveEventImage = true;
+      editEventImageFile = null;
+      document.getElementById('edit-event-image-preview').src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 50'%3E%3Crect fill='%231a1a2e' width='80' height='50'/%3E%3Ctext x='50%25' y='55%25' text-anchor='middle' fill='%237a7a8e' font-size='14'%3E%3F%3C/text%3E%3C/svg%3E";
+      document.getElementById('edit-event-image-status').textContent = 'Bild wird beim Speichern entfernt.';
+      document.getElementById('edit-event-image-status').style.color = 'var(--clr-accent-pubg)';
+    });
+
+    // Save
+    document.getElementById('edit-event-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const saveBtn = document.getElementById('edit-event-save');
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Speichern...';
+
+      try {
+        const eventId = document.getElementById('edit-event-id').value;
+        const title = document.getElementById('edit-event-title').value.trim();
+        const date = document.getElementById('edit-event-date').value;
+        const game = document.getElementById('edit-event-game').value;
+        const description = document.getElementById('edit-event-desc').value.trim();
+
+        let imageUrl = ev.image || '';
+
+        if (editEventImageFile) {
+          const uploadResult = await uploadEventImage(eventId, editEventImageFile);
+          imageUrl = uploadResult.url;
+        } else if (editRemoveEventImage) {
+          await fetch(`${EVENT_IMAGE_API}?id=${encodeURIComponent(eventId)}`, { method: 'DELETE' });
+          imageUrl = '';
+        }
+
+        const updateRes = await fetch(EVENTS_API, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: eventId, title, date, game, description, image: imageUrl }),
+        });
+        if (!updateRes.ok) {
+          const data = await updateRes.json();
+          throw new Error(data.error || `HTTP ${updateRes.status}`);
+        }
+
+        closeEditEvent();
+        await loadEvents();
+      } catch (err) {
+        alert('Fehler: ' + err.message);
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Speichern';
+      }
+    });
+  }).catch(err => alert('Fehler beim Laden: ' + err.message));
+}
+
+function closeEditEvent() {
+  const overlay = document.getElementById('edit-event-overlay');
+  if (overlay) overlay.remove();
+  editEventImageFile = null;
+}
+
+document.getElementById('events-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('events-submit');
+  btn.disabled = true;
+  btn.textContent = 'Wird gespeichert...';
+
+  const title = document.getElementById('event-title').value.trim();
+  const date = document.getElementById('event-date').value;
+  const game = document.getElementById('event-game').value;
+  const description = document.getElementById('event-desc').value.trim();
+
+  try {
+    const res = await fetch(EVENTS_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, date, game, description }),
+    });
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error || `HTTP ${res.status}`);
+    }
+    const result = await res.json();
+    const eventId = result.id;
+
+    // Upload image if selected
+    if (eventImageFile) {
+      const uploadResult = await uploadEventImage(eventId, eventImageFile);
+      // Update event with image URL
+      await fetch(EVENTS_API, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: eventId, image: uploadResult.url }),
+      });
+    }
+
+    document.getElementById('events-form').reset();
+    document.getElementById('event-image-preview').src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 50'%3E%3Crect fill='%231a1a2e' width='80' height='50'/%3E%3Ctext x='50%25' y='55%25' text-anchor='middle' fill='%237a7a8e' font-size='14'%3E%3F%3C/text%3E%3C/svg%3E";
+    document.getElementById('event-image-status').textContent = '';
+    eventImageFile = null;
+    await loadEvents();
+  } catch (err) {
+    alert('Fehler: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '+ Event erstellen';
+  }
+});
+
+// ══════════════════════════════════════════════════════════
+// VIDEOS
+// ══════════════════════════════════════════════════════════
+async function loadVideos() {
+  const body = document.getElementById('videos-list-body');
+  body.innerHTML = '<div class="loading">Lade Videos</div>';
+
+  try {
+    const res = await fetch(VIDEOS_API);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const videos = await res.json();
+    renderVideosAdmin(videos);
+  } catch (err) {
+    body.innerHTML = `<div class="empty-state"><div class="empty-state__icon">&#9888;</div><div class="empty-state__text">Fehler: ${err.message}</div></div>`;
+  }
+}
+
+function renderVideosAdmin(videos) {
+  const body = document.getElementById('videos-list-body');
+
+  if (videos.length === 0) {
+    body.innerHTML = `<div class="empty-state"><div class="empty-state__icon">&#127909;</div><div class="empty-state__text">Keine Videos vorhanden.</div></div>`;
+    return;
+  }
+
+  body.innerHTML = `<div class="admin-video-grid">${videos.map(v => `
+    <div class="admin-video-card">
+      <img class="admin-video-card__thumb" src="${escapeHtml(v.thumbnail)}" alt="${escapeHtml(v.title)}" loading="lazy">
+      <div class="admin-video-card__body">
+        <span class="admin-video-card__title">${escapeHtml(v.title)}</span>
+        <button class="btn-delete" onclick="deleteVideo('${v.id}')">&#10005;</button>
+      </div>
+    </div>
+  `).join('')}</div>`;
+}
+
+async function deleteVideo(id) {
+  if (!confirm('Video wirklich löschen?')) return;
+  try {
+    const res = await fetch(`${VIDEOS_API}?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    await loadVideos();
+  } catch (err) {
+    alert('Fehler beim Löschen: ' + err.message);
+  }
+}
+
+document.getElementById('videos-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('videos-submit');
+  btn.disabled = true;
+
+  const title = document.getElementById('video-title').value.trim();
+  const platform = document.getElementById('video-platform').value;
+  const url = document.getElementById('video-url').value.trim();
+
+  if (!title || !platform || !url) {
+    btn.disabled = false;
+    return;
+  }
+
+  try {
+    const res = await fetch(VIDEOS_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, platform, url }),
+    });
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error || `HTTP ${res.status}`);
+    }
+    document.getElementById('videos-form').reset();
+    await loadVideos();
+  } catch (err) {
+    alert('Fehler: ' + err.message);
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+// ══════════════════════════════════════════════════════════
+// BANNER MANAGEMENT
+// ══════════════════════════════════════════════════════════
+let currentBannerTab = 'url';
+
+// Tab switching
+document.querySelectorAll('.banner-tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    currentBannerTab = btn.dataset.tab;
+    document.querySelectorAll('.banner-tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('banner-tab-url').style.display = currentBannerTab === 'url' ? '' : 'none';
+    document.getElementById('banner-tab-upload').style.display = currentBannerTab === 'upload' ? '' : 'none';
+  });
+});
+
+async function loadBannerSettings() {
+  const body = document.getElementById('banner-preview-body');
+  body.innerHTML = '<div class="loading">Lade Banner</div>';
+
+  try {
+    const res = await fetch(SETTINGS_API);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const settings = await res.json();
+
+    if (settings.bannerUrl) {
+      // Add cache-buster for uploaded images
+      const imgUrl = settings.bannerUrl === '/api/banner-image'
+        ? settings.bannerUrl + '?t=' + Date.now()
+        : settings.bannerUrl;
+
+      body.innerHTML = `
+        <div class="banner-preview-container">
+          <span class="banner-preview-label">1920 &times; 600</span>
+          <img src="${escapeHtml(imgUrl)}" alt="Header Banner" onerror="this.parentElement.innerHTML='<div class=\\'empty-state\\'><div class=\\'empty-state__icon\\'>&#9888;</div><div class=\\'empty-state__text\\'>Bild konnte nicht geladen werden.</div></div>'">
+        </div>
+        <p style="font-family:var(--ff-mono);font-size:.75rem;color:var(--clr-text-muted);margin-top:.75rem;">
+          Quelle: ${escapeHtml(settings.bannerUrl)}
+        </p>`;
+
+      // Pre-fill URL input if it's a URL type
+      if (settings.bannerUrl !== '/api/banner-image') {
+        document.getElementById('banner-url').value = settings.bannerUrl;
+      }
+    } else {
+      body.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state__icon">&#128444;</div>
+          <div class="empty-state__text">Kein Banner konfiguriert. Verwende das Formular oben, um ein Banner hinzuzuf&uuml;gen.</div>
+        </div>`;
+    }
+  } catch (err) {
+    body.innerHTML = `<div class="empty-state"><div class="empty-state__icon">&#9888;</div><div class="empty-state__text">Fehler: ${err.message}</div></div>`;
+  }
+}
+
+document.getElementById('banner-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('banner-submit');
+  btn.disabled = true;
+
+  try {
+    let bannerUrl = '';
+
+    if (currentBannerTab === 'url') {
+      bannerUrl = document.getElementById('banner-url').value.trim();
+      if (!bannerUrl) {
+        alert('Bitte eine Bild-URL eingeben.');
+        btn.disabled = false;
+        return;
+      }
+    } else {
+      // File upload
+      const fileInput = document.getElementById('banner-file');
+      const file = fileInput.files[0];
+      if (!file) {
+        alert('Bitte eine Datei ausw\u00e4hlen.');
+        btn.disabled = false;
+        return;
+      }
+
+      const statusEl = document.getElementById('banner-upload-status');
+      statusEl.textContent = 'Lade hoch...';
+      statusEl.style.color = 'var(--clr-accent-arc)';
+
+      const uploadRes = await fetch(BANNER_IMAGE_API, {
+        method: 'POST',
+        headers: { 'Content-Type': file.type },
+        body: file,
+      });
+
+      if (!uploadRes.ok) {
+        const data = await uploadRes.json();
+        throw new Error(data.error || `Upload fehlgeschlagen (HTTP ${uploadRes.status})`);
+      }
+
+      const uploadData = await uploadRes.json();
+      bannerUrl = uploadData.url;
+      statusEl.textContent = 'Upload erfolgreich!';
+    }
+
+    // Save to settings
+    const res = await fetch(SETTINGS_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ bannerUrl }),
+    });
+
+    if (!res.ok) throw new Error('Speichern fehlgeschlagen');
+
+    await loadBannerSettings();
+    alert('Banner erfolgreich gespeichert! Die \u00c4nderung ist sofort auf der Startseite sichtbar.');
+  } catch (err) {
+    alert('Fehler: ' + err.message);
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+document.getElementById('banner-remove').addEventListener('click', async () => {
+  if (!confirm('Banner wirklich entfernen?')) return;
+
+  try {
+    const res = await fetch(SETTINGS_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ bannerUrl: '' }),
+    });
+
+    if (!res.ok) throw new Error('Fehler beim Entfernen');
+    document.getElementById('banner-url').value = '';
+    document.getElementById('banner-file').value = '';
+    await loadBannerSettings();
+    alert('Banner wurde entfernt.');
+  } catch (err) {
+    alert('Fehler: ' + err.message);
+  }
+});
+
+// ══════════════════════════════════════════════════════════
+// EVENT-ANMELDUNGEN (Event Registrations)
+// ══════════════════════════════════════════════════════════
+let currentEventRegistrations = [];
+let currentEvtModalId = null;
+
+async function loadEventRegistrations() {
+  const body = document.getElementById('evt-registrations-body');
+  body.innerHTML = '<div class="loading">Lade Event-Anmeldungen</div>';
+
+  try {
+    const res = await fetch(EVT_REGISTRATIONS_API);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    currentEventRegistrations = await res.json();
+    renderEventRegistrations();
+    updateEvtStats();
+  } catch (err) {
+    console.error('[Admin-EvtReg]', err);
+    body.innerHTML = `<div class="empty-state"><div class="empty-state__icon">&#9888;</div><div class="empty-state__text">Fehler beim Laden: ${err.message}</div></div>`;
+  }
+}
+
+function renderEventRegistrations() {
+  const body = document.getElementById('evt-registrations-body');
+
+  if (currentEventRegistrations.length === 0) {
+    body.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state__icon">&#128203;</div>
+        <div class="empty-state__text">Noch keine Event-Anmeldungen eingegangen.</div>
+      </div>`;
+    return;
+  }
+
+  body.innerHTML = `
+    <table class="app-table">
+      <thead>
+        <tr>
+          <th>Name / Gaming-ID</th>
+          <th>Spiel</th>
+          <th>Clan</th>
+          <th>Spieler</th>
+          <th>Bemerkungen</th>
+          <th>Datum</th>
+          <th>Aktionen</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${currentEventRegistrations.map(reg => `
+          <tr>
+            <td><strong>${escapeHtml(reg.name)}</strong></td>
+<td>${
+  reg.spiel === 'PUBG'
+    ? '<span class="tag tag--pubg">PUBG</span>'
+    : reg.spiel === 'ARC Raiders'
+      ? '<span class="tag tag--arc">ARC Raiders</span>'
+      : '<span class="tag tag--both">Mixed</span>'
+}</td>
+<td>${escapeHtml(reg.clan || '–')}</td>
+<td>${escapeHtml(reg.spielerAnzahl || '–')}</td>
+<td class="app-about">${escapeHtml(truncate(reg.bemerkungen || '', 60))}</td>
+<td class="app-date">${formatDate(reg.createdAt)}</td>
+<td>
+  <button class="btn-sm" onclick="showEvtDetail('${reg.id}')">Details</button>
+  <button class="btn-delete" onclick="deleteEventRegistration('${reg.id}')">Löschen</button>
+</td>
+
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>`;
+}
+
+function updateEvtStats() {
+  document.getElementById('stat-evt-total').textContent = currentEventRegistrations.length;
+  document.getElementById('stat-evt-pubg').textContent = currentEventRegistrations.filter(r => r.spiel === 'PUBG').length;
+  document.getElementById('stat-evt-arc').textContent = currentEventRegistrations.filter(r => r.spiel === 'ARC Raiders').length;
+}
+
+function showEvtDetail(id) {
+  const reg = currentEventRegistrations.find(r => r.id === id);
+  if (!reg) return;
+  currentEvtModalId = id;
+  currentModalId = null;
+
+  document.getElementById('modal-title').textContent = `Event-Anmeldung: ${reg.name}`;
+  document.getElementById('modal-body').innerHTML = `
+    <div class="modal__field">
+      <div class="modal__label">Name / Gaming-ID</div>
+      <div class="modal__value">${escapeHtml(reg.name)}</div>
+    </div>
+    <div class="modal__field">
+      <div class="modal__label">E-Mail</div>
+      <div class="modal__value">${escapeHtml(reg.email)}</div>
+    </div>
+    <div class="modal__field">
+      <div class="modal__label">Spiel</div>
+      <div class="modal__value">${escapeHtml(reg.spiel)}</div>
+    </div>
+    <div class="modal__field">
+      <div class="modal__label">Clan-Name</div>
+      <div class="modal__value">${escapeHtml(reg.clan || '–')}</div>
+    </div>
+    <div class="modal__field">
+      <div class="modal__label">Anzahl Spieler</div>
+      <div class="modal__value">${escapeHtml(reg.spielerAnzahl || '–')}</div>
+    </div>
+    <div class="modal__field">
+      <div class="modal__label">Bemerkungen</div>
+      <div class="modal__value" style="white-space:pre-wrap;">${escapeHtml(reg.bemerkungen || '–')}</div>
+    </div>
+    <div class="modal__field">
+      <div class="modal__label">Eingegangen am</div>
+      <div class="modal__value">${formatDate(reg.createdAt)}</div>
+    </div>`;
+
+  document.getElementById('modal-overlay').classList.add('active');
+}
+
+async function deleteEventRegistration(id) {
+  if (!confirm('Event-Anmeldung wirklich l\u00f6schen?')) return;
+
+  try {
+    const res = await fetch(`${EVT_REGISTRATIONS_API}?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    closeModal();
+    await loadEventRegistrations();
+  } catch (err) {
+    alert('Fehler beim L\u00f6schen: ' + err.message);
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════════════
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function truncate(str, max) {
+  if (!str) return '';
+  return str.length > max ? str.slice(0, max) + '\u2026' : str;
+}
+
+// ══════════════════════════════════════════════════════════
+// EVENT LISTENERS
+// ══════════════════════════════════════════════════════════
+document.getElementById('btn-refresh').addEventListener('click', loadApplications);
+document.getElementById('btn-refresh-roster').addEventListener('click', loadRoster);
+document.getElementById('btn-refresh-events').addEventListener('click', loadEvents);
+document.getElementById('btn-refresh-videos').addEventListener('click', loadVideos);
+document.getElementById('btn-refresh-banner').addEventListener('click', loadBannerSettings);
+document.getElementById('btn-refresh-evt-registrations').addEventListener('click', loadEventRegistrations);
+
+document.getElementById('modal-close').addEventListener('click', closeModal);
+document.getElementById('modal-close-btn').addEventListener('click', closeModal);
+document.getElementById('modal-delete').addEventListener('click', () => {
+  if (currentEvtModalId) deleteEventRegistration(currentEvtModalId);
+  else if (currentModalId) deleteApplication(currentModalId);
+});
+document.getElementById('modal-overlay').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) closeModal();
+});
+
+// TWITCH STATUS CHECK (TEMPORÄR UMGEHEND – Admin Dashboard Fix)
+async function checkTwitchStatus() {
+  const banner = document.getElementById('twitch-admin-banner');
+  if (!banner) return;
+  
+  // Banner verstecken + neutrale Nachricht (Twitch später fixen)
+  banner.style.display = 'block';
+  banner.innerHTML = `
+    <div style="display:flex;align-items:center;gap:.6rem;">
+      <span style="width:10px;height:10px;border-radius:50%;background:var(--clr-text-muted);"></span>
+      <strong style="font-family:var(--ff-heading);font-size:.95rem;color:var(--clr-text-muted);">Twitch</strong>
+      <span style="color:var(--clr-text-muted);font-size:.8rem;">Konfiguration ausstehend</span>
+    </div>
+  `;
+  
+  // Dashboard trotzdem laden!
+  console.log('✅ Twitch umgangen – lade Bewerbungen...');
+  loadApplications();  // ← WICHTIG: Direkt Bewerbungen laden
+}
+// ══════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════
+loadApplications();
+checkTwitchStatus();
+setInterval(checkTwitchStatus, 60000);
