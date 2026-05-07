@@ -1108,6 +1108,35 @@ img { max-width: 100%; display: block; }
   color: var(--clr-text-muted);
 }
 
+/* ── Legal pages ──────────────────────────────────────── */
+.legal-page {
+  padding-top: calc(56px + var(--sp-2xl));
+}
+
+.legal-card {
+  max-width: 860px;
+  margin-top: var(--sp-lg);
+}
+
+.legal-card__body {
+  display: grid;
+  gap: var(--sp-md);
+}
+
+.legal-card__body p {
+  color: var(--clr-text);
+}
+
+.legal-card__body strong {
+  color: var(--clr-accent-arc);
+}
+
+.legal-card__body a {
+  color: var(--clr-accent-arc);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 /* ── Responsive ────────────────────────────────────────── */
 @media (max-width: 1024px) {
   .hero { grid-template-columns: 1fr; min-height: 70vh; }
