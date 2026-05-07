@@ -308,6 +308,59 @@ img { max-width: 100%; display: block; }
   );
 }
 
+.hero__intro-card {
+  width: min(92%, 980px);
+  padding: clamp(1.5rem, 4vw, 3rem);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(135deg, rgba(15, 242, 169, .11), transparent 32%),
+    linear-gradient(315deg, rgba(255, 156, 67, .12), transparent 30%),
+    rgba(13, 13, 18, .72);
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, .55),
+    inset 0 0 0 1px rgba(255, 255, 255, .04),
+    0 0 32px rgba(15, 242, 169, .12);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.hero__intro-card::before,
+.hero__intro-card::after {
+  content: '';
+  position: absolute;
+  width: 64px;
+  height: 64px;
+  pointer-events: none;
+  opacity: .75;
+}
+
+.hero__intro-card::before {
+  top: 1rem;
+  left: 1rem;
+  border-top: 2px solid var(--clr-accent-arc);
+  border-left: 2px solid var(--clr-accent-arc);
+}
+
+.hero__intro-card::after {
+  right: 1rem;
+  bottom: 1rem;
+  border-right: 2px solid var(--clr-accent-pubg);
+  border-bottom: 2px solid var(--clr-accent-pubg);
+}
+
+.hero__eyebrow {
+  margin-bottom: var(--sp-md);
+  color: var(--clr-accent-arc);
+  font-family: var(--ff-mono);
+  font-size: clamp(.68rem, 1.5vw, .82rem);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .16em;
+}
+
 .hero__heading {
   font-family: var(--ff-heading);
   font-size: clamp(2rem, 6vw, 4.5rem);
@@ -322,6 +375,52 @@ img { max-width: 100%; display: block; }
     0 0 30px rgba(57, 255, 20, .2),
     0 0 60px rgba(57, 255, 20, .15),
     0 0 100px rgba(57, 255, 20, .1);
+}
+
+.hero__tagline {
+  margin-top: var(--sp-md);
+  color: var(--clr-accent-pubg);
+  font-family: var(--ff-heading);
+  font-size: clamp(1.35rem, 3vw, 2.1rem);
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  text-shadow: var(--shadow-glow-pubg);
+}
+
+.hero__sub {
+  max-width: 720px;
+  margin: var(--sp-md) auto 0;
+  color: var(--clr-text);
+  font-size: clamp(.95rem, 1.8vw, 1.15rem);
+  line-height: 1.7;
+}
+
+.hero__actions {
+  display: flex;
+  justify-content: center;
+  gap: var(--sp-md);
+  flex-wrap: wrap;
+  margin-top: var(--sp-xl);
+}
+
+.hero__stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: .75rem;
+  margin-top: var(--sp-lg);
+}
+
+.hero__stats span {
+  padding: .7rem .8rem;
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, .035);
+  color: var(--clr-text-muted);
+  font-family: var(--ff-mono);
+  font-size: .72rem;
+  text-transform: uppercase;
+  letter-spacing: .08em;
 }
 /* ── Glitch Text Effect (RGB Offset) ───────────────────── */
 .glitch {
@@ -421,6 +520,19 @@ img { max-width: 100%; display: block; }
 
 .btn:hover::before { transform: scaleX(1); }
 
+.btn--secondary {
+  border-color: var(--clr-accent-pubg);
+  color: var(--clr-accent-pubg);
+}
+
+.btn--secondary::before {
+  background: var(--clr-accent-pubg);
+}
+
+.btn--secondary:hover {
+  box-shadow: var(--shadow-glow-pubg);
+}
+
 /* Untertitel im Button */
 .btn__subtitle {
   display: block;
@@ -446,7 +558,7 @@ img { max-width: 100%; display: block; }
   to { transform: scale(4); opacity: 0; }
 }
 
-.hero__cta { margin-top: var(--sp-xl); }
+.hero__cta { margin-top: 0; }
 
 
 /* ── Header Banner ────────────────────────────────────── */
@@ -1169,6 +1281,11 @@ img { max-width: 100%; display: block; }
 
   .live-status__inner { flex-direction: column; align-items: center; }
 
+  .hero__intro-card { width: min(94%, 680px); }
+  .hero__actions { gap: var(--sp-sm); }
+  .hero__stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hero__stats span { font-size: .66rem; }
+
   .roster-grid { grid-template-columns: 1fr 1fr; }
 
   .timeline { padding-left: 30px; }
@@ -1180,6 +1297,10 @@ img { max-width: 100%; display: block; }
 
   .hero__heading { font-size: 1.8rem; }
   .hero__sub { font-size: .8rem; }
+  .hero__intro-card { padding: 1.25rem; }
+  .hero__actions { flex-direction: column; }
+  .hero__actions .btn { width: 100%; }
+  .hero__stats { grid-template-columns: 1fr; }
 }
 
 /* ── Loading / Skeleton ────────────────────────────────── */
