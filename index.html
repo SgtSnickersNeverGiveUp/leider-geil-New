@@ -49,29 +49,32 @@
     </div>
   </div>
 
-  <!-- CLAN ROSTER SLIDESHOW -->
-  <section class="roster-slideshow" id="roster-slideshow" aria-label="Clan Roster Highlight" hidden>
-    <div class="container roster-slideshow__inner">
-      <div class="roster-slideshow__frame">
-        <div class="roster-slideshow__media">
-          <img class="roster-slideshow__avatar" id="roster-slideshow-avatar" src="" alt="" loading="eager">
+  <!-- TOP SHOWCASE: ROSTER SPOTLIGHT + HERO INTRO -->
+  <section class="home-showcase" aria-label="Clan Einstieg">
+    <div class="container home-showcase__grid">
+      <!-- CLAN ROSTER SLIDESHOW -->
+      <section class="roster-slideshow" id="roster-slideshow" aria-label="Clan Roster Highlight" hidden>
+        <div class="container roster-slideshow__inner">
+          <div class="roster-slideshow__frame">
+            <div class="roster-slideshow__media">
+              <img class="roster-slideshow__avatar" id="roster-slideshow-avatar" src="" alt="" loading="eager">
+            </div>
+            <div class="roster-slideshow__content">
+              <span class="roster-slideshow__eyebrow" id="roster-slideshow-eyebrow">Member Spotlight</span>
+              <h2 class="roster-slideshow__name" id="roster-slideshow-name"></h2>
+              <p class="roster-slideshow__role" id="roster-slideshow-role"></p>
+              <div class="roster-slideshow__games" id="roster-slideshow-games"></div>
+              <p class="roster-slideshow__text" id="roster-slideshow-text"></p>
+            </div>
+            <div class="roster-slideshow__progress" id="roster-slideshow-progress"></div>
+          </div>
         </div>
-        <div class="roster-slideshow__content">
-          <span class="roster-slideshow__eyebrow" id="roster-slideshow-eyebrow">Member Spotlight</span>
-          <h2 class="roster-slideshow__name" id="roster-slideshow-name"></h2>
-          <p class="roster-slideshow__role" id="roster-slideshow-role"></p>
-          <div class="roster-slideshow__games" id="roster-slideshow-games"></div>
-          <p class="roster-slideshow__text" id="roster-slideshow-text"></p>
-        </div>
-        <div class="roster-slideshow__progress" id="roster-slideshow-progress"></div>
-      </div>
-    </div>
-  </section>
+      </section>
 
 
-  <!-- ═══════════════════════════════════════════════════════
-     HERO – Split-Screen
-     ═══════════════════════════════════════════════════════ -->
+      <!-- ═══════════════════════════════════════════════════════
+         HERO – Split-Screen
+         ═══════════════════════════════════════════════════════ -->
 <header class="hero" id="hero">
 
   <!-- PUBG Panel (links) -->
@@ -135,6 +138,8 @@
   </div>
 
 </header>
+    </div>
+  </section>
 
 
 
