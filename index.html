@@ -49,22 +49,58 @@
     </div>
   </div>
 
-  <!-- CLAN ROSTER SLIDESHOW -->
-  <section class="roster-slideshow" id="roster-slideshow" aria-label="Clan Roster Highlight" hidden>
-    <div class="container roster-slideshow__inner">
-      <div class="roster-slideshow__frame">
-        <div class="roster-slideshow__media">
-          <img class="roster-slideshow__avatar" id="roster-slideshow-avatar" src="" alt="" loading="eager">
+  <!-- TOP COMMUNITY PANEL -->
+  <section class="top-community" aria-label="Clan Spotlight und Community Shouts">
+    <div class="container top-community__grid">
+      <!-- CLAN ROSTER SLIDESHOW -->
+      <section class="roster-slideshow" id="roster-slideshow" aria-label="Clan Roster Highlight" hidden>
+        <div class="roster-slideshow__inner">
+          <div class="roster-slideshow__frame">
+            <div class="roster-slideshow__media">
+              <img class="roster-slideshow__avatar" id="roster-slideshow-avatar" src="" alt="" loading="eager">
+            </div>
+            <div class="roster-slideshow__content">
+              <span class="roster-slideshow__eyebrow" id="roster-slideshow-eyebrow">Member Spotlight</span>
+              <h2 class="roster-slideshow__name" id="roster-slideshow-name"></h2>
+              <p class="roster-slideshow__role" id="roster-slideshow-role"></p>
+              <div class="roster-slideshow__games" id="roster-slideshow-games"></div>
+              <p class="roster-slideshow__text" id="roster-slideshow-text"></p>
+            </div>
+            <div class="roster-slideshow__progress" id="roster-slideshow-progress"></div>
+          </div>
         </div>
-        <div class="roster-slideshow__content">
-          <span class="roster-slideshow__eyebrow" id="roster-slideshow-eyebrow">Member Spotlight</span>
-          <h2 class="roster-slideshow__name" id="roster-slideshow-name"></h2>
-          <p class="roster-slideshow__role" id="roster-slideshow-role"></p>
-          <div class="roster-slideshow__games" id="roster-slideshow-games"></div>
-          <p class="roster-slideshow__text" id="roster-slideshow-text"></p>
+      </section>
+
+      <!-- COMMUNITY SHOUTS -->
+      <section class="community-shouts" id="community-shouts" aria-label="Community Shouts">
+        <div class="community-shouts__header">
+          <span class="community-shouts__eyebrow">// Community Shouts</span>
+          <h2>Sag GG ans Squad</h2>
+          <p>Grüß den Clan, drop einen Shout oder lass ein GG da.</p>
         </div>
-        <div class="roster-slideshow__progress" id="roster-slideshow-progress"></div>
-      </div>
+
+        <form class="community-shouts__form" id="community-shouts-form" autocomplete="off">
+          <input type="text" name="website" class="honey-field" tabindex="-1" aria-hidden="true">
+          <div class="community-shouts__row">
+            <input type="text" name="name" maxlength="32" placeholder="Dein Nickname" required>
+            <select name="tag" aria-label="Shout Tag">
+              <option value="GG">GG</option>
+              <option value="PUBG">PUBG</option>
+              <option value="ARC">ARC</option>
+              <option value="Event">Event</option>
+              <option value="Community">Community</option>
+            </select>
+          </div>
+          <textarea name="message" maxlength="220" rows="3" placeholder="Dein Shout..." required></textarea>
+          <p class="community-shouts__hint">Hinweis: Shouts erscheinen erst nach Admin-Freigabe.</p>
+          <button type="submit" class="btn community-shouts__submit">Shout senden</button>
+          <p class="community-shouts__status" id="community-shouts-status" role="status"></p>
+        </form>
+
+        <div class="community-shouts__list" id="community-shouts-list">
+          <div class="community-shouts__empty">Noch keine freigegebenen Shouts.</div>
+        </div>
+      </section>
     </div>
   </section>
 
@@ -246,6 +282,7 @@
   <script src="config.js"></script>
   <script src="assets/js/script.js"></script>
   <script src="assets/js/roster-slideshow.js"></script>
+  <script src="assets/js/community-shouts.js"></script>
   <script src="assets/js/public-roster.js"></script>
   <script src="assets/js/clan-news-ticker.js"></script>
 </body>

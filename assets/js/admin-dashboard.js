@@ -8,6 +8,7 @@ const EVT_REGISTRATIONS_API = '/api/event-registrations';
 const NEWS_API_URL = '/api/news';
 const SETTINGS_API = '/api/settings';
 const BANNER_IMAGE_API = '/api/banner-image';
+const COMMUNITY_SHOUTS_API = '/api/community-shouts';
 async function loadTickerSettings() {
   try {
     const res = await fetch(SETTINGS_API);
@@ -48,6 +49,7 @@ function switchPage(pageId) {
   if (pageId === 'page-videos') loadVideos();
   if (pageId === 'page-banner') loadBannerSettings();
   if (pageId === 'page-event-anmeldungen') loadEventRegistrations();
+  if (pageId === 'page-community-shouts') loadCommunityShouts();
   if (pageId === 'page-news') {
     loadTickerSettings();
     initNewsAdmin();
@@ -965,6 +967,98 @@ async function deleteEventRegistration(id) {
 }
 
 // ══════════════════════════════════════════════════════════
+// COMMUNITY SHOUTS
+// ══════════════════════════════════════════════════════════
+let currentCommunityShouts = [];
+
+async function loadCommunityShouts() {
+  const body = document.getElementById('community-shouts-admin-body');
+  if (!body) return;
+
+  body.innerHTML = '<div class="loading">Lade Community Shouts</div>';
+
+  try {
+    const res = await fetch(`${COMMUNITY_SHOUTS_API}?all=1`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    currentCommunityShouts = await res.json();
+    renderCommunityShoutsAdmin();
+  } catch (err) {
+    body.innerHTML = `<div class="empty-state"><div class="empty-state__icon">&#9888;</div><div class="empty-state__text">Fehler beim Laden: ${err.message}</div></div>`;
+  }
+}
+
+function renderCommunityShoutsAdmin() {
+  const body = document.getElementById('community-shouts-admin-body');
+  if (!body) return;
+
+  if (currentCommunityShouts.length === 0) {
+    body.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state__icon">&#128172;</div>
+        <div class="empty-state__text">Noch keine Community Shouts vorhanden.</div>
+      </div>`;
+    return;
+  }
+
+  body.innerHTML = `
+    <table class="app-table">
+      <thead>
+        <tr>
+          <th>Status</th>
+          <th>Name</th>
+          <th>Tag</th>
+          <th>Nachricht</th>
+          <th>Datum</th>
+          <th>Aktionen</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${currentCommunityShouts.map((shout) => `
+          <tr>
+            <td>${shout.approved ? '<span class="tag tag--arc">Live</span>' : '<span class="tag tag--pubg">Wartet</span>'}</td>
+            <td><strong>${escapeHtml(shout.name)}</strong></td>
+            <td>${escapeHtml(shout.tag || 'Community')}</td>
+            <td class="app-about">${escapeHtml(shout.message)}</td>
+            <td class="app-date">${formatDate(shout.createdAt)}</td>
+            <td>
+              <button class="btn-sm" onclick="setCommunityShoutApproval('${shout.id}', ${!shout.approved})">
+                ${shout.approved ? 'Ausblenden' : 'Freigeben'}
+              </button>
+              <button class="btn-delete" onclick="deleteCommunityShout('${shout.id}')">Löschen</button>
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>`;
+}
+
+async function setCommunityShoutApproval(id, approved) {
+  try {
+    const res = await fetch(COMMUNITY_SHOUTS_API, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, approved }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    await loadCommunityShouts();
+  } catch (err) {
+    alert('Fehler beim Aktualisieren: ' + err.message);
+  }
+}
+
+async function deleteCommunityShout(id) {
+  if (!confirm('Community Shout wirklich löschen?')) return;
+
+  try {
+    const res = await fetch(`${COMMUNITY_SHOUTS_API}?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    await loadCommunityShouts();
+  } catch (err) {
+    alert('Fehler beim Löschen: ' + err.message);
+  }
+}
+
+// ══════════════════════════════════════════════════════════
 // HELPERS
 // ══════════════════════════════════════════════════════════
 function escapeHtml(str) {
@@ -978,6 +1072,13 @@ function truncate(str, max) {
   return str.length > max ? str.slice(0, max) + '\u2026' : str;
 }
 
+function formatDate(value) {
+  if (!value) return '–';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '–';
+  return date.toLocaleString('de-DE');
+}
+
 // ══════════════════════════════════════════════════════════
 // EVENT LISTENERS
 // ══════════════════════════════════════════════════════════
@@ -987,6 +1088,7 @@ document.getElementById('btn-refresh-events').addEventListener('click', loadEven
 document.getElementById('btn-refresh-videos').addEventListener('click', loadVideos);
 document.getElementById('btn-refresh-banner').addEventListener('click', loadBannerSettings);
 document.getElementById('btn-refresh-evt-registrations').addEventListener('click', loadEventRegistrations);
+document.getElementById('btn-refresh-community-shouts')?.addEventListener('click', loadCommunityShouts);
 
 document.getElementById('modal-close').addEventListener('click', closeModal);
 document.getElementById('modal-close-btn').addEventListener('click', closeModal);
