@@ -1846,6 +1846,26 @@ img { max-width: 100%; display: block; }
   .community-shouts__submit {
     width: 100%;
   }
+
+  .hero,
+  .hero--compact {
+    min-height: 0;
+  }
+
+  .hero {
+    display: block;
+  }
+
+  .hero__panel {
+    position: absolute;
+    inset: 0;
+  }
+
+  .hero__overlay {
+    position: relative;
+    inset: auto;
+    padding: 1rem;
+  }
 }
 
 .clan-news-ticker {
