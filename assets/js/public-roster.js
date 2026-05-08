@@ -1,6 +1,9 @@
 (() => {
   'use strict';
 
+  let publicRosterMembers = [];
+  let activeRosterFilter = '';
+
   async function loadPublicRoster() {
     const container = document.getElementById('roster-grid');
     if (!container) return;
@@ -17,12 +20,47 @@
         return;
       }
 
-      container.innerHTML = members.map((member) => renderPublicRosterCard(member)).join('');
+      publicRosterMembers = members;
+      renderPublicRoster(container);
       initRosterToggle(container);
     } catch (err) {
       console.error('Public roster load failed:', err);
       container.innerHTML = '<div class="empty-state">Fehler beim Laden des Rosters.</div>';
     }
+  }
+
+  function renderPublicRoster(container) {
+    const members = getFilteredMembers();
+    const status = activeRosterFilter ? renderRosterFilterStatus(members.length) : '';
+
+    if (members.length === 0) {
+      container.innerHTML = `${status}<div class="empty-state">Keine Mitglieder für diesen Filter gefunden.</div>`;
+      return;
+    }
+
+    container.innerHTML = status + members.map((member) => renderPublicRosterCard(member)).join('');
+  }
+
+  function getFilteredMembers() {
+    if (!activeRosterFilter) return publicRosterMembers;
+
+    return publicRosterMembers.filter((member) =>
+      (member.games || []).some((game) => {
+        const normalized = String(game || '').toLowerCase();
+        if (activeRosterFilter === 'pubg') return normalized.includes('pubg');
+        if (activeRosterFilter === 'arc') return normalized.includes('arc');
+        return false;
+      })
+    );
+  }
+
+  function renderRosterFilterStatus(count) {
+    const label = activeRosterFilter === 'pubg' ? 'PUBG Squad' : 'ARC Raiders';
+    return `
+      <div class="roster-filter-status">
+        <span>${escapeRosterHtml(label)}: ${count} Member</span>
+        <button type="button" class="btn-sm" data-roster-filter-clear>Alle anzeigen</button>
+      </div>`;
   }
 
   function escapeRosterHtml(value) {
@@ -96,6 +134,13 @@
 
   function initRosterToggle(container) {
     container.addEventListener('click', (e) => {
+      const clearBtn = e.target.closest('[data-roster-filter-clear]');
+      if (clearBtn) {
+        activeRosterFilter = '';
+        renderPublicRoster(container);
+        return;
+      }
+
       const btn = e.target.closest('[data-toggle="more"]');
       if (!btn) return;
 
@@ -109,5 +154,18 @@
     });
   }
 
+  function initRosterFilterLinks() {
+    document.querySelectorAll('[data-roster-filter]').forEach((link) => {
+      link.addEventListener('click', () => {
+        activeRosterFilter = link.dataset.rosterFilter || '';
+        const container = document.getElementById('roster-grid');
+        if (container && publicRosterMembers.length > 0) {
+          renderPublicRoster(container);
+        }
+      });
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', initRosterFilterLinks);
   document.addEventListener('DOMContentLoaded', loadPublicRoster);
 })();
