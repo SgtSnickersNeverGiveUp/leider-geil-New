@@ -79,26 +79,31 @@
           <p>Grüß den Clan, drop einen Shout oder lass ein GG da.</p>
         </div>
 
-        <form class="community-shouts__form" id="community-shouts-form" autocomplete="off">
-          <input type="text" name="website" class="honey-field" tabindex="-1" aria-hidden="true">
-          <div class="community-shouts__row">
-            <input type="text" name="name" maxlength="32" placeholder="Dein Nickname" required>
-            <select name="tag" aria-label="Shout Tag">
-              <option value="GG">GG</option>
-              <option value="PUBG">PUBG</option>
-              <option value="ARC">ARC</option>
-              <option value="Event">Event</option>
-              <option value="Community">Community</option>
-            </select>
-          </div>
-          <textarea name="message" maxlength="220" rows="3" placeholder="Dein Shout..." required></textarea>
-          <p class="community-shouts__hint">Hinweis: Shouts erscheinen erst nach Admin-Freigabe.</p>
-          <button type="submit" class="btn community-shouts__submit">Shout senden</button>
-          <p class="community-shouts__status" id="community-shouts-status" role="status"></p>
-        </form>
+        <div class="community-shouts__body">
+          <form class="community-shouts__form" id="community-shouts-form" autocomplete="off">
+            <input type="text" name="website" class="honey-field" tabindex="-1" aria-hidden="true">
+            <div class="community-shouts__row">
+              <input type="text" name="name" maxlength="32" placeholder="Dein Nickname" required>
+              <select name="tag" aria-label="Shout Tag">
+                <option value="GG">GG</option>
+                <option value="PUBG">PUBG</option>
+                <option value="ARC">ARC</option>
+                <option value="Event">Event</option>
+                <option value="Community">Community</option>
+              </select>
+            </div>
+            <textarea name="message" maxlength="220" rows="3" placeholder="Dein Shout..." required></textarea>
+            <p class="community-shouts__hint">Hinweis: Shouts erscheinen erst nach Admin-Freigabe.</p>
+            <button type="submit" class="btn community-shouts__submit">Shout senden</button>
+            <p class="community-shouts__status" id="community-shouts-status" role="status"></p>
+          </form>
 
-        <div class="community-shouts__list" id="community-shouts-list">
-          <div class="community-shouts__empty">Noch keine freigegebenen Shouts.</div>
+          <div class="community-shouts__feed" aria-label="Freigegebene Community Shouts">
+            <div class="community-shouts__feed-title">Letzte Shouts</div>
+            <div class="community-shouts__list" id="community-shouts-list">
+              <div class="community-shouts__empty">Noch keine freigegebenen Shouts.</div>
+            </div>
+          </div>
         </div>
       </section>
     </div>
