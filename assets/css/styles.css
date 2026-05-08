@@ -1807,6 +1807,47 @@ img { max-width: 100%; display: block; }
   font-size: .92rem;
   line-height: 1.45;
 }
+
+@media (max-width: 1024px) {
+  .top-community__grid {
+    grid-template-columns: 1fr;
+    width: min(94vw, 760px);
+  }
+
+  .top-community .roster-slideshow__frame {
+    min-height: 360px;
+  }
+}
+
+@media (max-width: 768px) {
+  .community-shouts__body,
+  .community-shouts__row {
+    grid-template-columns: 1fr;
+  }
+
+  .community-shouts__feed .community-shouts__list {
+    max-height: 240px;
+  }
+}
+
+@media (max-width: 480px) {
+  .top-community {
+    padding-block: .9rem;
+  }
+
+  .top-community__grid {
+    width: min(94vw, 430px);
+  }
+
+  .community-shouts {
+    padding: 1rem;
+  }
+
+  .community-shouts__submit {
+    width: 100%;
+  }
+}
+
 .clan-news-ticker {
   margin-top: 56px;
   position: relative;
