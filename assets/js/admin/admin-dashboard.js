@@ -1,14 +1,15 @@
 'use strict';
 
-const API_URL = '/api/applications';
-const EVENTS_API = '/api/events';
-const EVENT_IMAGE_API = '/api/event-image';
-const VIDEOS_API = '/api/videos';
-const EVT_REGISTRATIONS_API = '/api/event-registrations';
-const NEWS_API_URL = '/api/news';
-const SETTINGS_API = '/api/settings';
-const BANNER_IMAGE_API = '/api/banner-image';
-const COMMUNITY_SHOUTS_API = '/api/community-shouts';
+const ADMIN_ENDPOINTS = window.LG_API_ENDPOINTS || {};
+const API_URL = ADMIN_ENDPOINTS.applications || '/api/applications';
+const EVENTS_API = ADMIN_ENDPOINTS.events || '/api/events';
+const EVENT_IMAGE_API = ADMIN_ENDPOINTS.eventImage || '/api/event-image';
+const VIDEOS_API = ADMIN_ENDPOINTS.videos || '/api/videos';
+const EVT_REGISTRATIONS_API = ADMIN_ENDPOINTS.eventRegistrations || '/api/event-registrations';
+const NEWS_API_URL = ADMIN_ENDPOINTS.news || '/api/news';
+const SETTINGS_API = ADMIN_ENDPOINTS.settings || '/api/settings';
+const BANNER_IMAGE_API = ADMIN_ENDPOINTS.bannerImage || '/api/banner-image';
+const COMMUNITY_SHOUTS_API = ADMIN_ENDPOINTS.communityShouts || '/api/community-shouts';
 async function loadTickerSettings() {
   try {
     const res = await fetch(SETTINGS_API);
@@ -1056,27 +1057,6 @@ async function deleteCommunityShout(id) {
   } catch (err) {
     alert('Fehler beim Löschen: ' + err.message);
   }
-}
-
-// ══════════════════════════════════════════════════════════
-// HELPERS
-// ══════════════════════════════════════════════════════════
-function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
-}
-
-function truncate(str, max) {
-  if (!str) return '';
-  return str.length > max ? str.slice(0, max) + '\u2026' : str;
-}
-
-function formatDate(value) {
-  if (!value) return '–';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '–';
-  return date.toLocaleString('de-DE');
 }
 
 // ══════════════════════════════════════════════════════════
