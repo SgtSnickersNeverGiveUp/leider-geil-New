@@ -1597,7 +1597,7 @@ img { max-width: 100%; display: block; }
 }
 
 .top-community__grid {
-  width: min(96vw, 1664px);
+  width: min(98vw, 2160px);
   display: grid;
   grid-template-columns: minmax(0, 2.2fr) minmax(0, 1fr);
   gap: clamp(1.25rem, 3vw, 2.25rem);
