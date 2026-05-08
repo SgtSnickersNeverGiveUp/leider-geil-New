@@ -1828,24 +1828,6 @@ img { max-width: 100%; display: block; }
   .community-shouts__feed .community-shouts__list {
     max-height: 240px;
   }
-}
-
-@media (max-width: 480px) {
-  .top-community {
-    padding-block: .9rem;
-  }
-
-  .top-community__grid {
-    width: min(94vw, 430px);
-  }
-
-  .community-shouts {
-    padding: 1rem;
-  }
-
-  .community-shouts__submit {
-    width: 100%;
-  }
 
   .hero,
   .hero--compact {
@@ -1865,6 +1847,24 @@ img { max-width: 100%; display: block; }
     position: relative;
     inset: auto;
     padding: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .top-community {
+    padding-block: .9rem;
+  }
+
+  .top-community__grid {
+    width: min(94vw, 430px);
+  }
+
+  .community-shouts {
+    padding: 1rem;
+  }
+
+  .community-shouts__submit {
+    width: 100%;
   }
 }
 
