@@ -68,6 +68,7 @@ navLinks.forEach(link => {
 // ══════════════════════════════════════════════════════════
 
 let currentApplications = [];
+let currentModalId = null;
 
 async function loadApplications() {
   const body = document.getElementById('applications-body');
@@ -115,24 +116,73 @@ function renderApplications() {
       <tbody>
         ${currentApplications.map(app => `
           <tr>
-            <td><strong>${app.gamingId}</strong></td>
-            <td>${app.alter}</td>
+            <td><strong>${escapeHtml(app.gamingId || '')}</strong></td>
+            <td>${escapeHtml(app.alter || '')}</td>
             <td>
               ${app.hauptspiel === 'PUBG' ? '<span class="tag tag--pubg">PUBG</span>' : 
                 app.hauptspiel === 'ARC Raiders' ? '<span class="tag tag--arc">ARC</span>' : 
                 '<span class="tag tag--both">PUBG + ARC</span>'}
             </td>
-            <td>${app.rolle}</td>
-            <td class="app-about">${app.ueberMich.substring(0,80)}${app.ueberMich.length > 80 ? '...' : ''}</td>
-            <td class="app-date">${new Date(app.createdAt).toLocaleString('de-DE')}</td>
+            <td>${escapeHtml(app.rolle || '')}</td>
+            <td class="app-about">${escapeHtml(truncate(app.ueberMich || '', 80))}</td>
+            <td class="app-date">${formatDate(app.createdAt)}</td>
             <td>
-  <button class="btn-sm" onclick="alert('Details: ${app.gamingId} | ${app.ueberMich}')">Details</button>
-  <button class="btn-delete" onclick="deleteApplication('${app.id}')">Löschen</button>
+  <button class="btn-sm" onclick="showApplicationDetail('${escapeHtml(app.id)}')">Details</button>
+  <button class="btn-delete" onclick="deleteApplication('${escapeHtml(app.id)}')">Löschen</button>
 </td>
           </tr>
         `).join('')}
       </tbody>
     </table>`;
+}
+
+function showApplicationDetail(id) {
+  const app = currentApplications.find((item) => item.id === id);
+  if (!app) return;
+  currentModalId = id;
+  currentEvtModalId = null;
+
+  document.getElementById('modal-title').textContent = `Bewerbung: ${app.gamingId || 'Unbekannt'}`;
+  document.getElementById('modal-body').innerHTML = `
+    <div class="modal__field">
+      <div class="modal__label">Gaming-ID</div>
+      <div class="modal__value">${escapeHtml(app.gamingId || '-')}</div>
+    </div>
+    <div class="modal__field">
+      <div class="modal__label">Alter</div>
+      <div class="modal__value">${escapeHtml(app.alter || '-')}</div>
+    </div>
+    <div class="modal__field">
+      <div class="modal__label">Spiel</div>
+      <div class="modal__value">${escapeHtml(app.hauptspiel || '-')}</div>
+    </div>
+    <div class="modal__field">
+      <div class="modal__label">Rolle</div>
+      <div class="modal__value">${escapeHtml(app.rolle || '-')}</div>
+    </div>
+    <div class="modal__field">
+      <div class="modal__label">Über mich</div>
+      <div class="modal__value" style="white-space:pre-wrap;">${escapeHtml(app.ueberMich || '-')}</div>
+    </div>
+    <div class="modal__field">
+      <div class="modal__label">Eingegangen am</div>
+      <div class="modal__value">${formatDate(app.createdAt)}</div>
+    </div>`;
+
+  document.getElementById('modal-overlay').classList.add('active');
+}
+
+async function deleteApplication(id) {
+  if (!confirm('Bewerbung wirklich löschen?')) return;
+
+  try {
+    const res = await fetch(`${API_URL}?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    closeModal();
+    await loadApplications();
+  } catch (err) {
+    alert('Fehler beim Löschen: ' + err.message);
+  }
 }
 
 function updateStats() {

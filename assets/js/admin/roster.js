@@ -320,6 +320,10 @@ function openEditMember(id) {
             <input class="admin-form__input" type="text" id="edit-member-name" value="${escapeHtml(m.name)}" required>
           </div>
           <div class="admin-form__group">
+            <label class="admin-form__label">Rolle / Position</label>
+            <input class="admin-form__input" type="text" id="edit-member-role" value="${escapeHtml(m.role || '')}" required>
+          </div>
+          <div class="admin-form__group">
             <label class="admin-form__label">Rang im Clan</label>
             <select class="admin-form__input admin-form__select" id="edit-member-clan-role">
               <option value="Leader" ${clanRole === 'Leader' ? 'selected' : ''}>Leader</option>
