@@ -1590,7 +1590,7 @@ img { max-width: 100%; display: block; }
 
 .top-community__grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 2.2fr) minmax(0, 1fr);
   gap: clamp(1.25rem, 3vw, 2.25rem);
   align-items: stretch;
 }
