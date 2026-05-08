@@ -35,6 +35,7 @@ const SITE_CONFIG = {
   videosApi: "/api/videos",
   newsApi: "/api/news",
   settingsApi: "/api/settings",
+  bannerImageApi: "/api/banner-image",
   communityShoutsApi: "/api/community-shouts",
   eventRegistrationsApi: "/api/event-registrations",
 
@@ -47,4 +48,5 @@ const SITE_CONFIG = {
   twitchRefreshInterval: 60000,
 };
 
+window.SITE_CONFIG = SITE_CONFIG;
 
