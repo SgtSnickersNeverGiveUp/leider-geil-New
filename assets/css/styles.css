@@ -415,7 +415,9 @@ img { max-width: 100%; display: block; }
   margin-top: var(--sp-lg);
 }
 
-.hero__stats span {
+.hero__stats a {
+  display: grid;
+  place-items: center;
   padding: .7rem .8rem;
   border: 1px solid rgba(255, 255, 255, .08);
   border-radius: var(--radius);
@@ -425,6 +427,15 @@ img { max-width: 100%; display: block; }
   font-size: .72rem;
   text-transform: uppercase;
   letter-spacing: .08em;
+  transition: border-color .2s var(--ease), color .2s var(--ease), background .2s var(--ease), transform .2s var(--ease);
+}
+
+.hero__stats a:hover,
+.hero__stats a:focus-visible {
+  border-color: rgba(15, 242, 169, .45);
+  background: rgba(15, 242, 169, .08);
+  color: var(--clr-accent-arc);
+  transform: translateY(-2px);
 }
 
 /* ── Glitch Text Effect (RGB Offset) ───────────────────── */
@@ -701,6 +712,32 @@ img { max-width: 100%; display: block; }
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: var(--sp-lg);
+}
+
+.roster-filter-status {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-md);
+  padding: .85rem 1rem;
+  border: 1px solid rgba(15, 242, 169, .22);
+  border-radius: var(--radius);
+  background: rgba(15, 242, 169, .06);
+  color: var(--clr-accent-arc);
+  font-family: var(--ff-mono);
+  font-size: .78rem;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+.roster-filter-status .btn-sm {
+  padding: .35rem .7rem;
+  border: 1px solid rgba(15, 242, 169, .4);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--clr-accent-arc);
+  cursor: pointer;
 }
 
 /* ── Roster Card – Base (Glass‑style) ───────────────────────────────────────────────── */
@@ -1290,7 +1327,7 @@ img { max-width: 100%; display: block; }
   .hero__intro-card { width: min(94%, 680px); }
   .hero__actions { gap: var(--sp-sm); }
   .hero__stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .hero__stats span { font-size: .66rem; }
+  .hero__stats a { font-size: .66rem; }
 
   .roster-grid { grid-template-columns: 1fr 1fr; }
 
