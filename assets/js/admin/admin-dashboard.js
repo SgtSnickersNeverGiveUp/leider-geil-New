@@ -1,14 +1,15 @@
 'use strict';
 
-const API_URL = '/api/applications';
-const EVENTS_API = '/api/events';
-const EVENT_IMAGE_API = '/api/event-image';
-const VIDEOS_API = '/api/videos';
-const EVT_REGISTRATIONS_API = '/api/event-registrations';
-const NEWS_API_URL = '/api/news';
-const SETTINGS_API = '/api/settings';
-const BANNER_IMAGE_API = '/api/banner-image';
-const COMMUNITY_SHOUTS_API = '/api/community-shouts';
+const DASHBOARD_ADMIN_API = window.ADMIN_API_ENDPOINTS || {};
+const API_URL = DASHBOARD_ADMIN_API.applications || '/api/applications';
+const EVENTS_API = DASHBOARD_ADMIN_API.events || '/api/events';
+const EVENT_IMAGE_API = DASHBOARD_ADMIN_API.eventImage || '/api/event-image';
+const VIDEOS_API = DASHBOARD_ADMIN_API.videos || '/api/videos';
+const EVT_REGISTRATIONS_API = DASHBOARD_ADMIN_API.eventRegistrations || '/api/event-registrations';
+const NEWS_API_URL = DASHBOARD_ADMIN_API.news || '/api/news';
+const SETTINGS_API = DASHBOARD_ADMIN_API.settings || '/api/settings';
+const BANNER_IMAGE_API = DASHBOARD_ADMIN_API.bannerImage || '/api/banner-image';
+const COMMUNITY_SHOUTS_API = DASHBOARD_ADMIN_API.communityShouts || '/api/community-shouts';
 async function loadTickerSettings() {
   try {
     const res = await fetch(SETTINGS_API);

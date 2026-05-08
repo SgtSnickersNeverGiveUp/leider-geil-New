@@ -1,4 +1,5 @@
 import { getStore } from "@netlify/blobs";
+import { requireAdmin } from "./_admin-auth.mjs";
 
 const STORE_NAME = "banner";
 const BANNER_KEY = "header-banner";
@@ -34,6 +35,9 @@ export default async (req) => {
 
   // POST – Upload a new banner image
   if (req.method === "POST") {
+    const adminError = requireAdmin(req);
+    if (adminError) return adminError;
+
     try {
       const contentType = req.headers.get("content-type") || "image/jpeg";
       const buffer = await req.arrayBuffer();

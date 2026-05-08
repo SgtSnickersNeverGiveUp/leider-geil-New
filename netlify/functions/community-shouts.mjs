@@ -1,4 +1,5 @@
 import { getStore } from "@netlify/blobs";
+import { requireAdmin } from "./_admin-auth.mjs";
 
 const STORE_NAME = "community-shouts";
 const MAX_NAME_LENGTH = 32;
@@ -37,6 +38,11 @@ export default async (req) => {
   const url = new URL(req.url);
 
   if (req.method === "GET") {
+    if (url.searchParams.get("all") === "1") {
+      const adminError = requireAdmin(req);
+      if (adminError) return adminError;
+    }
+
     try {
       const includePending = url.searchParams.get("all") === "1";
       const shouts = await listShouts(store, includePending);
@@ -80,6 +86,9 @@ export default async (req) => {
   }
 
   if (req.method === "PUT") {
+    const adminError = requireAdmin(req);
+    if (adminError) return adminError;
+
     try {
       const body = await req.json();
       const id = sanitizeText(body.id, 80);
@@ -102,6 +111,9 @@ export default async (req) => {
   }
 
   if (req.method === "DELETE") {
+    const adminError = requireAdmin(req);
+    if (adminError) return adminError;
+
     try {
       const id = sanitizeText(url.searchParams.get("id"), 80);
       if (!id) return jsonResponse({ error: "ID fehlt." }, 400);

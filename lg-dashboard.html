@@ -279,43 +279,43 @@
 <!-- PAGE CLAN NEWS -->
 <div class="admin-page" id="page-news">
   <section class="panel">
-    <div class="panelheader">
-      <h2 class="paneltitle">Clan News Ticker</h2>
-      <div class="panelactions">
+    <div class="panel__header">
+      <h2 class="panel__title">Clan News Ticker</h2>
+      <div class="panel__actions">
         <button class="btn-sm" id="btn-refresh-news">Aktualisieren</button>
         <button class="btn-sm btn-sm--accent" id="news-add">Eintrag</button>
       </div>
     </div>
 
-    <div class="panelbody">
-      <div class="admin-formsection">Ticker-Einstellungen</div>
+    <div class="panel__body">
+      <div class="admin-form__section">Ticker-Einstellungen</div>
 
-      <div class="admin-formgroup">
-        <label class="admin-formlabel" for="ticker-speed">
+      <div class="admin-form__group">
+        <label class="admin-form__label" for="ticker-speed">
           Ticker-Geschwindigkeit (Sekunden für eine Runde)
         </label>
-        <input class="admin-forminput" type="number" id="ticker-speed" min="5" max="120" step="5">
-        <div class="admin-formhint">
+        <input class="admin-form__input" type="number" id="ticker-speed" min="5" max="120" step="5">
+        <div class="admin-form__hint">
           Größere Zahl = langsamer, kleinere Zahl = schneller.
         </div>
       </div>
 
-      <div class="admin-formgroup">
-        <label class="admin-formlabel" for="ticker-separator">
+      <div class="admin-form__group">
+        <label class="admin-form__label" for="ticker-separator">
           Trenner zwischen Nachrichten
         </label>
-        <input class="admin-forminput" type="text" id="ticker-separator" placeholder="   ●   ">
-        <div class="admin-formhint">
+        <input class="admin-form__input" type="text" id="ticker-separator" placeholder="   ●   ">
+        <div class="admin-form__hint">
           Wird zwischen die Texte gesetzt, z.B. • oder |.
         </div>
       </div>
 
-      <div class="admin-formsection" style="margin-top:1.5rem;">Ticker-Einträge</div>
+      <div class="admin-form__section" style="margin-top:1.5rem;">Ticker-Einträge</div>
 
-      <div id="news-status" class="admin-formhint">Noch nicht geladen.</div>
+      <div id="news-status" class="admin-form__hint">Noch nicht geladen.</div>
       <div id="news-list" class="admin-form" style="margin-top:1rem"></div>
 
-      <button type="button" class="admin-formsubmit" id="news-save">
+      <button type="button" class="admin-form__submit" id="news-save">
         News & Ticker speichern
       </button>
     </div>
@@ -420,26 +420,26 @@
         </div>
         <div class="panel__body">
           <form class="admin-form" id="videos-form">
-  <div class="admin-formgroup">
-    <label class="admin-formlabel" for="video-title">Titel</label>
-    <input class="admin-forminput" type="text" id="video-title" placeholder="Video-Titel" required>
+  <div class="admin-form__group">
+    <label class="admin-form__label" for="video-title">Titel</label>
+    <input class="admin-form__input" type="text" id="video-title" placeholder="Video-Titel" required>
   </div>
 
-  <div class="admin-formgroup">
-    <label class="admin-formlabel" for="video-platform">Plattform</label>
-    <select class="admin-formselect" id="video-platform" required>
+  <div class="admin-form__group">
+    <label class="admin-form__label" for="video-platform">Plattform</label>
+    <select class="admin-form__select" id="video-platform" required>
       <option value="" disabled selected>Plattform wählen</option>
       <option value="youtube">YouTube</option>
       <option value="twitch">Twitch</option>
     </select>
   </div>
 
-  <div class="admin-formgroup">
-    <label class="admin-formlabel" for="video-url">Video-Link</label>
-    <input class="admin-forminput" type="url" id="video-url" placeholder="https://www.youtube.com/watch?v=... oder https://www.twitch.tv/videos/..." required>
+  <div class="admin-form__group">
+    <label class="admin-form__label" for="video-url">Video-Link</label>
+    <input class="admin-form__input" type="url" id="video-url" placeholder="https://www.youtube.com/watch?v=... oder https://www.twitch.tv/videos/..." required>
   </div>
 
-  <button type="submit" class="admin-formsubmit" id="videos-submit">Video hinzufügen</button>
+  <button type="submit" class="admin-form__submit" id="videos-submit">Video hinzufügen</button>
 </form>
         </div>
       </section>
@@ -573,8 +573,9 @@
   </div>
 </div>
 
-<script src="/assets/js/admin-roster.js"></script>
-<script src="/assets/js/admin-dashboard.js"></script>
+<script src="/assets/js/admin/admin-config.js"></script>
+<script src="/assets/js/admin/admin-roster.js"></script>
+<script src="/assets/js/admin/admin-dashboard.js"></script>
 
 </body>
 </html>

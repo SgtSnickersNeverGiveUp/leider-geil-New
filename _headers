@@ -3,3 +3,9 @@
 
 /lg-dashboard*
   Basic-Auth: clanadmin:MilfHunter
+
+/assets/js/admin/*
+  Basic-Auth: clanadmin:MilfHunter
+
+/assets/css/admin-dashboard.css
+  Basic-Auth: clanadmin:MilfHunter
