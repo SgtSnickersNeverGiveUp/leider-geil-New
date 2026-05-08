@@ -244,6 +244,27 @@ img { max-width: 100%; display: block; }
   min-height: clamp(430px, 58vh, 620px);
 }
 
+.hero--compact {
+  display: block;
+}
+
+.hero--compact .hero__panel {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 50%;
+}
+
+.hero--compact .hero__panel--arc {
+  left: auto;
+  right: 0;
+}
+
+.hero--compact .hero__overlay {
+  position: relative;
+  inset: auto;
+  min-height: clamp(430px, 58vh, 620px);
+}
+
 .hero__panel {
   position: relative;
   display: flex;
@@ -1320,6 +1341,7 @@ img { max-width: 100%; display: block; }
 @media (max-width: 1024px) {
   .hero { grid-template-columns: 1fr; min-height: 70vh; }
   .hero--compact { min-height: clamp(430px, 58vh, 620px); }
+  .hero--compact .hero__panel { width: 100%; }
   .top-community__grid { grid-template-columns: 1fr; }
   .top-community .roster-slideshow__frame { min-height: 360px; }
   .hero__panel--arc { display: none; }
