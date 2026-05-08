@@ -1,8 +1,13 @@
 'use strict';
 
-const ROSTER_API = '/api/roster';
-const ROSTER_AVATAR_API = '/api/roster-avatar';
-const ROSTER_SETTINGS_API = '/api/settings';
+const LG_ADMIN_ROSTER_SHARED = window.LGShared;
+if (!LG_ADMIN_ROSTER_SHARED) {
+  throw new Error('Shared utilities wurden nicht geladen.');
+}
+
+const ROSTER_API = LG_ADMIN_ROSTER_SHARED.API_PATHS.roster;
+const ROSTER_AVATAR_API = LG_ADMIN_ROSTER_SHARED.API_PATHS.rosterAvatar;
+const ROSTER_SETTINGS_API = LG_ADMIN_ROSTER_SHARED.API_PATHS.settings;
 
 // ══════════════════════════════════════════════════════════
 // CLAN ROSTER
@@ -84,33 +89,35 @@ function renderRosterAdmin(members) {
   }
 
   body.innerHTML = `<div class="admin-roster-grid">${members.map(m => {
-    const avatarSrc = m.avatar ? escapeHtml(m.avatar) + (m.avatar.startsWith('/api/roster-avatar') ? '&t=' + Math.floor(Date.now() / 60000) : '') : '';
+    const avatarSrc = m.avatar
+      ? LG_ADMIN_ROSTER_SHARED.escapeHtml(LG_ADMIN_ROSTER_SHARED.appendMinuteCacheBust(m.avatar, { prefixes: [ROSTER_AVATAR_API] }))
+      : '';
 
     const gamesHtml = (m.games || []).map(g => {
       const cls = g === 'PUBG' ? 'pubg' : g === 'ARC Raiders' ? 'arc' : 'other';
-      return `<span class="admin-roster-card__tag admin-roster-card__tag--${cls}">${escapeHtml(g)}</span>`;
+      return `<span class="admin-roster-card__tag admin-roster-card__tag--${cls}">${LG_ADMIN_ROSTER_SHARED.escapeHtml(g)}</span>`;
     }).join('');
 
     // Nur anzeigen, wenn clanRole vorhanden UND anders als role
     const showClanRole = m.clanRole && m.clanRole !== m.role;
     const clanRoleHtml = showClanRole
-      ? `<div class="admin-roster-card__clan-role">${escapeHtml(m.clanRole)}</div>`
+      ? `<div class="admin-roster-card__clan-role">${LG_ADMIN_ROSTER_SHARED.escapeHtml(m.clanRole)}</div>`
       : '';
 
-    const bioHtml = m.bio ? `<div class="admin-roster-card__bio">${escapeHtml(m.bio)}</div>` : '';
+    const bioHtml = m.bio ? `<div class="admin-roster-card__bio">${LG_ADMIN_ROSTER_SHARED.escapeHtml(m.bio)}</div>` : '';
     const funTagsHtml = (m.funTags || []).length > 0
-      ? `<div class="admin-roster-card__fun-tags">${m.funTags.map(t => `<span class="admin-roster-card__fun-tag">${escapeHtml(t)}</span>`).join('')}</div>`
+      ? `<div class="admin-roster-card__fun-tags">${m.funTags.map(t => `<span class="admin-roster-card__fun-tag">${LG_ADMIN_ROSTER_SHARED.escapeHtml(t)}</span>`).join('')}</div>`
       : '';
 
     return `
-    <div class="admin-roster-card" data-id="${escapeHtml(m.id)}">
-      <button class="btn-sm admin-roster-card__edit" onclick="openEditMember('${escapeHtml(m.id)}')">&#9998;</button>
-      <button class="btn-delete admin-roster-card__delete" onclick="deleteRosterMember('${escapeHtml(m.id)}')">&#10005;</button>
-      <img class="admin-roster-cardavatar" src="${avatarSrc}" alt="${escapeHtml(m.name)}" loading="lazy"
-     onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 80 80%27%3E%3Crect fill=%27%231a1a2e%27 width=%2780%27 height=%2780%27/%3E%3Ctext x=%2750%25%27 y=%2755%25%27 text-anchor=%27middle%27 fill=%27%237a7a8e%27 font-size=%2724%27%3E${escapeHtml(m.name.slice(0,2).toUpperCase())}%3C/text%3E%3C/svg%3E'">
-      <div class="admin-roster-card__name">${escapeHtml(m.name)}</div>
+    <div class="admin-roster-card" data-id="${LG_ADMIN_ROSTER_SHARED.escapeHtml(m.id)}">
+      <button class="btn-sm admin-roster-card__edit" onclick="openEditMember('${LG_ADMIN_ROSTER_SHARED.escapeHtml(m.id)}')">&#9998;</button>
+      <button class="btn-delete admin-roster-card__delete" onclick="deleteRosterMember('${LG_ADMIN_ROSTER_SHARED.escapeHtml(m.id)}')">&#10005;</button>
+      <img class="admin-roster-cardavatar" src="${avatarSrc}" alt="${LG_ADMIN_ROSTER_SHARED.escapeHtml(m.name)}" loading="lazy"
+     onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 80 80%27%3E%3Crect fill=%27%231a1a2e%27 width=%2780%27 height=%2780%27/%3E%3Ctext x=%2750%25%27 y=%2755%25%27 text-anchor=%27middle%27 fill=%27%237a7a8e%27 font-size=%2724%27%3E${LG_ADMIN_ROSTER_SHARED.escapeHtml(m.name.slice(0,2).toUpperCase())}%3C/text%3E%3C/svg%3E'">
+      <div class="admin-roster-card__name">${LG_ADMIN_ROSTER_SHARED.escapeHtml(m.name)}</div>
       <div class="admin-roster-card__role">
-  ${escapeHtml(m.clanRole || m.role || '')}
+  ${LG_ADMIN_ROSTER_SHARED.escapeHtml(m.clanRole || m.role || '')}
 </div>
       <div class="admin-roster-card__games">${gamesHtml}</div>
       ${funTagsHtml}
@@ -120,13 +127,7 @@ function renderRosterAdmin(members) {
 }
 
 function getDefaultRosterSlideshowSettings() {
-  return {
-    enabled: false,
-    autoplay: true,
-    speedSeconds: 8,
-    pinnedMemberId: '',
-    members: [],
-  };
+  return LG_ADMIN_ROSTER_SHARED.normalizeRosterSlideshowForAdmin();
 }
 
 async function loadRosterSlideshowSettings() {
@@ -142,25 +143,7 @@ async function loadRosterSlideshowSettings() {
 }
 
 function normalizeRosterSlideshowSettings(settings) {
-  const defaults = getDefaultRosterSlideshowSettings();
-  if (!settings || typeof settings !== 'object') return defaults;
-
-  const members = Array.isArray(settings.members)
-    ? settings.members
-        .filter((entry) => entry && entry.id)
-        .map((entry) => ({
-          id: String(entry.id),
-          text: String(entry.text || ''),
-        }))
-    : [];
-
-  return {
-    enabled: Boolean(settings.enabled),
-    autoplay: settings.autoplay !== false,
-    speedSeconds: Math.max(3, Number(settings.speedSeconds) || defaults.speedSeconds),
-    pinnedMemberId: settings.pinnedMemberId ? String(settings.pinnedMemberId) : '',
-    members,
-  };
+  return LG_ADMIN_ROSTER_SHARED.normalizeRosterSlideshowForAdmin(settings);
 }
 
 async function renderRosterSlideshowAdmin(members, reloadSettings = true) {
@@ -179,7 +162,7 @@ async function renderRosterSlideshowAdmin(members, reloadSettings = true) {
 
   addSelect.innerHTML = '<option value="">Member ausw&auml;hlen...</option>' + members
     .filter((member) => !selectedIds.has(member.id))
-    .map((member) => `<option value="${escapeHtml(member.id)}">${escapeHtml(member.name)}</option>`)
+    .map((member) => `<option value="${LG_ADMIN_ROSTER_SHARED.escapeHtml(member.id)}">${LG_ADMIN_ROSTER_SHARED.escapeHtml(member.name)}</option>`)
     .join('');
 
   pinnedSelect.innerHTML = '<option value="">Automatisch erster aktiver Member</option>' + settings.members
@@ -187,7 +170,7 @@ async function renderRosterSlideshowAdmin(members, reloadSettings = true) {
       const member = members.find((item) => item.id === entry.id);
       if (!member) return '';
       const selected = settings.pinnedMemberId === entry.id ? ' selected' : '';
-      return `<option value="${escapeHtml(entry.id)}"${selected}>${escapeHtml(member.name)}</option>`;
+      return `<option value="${LG_ADMIN_ROSTER_SHARED.escapeHtml(entry.id)}"${selected}>${LG_ADMIN_ROSTER_SHARED.escapeHtml(member.name)}</option>`;
     })
     .join('');
 
@@ -203,22 +186,24 @@ async function renderRosterSlideshowAdmin(members, reloadSettings = true) {
   selectedBody.innerHTML = settings.members.map((entry) => {
     const member = members.find((item) => item.id === entry.id);
     if (!member) return '';
-    const avatarSrc = member.avatar ? escapeHtml(member.avatar) : '';
+    const avatarSrc = member.avatar
+      ? LG_ADMIN_ROSTER_SHARED.escapeHtml(LG_ADMIN_ROSTER_SHARED.appendMinuteCacheBust(member.avatar, { prefixes: [ROSTER_AVATAR_API] }))
+      : '';
     return `
-      <div class="roster-slideshow-admin__item" data-slideshow-member-id="${escapeHtml(entry.id)}">
-        <img class="roster-slideshow-admin__avatar" src="${avatarSrc}" alt="${escapeHtml(member.name)}" loading="lazy"
+      <div class="roster-slideshow-admin__item" data-slideshow-member-id="${LG_ADMIN_ROSTER_SHARED.escapeHtml(entry.id)}">
+        <img class="roster-slideshow-admin__avatar" src="${avatarSrc}" alt="${LG_ADMIN_ROSTER_SHARED.escapeHtml(member.name)}" loading="lazy"
              onerror="this.style.display='none'">
         <div>
-          <div class="roster-slideshow-admin__name">${escapeHtml(member.name)}</div>
-          <div class="roster-slideshow-admin__meta">${escapeHtml(member.clanRole || member.role || 'Member')}</div>
-          <label class="admin-form__label" for="slideshow-text-${escapeHtml(entry.id)}">Diashow-Text</label>
+          <div class="roster-slideshow-admin__name">${LG_ADMIN_ROSTER_SHARED.escapeHtml(member.name)}</div>
+          <div class="roster-slideshow-admin__meta">${LG_ADMIN_ROSTER_SHARED.escapeHtml(member.clanRole || member.role || 'Member')}</div>
+          <label class="admin-form__label" for="slideshow-text-${LG_ADMIN_ROSTER_SHARED.escapeHtml(entry.id)}">Diashow-Text</label>
           <textarea class="admin-form__textarea roster-slideshow-text"
-                    id="slideshow-text-${escapeHtml(entry.id)}"
-                    data-slideshow-text="${escapeHtml(entry.id)}"
+                    id="slideshow-text-${LG_ADMIN_ROSTER_SHARED.escapeHtml(entry.id)}"
+                    data-slideshow-text="${LG_ADMIN_ROSTER_SHARED.escapeHtml(entry.id)}"
                     maxlength="180"
-                    placeholder="z.B. Alles Gute zum Geburtstag oder Willkommen im Clan!">${escapeHtml(entry.text)}</textarea>
+                    placeholder="z.B. Alles Gute zum Geburtstag oder Willkommen im Clan!">${LG_ADMIN_ROSTER_SHARED.escapeHtml(entry.text)}</textarea>
         </div>
-        <button type="button" class="btn-delete" data-slideshow-remove="${escapeHtml(entry.id)}">Entfernen</button>
+        <button type="button" class="btn-delete" data-slideshow-remove="${LG_ADMIN_ROSTER_SHARED.escapeHtml(entry.id)}">Entfernen</button>
       </div>`;
   }).join('');
 }
@@ -271,14 +256,14 @@ async function saveRosterSlideshowSettings() {
   if (status) status.textContent = '';
 
   try {
-    const rosterSlideshow = collectRosterSlideshowSettingsFromForm();
+    const rosterSlideshow = LG_ADMIN_ROSTER_SHARED.normalizeRosterSlideshowForStorage(collectRosterSlideshowSettingsFromForm());
     const res = await fetch(ROSTER_SETTINGS_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ rosterSlideshow }),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    currentRosterSlideshowSettings = rosterSlideshow;
+    currentRosterSlideshowSettings = normalizeRosterSlideshowSettings(rosterSlideshow);
     if (status) {
       status.textContent = 'Diashow gespeichert.';
       status.style.color = 'var(--clr-accent-arc)';
@@ -325,7 +310,7 @@ function openEditMember(id) {
     const defaultGames = ['PUBG', 'ARC Raiders'];
     const customGames = games.filter(g => !defaultGames.includes(g));
     const customGamesCheckboxes = customGames.map(g =>
-      `<label><input type="checkbox" name="edit-games" value="${escapeHtml(g)}" checked> ${escapeHtml(g)}</label>`
+      `<label><input type="checkbox" name="edit-games" value="${LG_ADMIN_ROSTER_SHARED.escapeHtml(g)}" checked> ${LG_ADMIN_ROSTER_SHARED.escapeHtml(g)}</label>`
     ).join('');
 
     const overlay = document.createElement('div');
@@ -335,11 +320,15 @@ function openEditMember(id) {
       <div class="edit-modal">
         <div class="edit-modal__title">Mitglied bearbeiten</div>
         <form class="admin-form" id="edit-member-form">
-          <input type="hidden" id="edit-member-id" value="${escapeHtml(m.id)}">
+          <input type="hidden" id="edit-member-id" value="${LG_ADMIN_ROSTER_SHARED.escapeHtml(m.id)}">
           <div class="admin-form__section">// Basis-Info</div>
           <div class="admin-form__group">
             <label class="admin-form__label">Name</label>
-            <input class="admin-form__input" type="text" id="edit-member-name" value="${escapeHtml(m.name)}" required>
+            <input class="admin-form__input" type="text" id="edit-member-name" value="${LG_ADMIN_ROSTER_SHARED.escapeHtml(m.name)}" required>
+          </div>
+          <div class="admin-form__group">
+            <label class="admin-form__label">Rolle / Position</label>
+            <input class="admin-form__input" type="text" id="edit-member-role" value="${LG_ADMIN_ROSTER_SHARED.escapeHtml(m.role || '')}" required>
           </div>
           <div class="admin-form__group">
             <label class="admin-form__label">Rang im Clan</label>
@@ -366,18 +355,18 @@ function openEditMember(id) {
           </div>
           <div class="admin-form__group">
             <label class="admin-form__label">Kurzbeschreibung / Bio</label>
-            <textarea class="admin-form__textarea" id="edit-member-bio" maxlength="300">${escapeHtml(bio)}</textarea>
+            <textarea class="admin-form__textarea" id="edit-member-bio" maxlength="300">${LG_ADMIN_ROSTER_SHARED.escapeHtml(bio)}</textarea>
           </div>
           <div class="admin-form__group">
             <label class="admin-form__label">Fun-Tags (kommagetrennt)</label>
-            <input class="admin-form__input" type="text" id="edit-member-fun-tags" value="${escapeHtml(funTags)}">
+            <input class="admin-form__input" type="text" id="edit-member-fun-tags" value="${LG_ADMIN_ROSTER_SHARED.escapeHtml(funTags)}">
           </div>
           <div class="admin-form__section">// Profilbild</div>
           <div class="admin-form__group">
             <label class="admin-form__label">Profilbild</label>
             <div class="admin-form__hint">Empfehlung: Quadratisch oder 4:5, ca. 500–800 px breit.</div>
             <div class="avatar-upload-area" id="edit-avatar-area" onclick="document.getElementById('edit-avatar-file').click()">
-              <img class="avatar-upload-area__preview" id="edit-avatar-preview" src="${escapeHtml(avatarSrc)}" alt="Vorschau"
+              <img class="avatar-upload-area__preview" id="edit-avatar-preview" src="${LG_ADMIN_ROSTER_SHARED.escapeHtml(avatarSrc)}" alt="Vorschau"
                    onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect fill=%27%231a1a2e%27 width=%2764%27 height=%2764%27/%3E%3Ctext x=%2750%25%27 y=%2755%25%27 text-anchor=%27middle%27 fill=%27%237a7a8e%27 font-size=%2722%27%3E%3F%3C/text%3E%3C/svg%3E'">
               <div class="avatar-upload-area__text">
                 <strong>Klicken</strong> um ein neues Bild auszuwählen
@@ -534,7 +523,7 @@ function addCustomGame(prefix) {
   const existing = [...container.querySelectorAll(`input[name="${checkboxName}"]`)].map(c => c.value.toLowerCase());
   if (existing.includes(gameName.toLowerCase())) { input.value = ''; return; }
   const label = document.createElement('label');
-  label.innerHTML = `<input type="checkbox" name="${checkboxName}" value="${escapeHtml(gameName)}" checked> ${escapeHtml(gameName)}`;
+  label.innerHTML = `<input type="checkbox" name="${checkboxName}" value="${LG_ADMIN_ROSTER_SHARED.escapeHtml(gameName)}" checked> ${LG_ADMIN_ROSTER_SHARED.escapeHtml(gameName)}`;
   container.appendChild(label);
   input.value = '';
 }

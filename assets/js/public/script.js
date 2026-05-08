@@ -4,6 +4,10 @@
 /* ── Helper: DOM‑Abfrage ───────────────────────────────────────────── */
 const $  = (sel, ctx = document) => ctx.querySelector(sel);
 const $$ = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
+const SHARED = window.LGShared;
+const PUBLIC_API = SHARED?.API_PATHS || {};
+const escapeHtml = SHARED?.escapeHtml || ((value) => String(value ?? ''));
+const appendMinuteCacheBust = SHARED?.appendMinuteCacheBust || ((url) => String(url || ''));
 
 /* ── 1. Video‑Quellen setzen ───────────────────────────────────────── */
 function initVideos() {
@@ -38,7 +42,7 @@ async function fetchTwitchStatus() {
   if (!el) return;
 
   try {
-    const res = await fetch('/api/twitch-status');
+    const res = await fetch(SITE_CONFIG.twitchStatusApi || PUBLIC_API.twitchStatus || '/api/twitch-status');
     if (!res.ok) throw new Error(`Twitch API ${res.status}`);
     const data = await res.json();
     const dot = $('#twitch-dot');
@@ -114,25 +118,25 @@ async function renderTimeline() {
       }
 
       const imgSrc = e.image
-        ? e.image + (e.image.startsWith('/api/event-image')
-            ? (e.image.includes('?') ? '&' : '?') + 't=' + Math.floor(Date.now() / 60000)
-            : '')
+        ? appendMinuteCacheBust(e.image, {
+            prefixes: [SITE_CONFIG.eventImageApi || PUBLIC_API.eventImage || '/api/event-image'],
+          })
         : '';
       const imgHtml = imgSrc
-        ? `<img class="timeline__image" src="${imgSrc}" alt="${e.title || ''}" loading="lazy" onerror="this.style.display='none'">`
+        ? `<img class="timeline__image" src="${escapeHtml(imgSrc)}" alt="${escapeHtml(e.title || '')}" loading="lazy" onerror="this.style.display='none'">`
         : '';
 
       return `
-        <div class="timeline__item" data-id="${e.id || ''}">
+        <div class="timeline__item" data-id="${escapeHtml(e.id || '')}">
           <div class="timeline__dot ${dotClass}"></div>
           <div class="timeline__card">
             ${imgHtml}
             ${dateStr ? `<time class="timeline__date">${dateStr}</time>` : ''}
-            <h3 class="timeline__title">${e.title || ''}</h3>
-            <p class="timeline__desc">${e.description || ''}</p>
+            <h3 class="timeline__title">${escapeHtml(e.title || '')}</h3>
+            <p class="timeline__desc">${escapeHtml(e.description || '')}</p>
             <div class="timeline__meta">
-              <span class="timeline__type ${typeClass}">${type}</span>
-              <span class="timeline__game">${game}</span>
+              <span class="timeline__type ${typeClass}">${escapeHtml(type)}</span>
+              <span class="timeline__game">${escapeHtml(game)}</span>
             </div>
           </div>
         </div>`;
@@ -203,9 +207,9 @@ async function renderHeaderBanner() {
     const settings = await res.json();
 
     if (settings.bannerUrl) {
-      const imgUrl = settings.bannerUrl === '/api/banner-image'
-        ? settings.bannerUrl + '?t=' + Math.floor(Date.now() / 60000)
-        : settings.bannerUrl;
+      const imgUrl = appendMinuteCacheBust(settings.bannerUrl, {
+        exact: [SITE_CONFIG.bannerImageApi || PUBLIC_API.bannerImage || '/api/banner-image'],
+      });
 
       img.src = imgUrl;
       img.onload = () => { section.style.display = ''; };
@@ -250,13 +254,13 @@ async function renderVideoGallery() {
       const platformLabel = platform === 'twitch' ? 'Twitch' : 'YouTube';
 
       return `
-        <a class="video-card" href="${targetUrl}" target="_blank" rel="noopener">
+        <a class="video-card" href="${escapeHtml(targetUrl)}" target="_blank" rel="noopener">
           <div class="video-card__thumb-wrap">
-            <img class="video-card__thumb" src="${thumb}" alt="${v.title || ''}" loading="lazy">
+            <img class="video-card__thumb" src="${escapeHtml(thumb)}" alt="${escapeHtml(v.title || '')}" loading="lazy">
             <div class="video-card__play">&#9654;</div>
             <span class="video-card__platform">${platformLabel}</span>
           </div>
-          <h3 class="video-card__title">${v.title || ''}</h3>
+          <h3 class="video-card__title">${escapeHtml(v.title || '')}</h3>
         </a>
       `;
     }).join('');

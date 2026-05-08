@@ -1,8 +1,13 @@
 (() => {
   'use strict';
 
-  const DEFAULT_SPEED_SECONDS = 8;
   const DEFAULT_AVATAR = 'assets/img/default-avatar.png';
+  const SHARED = window.LGShared;
+
+  if (!SHARED) {
+    console.error('[Roster Slideshow] Shared utilities wurden nicht geladen.');
+    return;
+  }
 
   document.addEventListener('DOMContentLoaded', initRosterSlideshow);
 
@@ -15,7 +20,7 @@
         fetchJson(SITE_CONFIG.settingsApi || '/api/settings', {}),
         fetchJson(SITE_CONFIG.rosterApi || '/api/roster', []),
       ]);
-      const config = normalizeSlideshowSettings(settings.rosterSlideshow);
+      const config = SHARED.normalizeRosterSlideshowSettings(settings.rosterSlideshow);
       if (!config.enabled || !Array.isArray(members) || members.length === 0) return;
 
       const slides = buildSlides(config, members);
@@ -31,23 +36,6 @@
     const res = await fetch(url);
     if (!res.ok) return fallback;
     return await res.json();
-  }
-
-  function normalizeSlideshowSettings(value) {
-    const settings = value && typeof value === 'object' ? value : {};
-    const entries = Array.isArray(settings.entries) ? settings.entries
-      : Array.isArray(settings.members) ? settings.members
-        : [];
-    return {
-      enabled: Boolean(settings.enabled),
-      autoplay: settings.autoplay !== false,
-      speedSeconds: Math.max(3, Number(settings.speedSeconds) || DEFAULT_SPEED_SECONDS),
-      pinnedMemberId: settings.pinnedMemberId || '',
-      entries: entries.map((entry) => ({
-        memberId: entry.memberId || entry.id,
-        text: entry.text || '',
-      })),
-    };
   }
 
   function buildSlides(config, members) {
@@ -117,17 +105,8 @@
     if (elements.text) elements.text.textContent = slide.text;
     if (elements.games) {
       elements.games.innerHTML = slide.games
-        .map((game) => `<span>${escapeHtml(game)}</span>`)
+        .map((game) => `<span>${SHARED.escapeHtml(game)}</span>`)
         .join('');
     }
-  }
-
-  function escapeHtml(value) {
-    return String(value || '')
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
   }
 })();

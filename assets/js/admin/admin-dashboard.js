@@ -1,14 +1,19 @@
 'use strict';
 
-const API_URL = '/api/applications';
-const EVENTS_API = '/api/events';
-const EVENT_IMAGE_API = '/api/event-image';
-const VIDEOS_API = '/api/videos';
-const EVT_REGISTRATIONS_API = '/api/event-registrations';
-const NEWS_API_URL = '/api/news';
-const SETTINGS_API = '/api/settings';
-const BANNER_IMAGE_API = '/api/banner-image';
-const COMMUNITY_SHOUTS_API = '/api/community-shouts';
+const LG_ADMIN_DASHBOARD_SHARED = window.LGShared;
+if (!LG_ADMIN_DASHBOARD_SHARED) {
+  throw new Error('Shared utilities wurden nicht geladen.');
+}
+
+const API_URL = LG_ADMIN_DASHBOARD_SHARED.API_PATHS.applications;
+const EVENTS_API = LG_ADMIN_DASHBOARD_SHARED.API_PATHS.events;
+const EVENT_IMAGE_API = LG_ADMIN_DASHBOARD_SHARED.API_PATHS.eventImage;
+const VIDEOS_API = LG_ADMIN_DASHBOARD_SHARED.API_PATHS.videos;
+const EVT_REGISTRATIONS_API = LG_ADMIN_DASHBOARD_SHARED.API_PATHS.eventRegistrations;
+const NEWS_API_URL = LG_ADMIN_DASHBOARD_SHARED.API_PATHS.news;
+const SETTINGS_API = LG_ADMIN_DASHBOARD_SHARED.API_PATHS.settings;
+const BANNER_IMAGE_API = LG_ADMIN_DASHBOARD_SHARED.API_PATHS.bannerImage;
+const COMMUNITY_SHOUTS_API = LG_ADMIN_DASHBOARD_SHARED.API_PATHS.communityShouts;
 async function loadTickerSettings() {
   try {
     const res = await fetch(SETTINGS_API);
@@ -67,6 +72,7 @@ navLinks.forEach(link => {
 // ══════════════════════════════════════════════════════════
 
 let currentApplications = [];
+let currentModalId = null;
 
 async function loadApplications() {
   const body = document.getElementById('applications-body');
@@ -112,24 +118,28 @@ function renderApplications() {
         </tr>
       </thead>
       <tbody>
-        ${currentApplications.map(app => `
+        ${currentApplications.map(app => {
+          const gameTag = app.hauptspiel === 'PUBG'
+            ? '<span class="tag tag--pubg">PUBG</span>'
+            : app.hauptspiel === 'ARC Raiders'
+              ? '<span class="tag tag--arc">ARC</span>'
+              : '<span class="tag tag--both">PUBG + ARC</span>';
+
+          return `
           <tr>
-            <td><strong>${app.gamingId}</strong></td>
-            <td>${app.alter}</td>
+            <td><strong>${LG_ADMIN_DASHBOARD_SHARED.escapeHtml(app.gamingId)}</strong></td>
+            <td>${LG_ADMIN_DASHBOARD_SHARED.escapeHtml(app.alter)}</td>
+            <td>${gameTag}</td>
+            <td>${LG_ADMIN_DASHBOARD_SHARED.escapeHtml(app.rolle)}</td>
+            <td class="app-about">${LG_ADMIN_DASHBOARD_SHARED.escapeHtml(truncate(app.ueberMich || '', 80))}</td>
+            <td class="app-date">${formatDate(app.createdAt)}</td>
             <td>
-              ${app.hauptspiel === 'PUBG' ? '<span class="tag tag--pubg">PUBG</span>' : 
-                app.hauptspiel === 'ARC Raiders' ? '<span class="tag tag--arc">ARC</span>' : 
-                '<span class="tag tag--both">PUBG + ARC</span>'}
+              <button class="btn-sm" onclick="showApplicationDetail('${LG_ADMIN_DASHBOARD_SHARED.escapeHtml(app.id)}')">Details</button>
+              <button class="btn-delete" onclick="deleteApplication('${LG_ADMIN_DASHBOARD_SHARED.escapeHtml(app.id)}')">Löschen</button>
             </td>
-            <td>${app.rolle}</td>
-            <td class="app-about">${app.ueberMich.substring(0,80)}${app.ueberMich.length > 80 ? '...' : ''}</td>
-            <td class="app-date">${new Date(app.createdAt).toLocaleString('de-DE')}</td>
-            <td>
-  <button class="btn-sm" onclick="alert('Details: ${app.gamingId} | ${app.ueberMich}')">Details</button>
-  <button class="btn-delete" onclick="deleteApplication('${app.id}')">Löschen</button>
-</td>
           </tr>
-        `).join('')}
+        `;
+        }).join('')}
       </tbody>
     </table>`;
 }
@@ -140,9 +150,59 @@ function updateStats() {
   document.getElementById('stat-arc').textContent = currentApplications.filter(a => a.hauptspiel === 'ARC Raiders' || a.hauptspiel === 'Beides').length;
 }
 
+function showApplicationDetail(id) {
+  const app = currentApplications.find((item) => item.id === id);
+  if (!app) return;
+  currentModalId = id;
+  currentEvtModalId = null;
+
+  document.getElementById('modal-title').textContent = `Bewerbung: ${app.gamingId}`;
+  document.getElementById('modal-body').innerHTML = `
+    <div class="modal__field">
+      <div class="modal__label">Gaming-ID</div>
+      <div class="modal__value">${LG_ADMIN_DASHBOARD_SHARED.escapeHtml(app.gamingId)}</div>
+    </div>
+    <div class="modal__field">
+      <div class="modal__label">Alter</div>
+      <div class="modal__value">${LG_ADMIN_DASHBOARD_SHARED.escapeHtml(app.alter)}</div>
+    </div>
+    <div class="modal__field">
+      <div class="modal__label">Hauptspiel</div>
+      <div class="modal__value">${LG_ADMIN_DASHBOARD_SHARED.escapeHtml(app.hauptspiel)}</div>
+    </div>
+    <div class="modal__field">
+      <div class="modal__label">Rolle</div>
+      <div class="modal__value">${LG_ADMIN_DASHBOARD_SHARED.escapeHtml(app.rolle)}</div>
+    </div>
+    <div class="modal__field">
+      <div class="modal__label">Über mich</div>
+      <div class="modal__value" style="white-space:pre-wrap;">${LG_ADMIN_DASHBOARD_SHARED.escapeHtml(app.ueberMich || '–')}</div>
+    </div>
+    <div class="modal__field">
+      <div class="modal__label">Eingegangen am</div>
+      <div class="modal__value">${formatDate(app.createdAt)}</div>
+    </div>`;
+
+  document.getElementById('modal-overlay').classList.add('active');
+}
+
+async function deleteApplication(id) {
+  if (!confirm('Bewerbung wirklich löschen?')) return;
+
+  try {
+    const res = await fetch(`${API_URL}?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    closeModal();
+    await loadApplications();
+  } catch (err) {
+    alert('Fehler beim Löschen: ' + err.message);
+  }
+}
+
 function closeModal() {
-  // Einfache Close-Funktion
   document.getElementById('modal-overlay')?.classList.remove('active');
+  currentModalId = null;
+  currentEvtModalId = null;
 }
 // ══════════════════════════════════════════════════════════
 // CLAN NEWS Ticker
@@ -360,14 +420,17 @@ function renderEventsAdmin(events) {
 
   body.innerHTML = events.map(ev => {
     const dateStr = new Date(ev.date).toLocaleDateString('de-DE', { year: 'numeric', month: 'long', day: 'numeric' });
+    const thumbSrc = ev.image
+      ? LG_ADMIN_DASHBOARD_SHARED.appendMinuteCacheBust(ev.image, { prefixes: [EVENT_IMAGE_API] })
+      : '';
     const thumbHtml = ev.image
-      ? `<img class="admin-event-thumb" src="${escapeHtml(ev.image)}${ev.image.startsWith('/api/event-image') ? (ev.image.includes('?') ? '&' : '?') + 't=' + Math.floor(Date.now() / 60000) : ''}" alt="" loading="lazy" onerror="this.style.display='none'">`
+      ? `<img class="admin-event-thumb" src="${LG_ADMIN_DASHBOARD_SHARED.escapeHtml(thumbSrc)}" alt="" loading="lazy" onerror="this.style.display='none'">`
       : '';
     return `
       <div class="admin-event-item">
         ${thumbHtml}
         <div class="admin-event-info">
-          <div class="admin-event-title">${escapeHtml(ev.title)}</div>
+          <div class="admin-event-title">${LG_ADMIN_DASHBOARD_SHARED.escapeHtml(ev.title)}</div>
           <div class="admin-event-meta">
             <span>${dateStr}</span>
             <span>${
@@ -407,7 +470,7 @@ function openEditEvent(id) {
     if (!ev) { alert('Event nicht gefunden.'); return; }
 
     const imgSrc = ev.image
-      ? escapeHtml(ev.image) + (ev.image.startsWith('/api/event-image') ? (ev.image.includes('?') ? '&' : '?') + 't=' + Math.floor(Date.now() / 60000) : '')
+      ? LG_ADMIN_DASHBOARD_SHARED.escapeHtml(LG_ADMIN_DASHBOARD_SHARED.appendMinuteCacheBust(ev.image, { prefixes: [EVENT_IMAGE_API] }))
       : "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 50'%3E%3Crect fill='%231a1a2e' width='80' height='50'/%3E%3Ctext x='50%25' y='55%25' text-anchor='middle' fill='%237a7a8e' font-size='14'%3E%3F%3C/text%3E%3C/svg%3E";
 
     const overlay = document.createElement('div');
@@ -417,14 +480,14 @@ function openEditEvent(id) {
       <div class="edit-modal">
         <div class="edit-modal__title">Event bearbeiten</div>
         <form class="admin-form" id="edit-event-form">
-          <input type="hidden" id="edit-event-id" value="${escapeHtml(ev.id)}">
+          <input type="hidden" id="edit-event-id" value="${LG_ADMIN_DASHBOARD_SHARED.escapeHtml(ev.id)}">
           <div class="admin-form__group">
             <label class="admin-form__label">Titel</label>
-            <input class="admin-form__input" type="text" id="edit-event-title" value="${escapeHtml(ev.title)}" required>
+            <input class="admin-form__input" type="text" id="edit-event-title" value="${LG_ADMIN_DASHBOARD_SHARED.escapeHtml(ev.title)}" required>
           </div>
           <div class="admin-form__group">
             <label class="admin-form__label">Datum</label>
-            <input class="admin-form__input" type="date" id="edit-event-date" value="${escapeHtml(ev.date)}" required>
+            <input class="admin-form__input" type="date" id="edit-event-date" value="${LG_ADMIN_DASHBOARD_SHARED.escapeHtml(ev.date)}" required>
           </div>
           <div class="admin-form__group">
             <label class="admin-form__label">Spiel</label>
@@ -436,7 +499,7 @@ function openEditEvent(id) {
           </div>
           <div class="admin-form__group">
             <label class="admin-form__label">Beschreibung</label>
-            <input class="admin-form__input" type="text" id="edit-event-desc" value="${escapeHtml(ev.description || '')}">
+            <input class="admin-form__input" type="text" id="edit-event-desc" value="${LG_ADMIN_DASHBOARD_SHARED.escapeHtml(ev.description || '')}">
           </div>
           <div class="admin-form__group">
             <label class="admin-form__label">Bild</label>
@@ -642,9 +705,9 @@ function renderVideosAdmin(videos) {
 
   body.innerHTML = `<div class="admin-video-grid">${videos.map(v => `
     <div class="admin-video-card">
-      <img class="admin-video-card__thumb" src="${escapeHtml(v.thumbnail)}" alt="${escapeHtml(v.title)}" loading="lazy">
+      <img class="admin-video-card__thumb" src="${LG_ADMIN_DASHBOARD_SHARED.escapeHtml(v.thumbnail)}" alt="${LG_ADMIN_DASHBOARD_SHARED.escapeHtml(v.title)}" loading="lazy">
       <div class="admin-video-card__body">
-        <span class="admin-video-card__title">${escapeHtml(v.title)}</span>
+        <span class="admin-video-card__title">${LG_ADMIN_DASHBOARD_SHARED.escapeHtml(v.title)}</span>
         <button class="btn-delete" onclick="deleteVideo('${v.id}')">&#10005;</button>
       </div>
     </div>
@@ -722,21 +785,21 @@ async function loadBannerSettings() {
 
     if (settings.bannerUrl) {
       // Add cache-buster for uploaded images
-      const imgUrl = settings.bannerUrl === '/api/banner-image'
-        ? settings.bannerUrl + '?t=' + Date.now()
-        : settings.bannerUrl;
+      const imgUrl = LG_ADMIN_DASHBOARD_SHARED.appendMinuteCacheBust(settings.bannerUrl, {
+        exact: [BANNER_IMAGE_API],
+      });
 
       body.innerHTML = `
         <div class="banner-preview-container">
           <span class="banner-preview-label">1920 &times; 600</span>
-          <img src="${escapeHtml(imgUrl)}" alt="Header Banner" onerror="this.parentElement.innerHTML='<div class=\\'empty-state\\'><div class=\\'empty-state__icon\\'>&#9888;</div><div class=\\'empty-state__text\\'>Bild konnte nicht geladen werden.</div></div>'">
+          <img src="${LG_ADMIN_DASHBOARD_SHARED.escapeHtml(imgUrl)}" alt="Header Banner" onerror="this.parentElement.innerHTML='<div class=\\'empty-state\\'><div class=\\'empty-state__icon\\'>&#9888;</div><div class=\\'empty-state__text\\'>Bild konnte nicht geladen werden.</div></div>'">
         </div>
         <p style="font-family:var(--ff-mono);font-size:.75rem;color:var(--clr-text-muted);margin-top:.75rem;">
-          Quelle: ${escapeHtml(settings.bannerUrl)}
+          Quelle: ${LG_ADMIN_DASHBOARD_SHARED.escapeHtml(settings.bannerUrl)}
         </p>`;
 
       // Pre-fill URL input if it's a URL type
-      if (settings.bannerUrl !== '/api/banner-image') {
+      if (settings.bannerUrl !== BANNER_IMAGE_API) {
         document.getElementById('banner-url').value = settings.bannerUrl;
       }
     } else {
@@ -884,7 +947,7 @@ function renderEventRegistrations() {
       <tbody>
         ${currentEventRegistrations.map(reg => `
           <tr>
-            <td><strong>${escapeHtml(reg.name)}</strong></td>
+            <td><strong>${LG_ADMIN_DASHBOARD_SHARED.escapeHtml(reg.name)}</strong></td>
 <td>${
   reg.spiel === 'PUBG'
     ? '<span class="tag tag--pubg">PUBG</span>'
@@ -892,9 +955,9 @@ function renderEventRegistrations() {
       ? '<span class="tag tag--arc">ARC Raiders</span>'
       : '<span class="tag tag--both">Mixed</span>'
 }</td>
-<td>${escapeHtml(reg.clan || '–')}</td>
-<td>${escapeHtml(reg.spielerAnzahl || '–')}</td>
-<td class="app-about">${escapeHtml(truncate(reg.bemerkungen || '', 60))}</td>
+<td>${LG_ADMIN_DASHBOARD_SHARED.escapeHtml(reg.clan || '–')}</td>
+<td>${LG_ADMIN_DASHBOARD_SHARED.escapeHtml(reg.spielerAnzahl || '–')}</td>
+<td class="app-about">${LG_ADMIN_DASHBOARD_SHARED.escapeHtml(truncate(reg.bemerkungen || '', 60))}</td>
 <td class="app-date">${formatDate(reg.createdAt)}</td>
 <td>
   <button class="btn-sm" onclick="showEvtDetail('${reg.id}')">Details</button>
@@ -923,27 +986,27 @@ function showEvtDetail(id) {
   document.getElementById('modal-body').innerHTML = `
     <div class="modal__field">
       <div class="modal__label">Name / Gaming-ID</div>
-      <div class="modal__value">${escapeHtml(reg.name)}</div>
+      <div class="modal__value">${LG_ADMIN_DASHBOARD_SHARED.escapeHtml(reg.name)}</div>
     </div>
     <div class="modal__field">
       <div class="modal__label">E-Mail</div>
-      <div class="modal__value">${escapeHtml(reg.email)}</div>
+      <div class="modal__value">${LG_ADMIN_DASHBOARD_SHARED.escapeHtml(reg.email)}</div>
     </div>
     <div class="modal__field">
       <div class="modal__label">Spiel</div>
-      <div class="modal__value">${escapeHtml(reg.spiel)}</div>
+      <div class="modal__value">${LG_ADMIN_DASHBOARD_SHARED.escapeHtml(reg.spiel)}</div>
     </div>
     <div class="modal__field">
       <div class="modal__label">Clan-Name</div>
-      <div class="modal__value">${escapeHtml(reg.clan || '–')}</div>
+      <div class="modal__value">${LG_ADMIN_DASHBOARD_SHARED.escapeHtml(reg.clan || '–')}</div>
     </div>
     <div class="modal__field">
       <div class="modal__label">Anzahl Spieler</div>
-      <div class="modal__value">${escapeHtml(reg.spielerAnzahl || '–')}</div>
+      <div class="modal__value">${LG_ADMIN_DASHBOARD_SHARED.escapeHtml(reg.spielerAnzahl || '–')}</div>
     </div>
     <div class="modal__field">
       <div class="modal__label">Bemerkungen</div>
-      <div class="modal__value" style="white-space:pre-wrap;">${escapeHtml(reg.bemerkungen || '–')}</div>
+      <div class="modal__value" style="white-space:pre-wrap;">${LG_ADMIN_DASHBOARD_SHARED.escapeHtml(reg.bemerkungen || '–')}</div>
     </div>
     <div class="modal__field">
       <div class="modal__label">Eingegangen am</div>
@@ -1016,9 +1079,9 @@ function renderCommunityShoutsAdmin() {
         ${currentCommunityShouts.map((shout) => `
           <tr>
             <td>${shout.approved ? '<span class="tag tag--arc">Live</span>' : '<span class="tag tag--pubg">Wartet</span>'}</td>
-            <td><strong>${escapeHtml(shout.name)}</strong></td>
-            <td>${escapeHtml(shout.tag || 'Community')}</td>
-            <td class="app-about">${escapeHtml(shout.message)}</td>
+            <td><strong>${LG_ADMIN_DASHBOARD_SHARED.escapeHtml(shout.name)}</strong></td>
+            <td>${LG_ADMIN_DASHBOARD_SHARED.escapeHtml(shout.tag || 'Community')}</td>
+            <td class="app-about">${LG_ADMIN_DASHBOARD_SHARED.escapeHtml(shout.message)}</td>
             <td class="app-date">${formatDate(shout.createdAt)}</td>
             <td>
               <button class="btn-sm" onclick="setCommunityShoutApproval('${shout.id}', ${!shout.approved})">
@@ -1061,12 +1124,6 @@ async function deleteCommunityShout(id) {
 // ══════════════════════════════════════════════════════════
 // HELPERS
 // ══════════════════════════════════════════════════════════
-function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
-}
-
 function truncate(str, max) {
   if (!str) return '';
   return str.length > max ? str.slice(0, max) + '\u2026' : str;

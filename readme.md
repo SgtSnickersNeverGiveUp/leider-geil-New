@@ -17,6 +17,12 @@ Willkommen bei **Clan Leider‑Geil** – deine zentrale Anlaufstelle für Gamin
 
 > **Hinweis** – Inhalte werden über die getrennten Pflegeoberflächen und API-Endpunkte verwaltet.
 
+## Code-Struktur
+
+- `assets/js/public/` enthält ausschließlich Code für öffentliche Seiten wie Startseite, Bewerbung und Event-Anmeldung.
+- `assets/js/admin/` enthält ausschließlich Dashboard-Code für `/lg-dashboard.html`.
+- `assets/js/shared/` enthält neutrale Hilfsfunktionen ohne Admin- oder Index-DOM-Abhängigkeiten.
+
 ---
 
 **Lizenz**  

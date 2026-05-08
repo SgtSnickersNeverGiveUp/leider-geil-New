@@ -2,6 +2,12 @@
   'use strict';
 
   const MAX_VISIBLE_SHOUTS = 4;
+  const SHARED = window.LGShared;
+
+  if (!SHARED) {
+    console.error('[Community Shouts] Shared utilities wurden nicht geladen.');
+    return;
+  }
 
   document.addEventListener('DOMContentLoaded', () => {
     const root = document.getElementById('community-shouts');
@@ -74,20 +80,11 @@
     list.innerHTML = shouts.map((shout) => `
       <article class="community-shout-card">
         <div class="community-shout-card__head">
-          <strong>${escapeHtml(shout.name)}</strong>
-          <span>${escapeHtml(shout.tag || 'Community')}</span>
+          <strong>${SHARED.escapeHtml(shout.name)}</strong>
+          <span>${SHARED.escapeHtml(shout.tag || 'Community')}</span>
         </div>
-        <p>${escapeHtml(shout.message)}</p>
+        <p>${SHARED.escapeHtml(shout.message)}</p>
       </article>
     `).join('');
-  }
-
-  function escapeHtml(value) {
-    return String(value || '')
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
   }
 })();

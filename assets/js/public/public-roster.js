@@ -1,6 +1,12 @@
 (() => {
   'use strict';
 
+  const SHARED = window.LGShared;
+  if (!SHARED) {
+    console.error('[Public Roster] Shared utilities wurden nicht geladen.');
+    return;
+  }
+
   let publicRosterMembers = [];
   let activeRosterFilter = '';
 
@@ -58,47 +64,37 @@
     const label = activeRosterFilter === 'pubg' ? 'PUBG Squad' : 'ARC Raiders';
     return `
       <div class="roster-filter-status">
-        <span>${escapeRosterHtml(label)}: ${count} Member</span>
+        <span>${SHARED.escapeHtml(label)}: ${count} Member</span>
         <button type="button" class="btn-sm" data-roster-filter-clear>Alle anzeigen</button>
       </div>`;
   }
 
-  function escapeRosterHtml(value) {
-    if (!value) return '';
-    return String(value)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
-  }
-
   function renderPublicRosterCard(member) {
-    const avatarSrc = member.avatar ? escapeRosterHtml(member.avatar) : 'assets/img/default-avatar.png';
+    const avatarSrc = member.avatar ? SHARED.escapeHtml(member.avatar) : 'assets/img/default-avatar.png';
     const clanRole = member.clanRole || 'Member';
     const genderLabel = getGenderLabel(member.gender);
     const genderBadge = genderLabel
       ? `<span class="badge badge--gender">${genderLabel}</span>`
       : '';
     const gamesHtml = (member.games || [])
-      .map((game) => `<span class="${getGameClass(game)}">${escapeRosterHtml(game)}</span>`)
+      .map((game) => `<span class="${getGameClass(game)}">${SHARED.escapeHtml(game)}</span>`)
       .join('');
     const funTagsHtml = (member.funTags || [])
-      .map((tag) => `<span class="roster-card-fun-tag">${escapeRosterHtml(tag)}</span>`)
+      .map((tag) => `<span class="roster-card-fun-tag">${SHARED.escapeHtml(tag)}</span>`)
       .join('');
     const bio = member.bio || '';
 
     return `
       <article class="roster-card">
         <header class="roster-card-header">
-          <img class="roster-card-avatar" src="${avatarSrc}" alt="${escapeRosterHtml(member.name)}" loading="lazy">
+          <img class="roster-card-avatar" src="${avatarSrc}" alt="${SHARED.escapeHtml(member.name)}" loading="lazy">
           <div>
             <div class="roster-card-name-row">
-              <span class="roster-card-name">${escapeRosterHtml(member.name)}</span>
-              <span class="badge badge--clan-role">${escapeRosterHtml(clanRole)}</span>
+              <span class="roster-card-name">${SHARED.escapeHtml(member.name)}</span>
+              <span class="badge badge--clan-role">${SHARED.escapeHtml(clanRole)}</span>
               ${genderBadge}
             </div>
-            <div class="roster-card-role">${escapeRosterHtml(member.role || '')}</div>
+            <div class="roster-card-role">${SHARED.escapeHtml(member.role || '')}</div>
             <div class="roster-card-games">${gamesHtml}</div>
           </div>
         </header>
@@ -109,7 +105,7 @@
 
         <div class="roster-card-more">
           ${bio
-            ? `<p class="roster-card-bio">${escapeRosterHtml(bio)}</p>`
+            ? `<p class="roster-card-bio">${SHARED.escapeHtml(bio)}</p>`
             : '<p class="roster-card-bio">Noch keine Beschreibung.</p>'}
           ${funTagsHtml
             ? `<div class="roster-card-fun-tags"><span class="roster-card-fun-label">Fun-Tags:</span>${funTagsHtml}</div>`
