@@ -1,8 +1,10 @@
 (() => {
   'use strict';
 
-  const DEFAULT_SPEED_SECONDS = 8;
   const DEFAULT_AVATAR = 'assets/img/default-avatar.png';
+  const settingsUtils = window.LG_ROSTER_SLIDESHOW_SETTINGS || {
+    normalize: () => ({ enabled: false, autoplay: true, speedSeconds: 8, pinnedMemberId: '', members: [] }),
+  };
 
   document.addEventListener('DOMContentLoaded', initRosterSlideshow);
 
@@ -15,7 +17,7 @@
         fetchJson(SITE_CONFIG.settingsApi || '/api/settings', {}),
         fetchJson(SITE_CONFIG.rosterApi || '/api/roster', []),
       ]);
-      const config = normalizeSlideshowSettings(settings.rosterSlideshow);
+      const config = settingsUtils.normalize(settings.rosterSlideshow);
       if (!config.enabled || !Array.isArray(members) || members.length === 0) return;
 
       const slides = buildSlides(config, members);
@@ -33,34 +35,17 @@
     return await res.json();
   }
 
-  function normalizeSlideshowSettings(value) {
-    const settings = value && typeof value === 'object' ? value : {};
-    const entries = Array.isArray(settings.entries) ? settings.entries
-      : Array.isArray(settings.members) ? settings.members
-        : [];
-    return {
-      enabled: Boolean(settings.enabled),
-      autoplay: settings.autoplay !== false,
-      speedSeconds: Math.max(3, Number(settings.speedSeconds) || DEFAULT_SPEED_SECONDS),
-      pinnedMemberId: settings.pinnedMemberId || '',
-      entries: entries.map((entry) => ({
-        memberId: entry.memberId || entry.id,
-        text: entry.text || '',
-      })),
-    };
-  }
-
   function buildSlides(config, members) {
     const memberById = new Map(members.map((member) => [member.id, member]));
-    const entries = config.entries
-      .filter((entry) => entry && entry.enabled !== false && memberById.has(entry.memberId));
+    const entries = config.members
+      .filter((entry) => entry && memberById.has(entry.id));
 
     if (!config.autoplay && config.pinnedMemberId) {
-      const pinnedEntry = entries.find((entry) => entry.memberId === config.pinnedMemberId);
-      return pinnedEntry ? [createSlide(memberById.get(pinnedEntry.memberId), pinnedEntry)] : [];
+      const pinnedEntry = entries.find((entry) => entry.id === config.pinnedMemberId);
+      return pinnedEntry ? [createSlide(memberById.get(pinnedEntry.id), pinnedEntry)] : [];
     }
 
-    return entries.map((entry) => createSlide(memberById.get(entry.memberId), entry));
+    return entries.map((entry) => createSlide(memberById.get(entry.id), entry));
   }
 
   function createSlide(member, entry) {

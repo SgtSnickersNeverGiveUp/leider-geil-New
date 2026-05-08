@@ -3,6 +3,21 @@
    Alle Platzhalter hier anpassen, kein Quellcode-Ändern nötig.
    ========================================================= */
 
+const API_ENDPOINTS = window.LG_API_ENDPOINTS || {
+  applications: "/api/applications",
+  bannerImage: "/api/banner-image",
+  communityShouts: "/api/community-shouts",
+  eventImage: "/api/event-image",
+  eventRegistrations: "/api/event-registrations",
+  events: "/api/events",
+  news: "/api/news",
+  roster: "/api/roster",
+  rosterAvatar: "/api/roster-avatar",
+  settings: "/api/settings",
+  twitchStatus: "/api/twitch-status",
+  videos: "/api/videos",
+};
+
 const SITE_CONFIG = {
 
   /* ── Clan-Infos ──────────────────────────────────────── */
@@ -25,18 +40,18 @@ const SITE_CONFIG = {
   twitchStatusApi: "/api/twitch-status",
 
   /* ── Bewerbungs-Endpoint ─────────────────────────────── */
-  applyEndpoint: "/api/applications",
+  applyEndpoint: API_ENDPOINTS.applications,
 
   /* ── API-Endpunkte ──────────────────────────────────── */
-  rosterApi: "/api/roster",
-  rosterAvatarApi: "/api/roster-avatar",
-  eventsApi: "/api/events",
-  eventImageApi: "/api/event-image",
-  videosApi: "/api/videos",
-  newsApi: "/api/news",
-  settingsApi: "/api/settings",
-  communityShoutsApi: "/api/community-shouts",
-  eventRegistrationsApi: "/api/event-registrations",
+  rosterApi: API_ENDPOINTS.roster,
+  rosterAvatarApi: API_ENDPOINTS.rosterAvatar,
+  eventsApi: API_ENDPOINTS.events,
+  eventImageApi: API_ENDPOINTS.eventImage,
+  videosApi: API_ENDPOINTS.videos,
+  newsApi: API_ENDPOINTS.news,
+  settingsApi: API_ENDPOINTS.settings,
+  communityShoutsApi: API_ENDPOINTS.communityShouts,
+  eventRegistrationsApi: API_ENDPOINTS.eventRegistrations,
 
   /* ── Datenpfade (Fallback) ─────────────────────────── */
   rosterPath: "assets/data/roster.json",
@@ -46,5 +61,7 @@ const SITE_CONFIG = {
   discordRefreshInterval: 60000,
   twitchRefreshInterval: 60000,
 };
+
+window.SITE_CONFIG = SITE_CONFIG;
 
 

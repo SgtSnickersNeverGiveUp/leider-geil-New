@@ -1,15 +1,20 @@
 'use strict';
 
-const ROSTER_API = '/api/roster';
-const ROSTER_AVATAR_API = '/api/roster-avatar';
-const ROSTER_SETTINGS_API = '/api/settings';
+const ADMIN_ROSTER_ENDPOINTS = window.LG_API_ENDPOINTS || {};
+const ROSTER_API = ADMIN_ROSTER_ENDPOINTS.roster || '/api/roster';
+const ROSTER_AVATAR_API = ADMIN_ROSTER_ENDPOINTS.rosterAvatar || '/api/roster-avatar';
+const ROSTER_SETTINGS_API = ADMIN_ROSTER_ENDPOINTS.settings || '/api/settings';
+const ROSTER_SLIDESHOW_SETTINGS = window.LG_ROSTER_SLIDESHOW_SETTINGS || {
+  getDefaultSettings: () => ({ enabled: false, autoplay: true, speedSeconds: 8, pinnedMemberId: '', members: [] }),
+  normalize: () => ({ enabled: false, autoplay: true, speedSeconds: 8, pinnedMemberId: '', members: [] }),
+};
 
 // ══════════════════════════════════════════════════════════
 // CLAN ROSTER
 // ══════════════════════════════════════════════════════════
 let rosterAvatarFile = null;
 let editAvatarFile = null;
-let currentRosterSlideshowSettings = getDefaultRosterSlideshowSettings();
+let currentRosterSlideshowSettings = ROSTER_SLIDESHOW_SETTINGS.getDefaultSettings();
 
 // Drag & drop support for new member form
 const rosterAvatarArea = document.getElementById('roster-avatar-area');
@@ -119,48 +124,16 @@ function renderRosterAdmin(members) {
   }).join('')}</div>`;
 }
 
-function getDefaultRosterSlideshowSettings() {
-  return {
-    enabled: false,
-    autoplay: true,
-    speedSeconds: 8,
-    pinnedMemberId: '',
-    members: [],
-  };
-}
-
 async function loadRosterSlideshowSettings() {
   try {
     const res = await fetch(ROSTER_SETTINGS_API);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const settings = await res.json();
-    currentRosterSlideshowSettings = normalizeRosterSlideshowSettings(settings.rosterSlideshow);
+    currentRosterSlideshowSettings = ROSTER_SLIDESHOW_SETTINGS.normalize(settings.rosterSlideshow);
   } catch (err) {
     console.warn('[Roster Slideshow Admin] Settings konnten nicht geladen werden:', err);
-    currentRosterSlideshowSettings = getDefaultRosterSlideshowSettings();
+    currentRosterSlideshowSettings = ROSTER_SLIDESHOW_SETTINGS.getDefaultSettings();
   }
-}
-
-function normalizeRosterSlideshowSettings(settings) {
-  const defaults = getDefaultRosterSlideshowSettings();
-  if (!settings || typeof settings !== 'object') return defaults;
-
-  const members = Array.isArray(settings.members)
-    ? settings.members
-        .filter((entry) => entry && entry.id)
-        .map((entry) => ({
-          id: String(entry.id),
-          text: String(entry.text || ''),
-        }))
-    : [];
-
-  return {
-    enabled: Boolean(settings.enabled),
-    autoplay: settings.autoplay !== false,
-    speedSeconds: Math.max(3, Number(settings.speedSeconds) || defaults.speedSeconds),
-    pinnedMemberId: settings.pinnedMemberId ? String(settings.pinnedMemberId) : '',
-    members,
-  };
 }
 
 async function renderRosterSlideshowAdmin(members, reloadSettings = true) {
@@ -340,6 +313,10 @@ function openEditMember(id) {
           <div class="admin-form__group">
             <label class="admin-form__label">Name</label>
             <input class="admin-form__input" type="text" id="edit-member-name" value="${escapeHtml(m.name)}" required>
+          </div>
+          <div class="admin-form__group">
+            <label class="admin-form__label">Rolle / Position</label>
+            <input class="admin-form__input" type="text" id="edit-member-role" value="${escapeHtml(m.role || '')}" required>
           </div>
           <div class="admin-form__group">
             <label class="admin-form__label">Rang im Clan</label>
