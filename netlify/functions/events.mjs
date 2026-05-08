@@ -1,4 +1,5 @@
 import { getStore } from "@netlify/blobs";
+import { requireAdmin } from "./_admin-auth.mjs";
 
 const STORE_NAME = "events";
 
@@ -59,6 +60,9 @@ export default async (req) => {
 
   // POST – Add new event
   if (req.method === "POST") {
+    const adminError = requireAdmin(req);
+    if (adminError) return adminError;
+
     try {
       const body = await req.json();
       const { title, date, game } = body;
@@ -124,6 +128,9 @@ export default async (req) => {
 
   // PUT – Update existing event
   if (req.method === "PUT") {
+    const adminError = requireAdmin(req);
+    if (adminError) return adminError;
+
     try {
       const body = await req.json();
       const { id } = body;
@@ -169,6 +176,9 @@ export default async (req) => {
 
   // DELETE – Remove event by id
   if (req.method === "DELETE") {
+    const adminError = requireAdmin(req);
+    if (adminError) return adminError;
+
     try {
       const url = new URL(req.url);
       const id = url.searchParams.get("id");

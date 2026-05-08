@@ -1,4 +1,5 @@
 import { getStore } from "@netlify/blobs";
+import { requireAdmin } from "./_admin-auth.mjs";
 
 const STORE_NAME = "videos";
 
@@ -8,6 +9,9 @@ export default async (req) => {
   // POST – Add new video
     // POST – Add new video
   if (req.method === "POST") {
+    const adminError = requireAdmin(req);
+    if (adminError) return adminError;
+
     try {
       const body = await req.json();
       const { url, title, platform: rawPlatform } = body;
@@ -124,6 +128,9 @@ export default async (req) => {
 
   // DELETE – Remove video by id
   if (req.method === "DELETE") {
+    const adminError = requireAdmin(req);
+    if (adminError) return adminError;
+
     try {
       const url = new URL(req.url);
       const id = url.searchParams.get("id");

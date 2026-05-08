@@ -3,6 +3,20 @@
    Alle Platzhalter hier anpassen, kein Quellcode-Ändern nötig.
    ========================================================= */
 
+const API_ENDPOINTS = window.LG_API_ENDPOINTS || {
+  applications: "/api/applications",
+  roster: "/api/roster",
+  rosterAvatar: "/api/roster-avatar",
+  events: "/api/events",
+  eventImage: "/api/event-image",
+  videos: "/api/videos",
+  news: "/api/news",
+  settings: "/api/settings",
+  communityShouts: "/api/community-shouts",
+  eventRegistrations: "/api/event-registrations",
+  twitchStatus: "/api/twitch-status",
+};
+
 const SITE_CONFIG = {
 
   /* ── Clan-Infos ──────────────────────────────────────── */
@@ -22,21 +36,21 @@ const SITE_CONFIG = {
 
   /* ── Twitch ──────────────────────────────────────────── */
   twitchChannel: "sgtsnickersnevergiveup",
-  twitchStatusApi: "/api/twitch-status",
+  twitchStatusApi: API_ENDPOINTS.twitchStatus,
 
   /* ── Bewerbungs-Endpoint ─────────────────────────────── */
-  applyEndpoint: "/api/applications",
+  applyEndpoint: API_ENDPOINTS.applications,
 
   /* ── API-Endpunkte ──────────────────────────────────── */
-  rosterApi: "/api/roster",
-  rosterAvatarApi: "/api/roster-avatar",
-  eventsApi: "/api/events",
-  eventImageApi: "/api/event-image",
-  videosApi: "/api/videos",
-  newsApi: "/api/news",
-  settingsApi: "/api/settings",
-  communityShoutsApi: "/api/community-shouts",
-  eventRegistrationsApi: "/api/event-registrations",
+  rosterApi: API_ENDPOINTS.roster,
+  rosterAvatarApi: API_ENDPOINTS.rosterAvatar,
+  eventsApi: API_ENDPOINTS.events,
+  eventImageApi: API_ENDPOINTS.eventImage,
+  videosApi: API_ENDPOINTS.videos,
+  newsApi: API_ENDPOINTS.news,
+  settingsApi: API_ENDPOINTS.settings,
+  communityShoutsApi: API_ENDPOINTS.communityShouts,
+  eventRegistrationsApi: API_ENDPOINTS.eventRegistrations,
 
   /* ── Datenpfade (Fallback) ─────────────────────────── */
   rosterPath: "assets/data/roster.json",
@@ -46,5 +60,7 @@ const SITE_CONFIG = {
   discordRefreshInterval: 60000,
   twitchRefreshInterval: 60000,
 };
+
+window.SITE_CONFIG = SITE_CONFIG;
 
 

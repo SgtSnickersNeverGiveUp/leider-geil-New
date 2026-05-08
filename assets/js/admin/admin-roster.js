@@ -1,8 +1,10 @@
 'use strict';
 
-const ROSTER_API = '/api/roster';
-const ROSTER_AVATAR_API = '/api/roster-avatar';
-const ROSTER_SETTINGS_API = '/api/settings';
+const ROSTER_ADMIN_API = window.LG_API_ENDPOINTS || {};
+const rosterSlideshowSchema = window.LGRosterSlideshowSettings;
+const ROSTER_API = ROSTER_ADMIN_API.roster || '/api/roster';
+const ROSTER_AVATAR_API = ROSTER_ADMIN_API.rosterAvatar || '/api/roster-avatar';
+const ROSTER_SETTINGS_API = ROSTER_ADMIN_API.settings || '/api/settings';
 
 // ══════════════════════════════════════════════════════════
 // CLAN ROSTER
@@ -120,13 +122,7 @@ function renderRosterAdmin(members) {
 }
 
 function getDefaultRosterSlideshowSettings() {
-  return {
-    enabled: false,
-    autoplay: true,
-    speedSeconds: 8,
-    pinnedMemberId: '',
-    members: [],
-  };
+  return rosterSlideshowSchema.toAdminModel({});
 }
 
 async function loadRosterSlideshowSettings() {
@@ -142,25 +138,7 @@ async function loadRosterSlideshowSettings() {
 }
 
 function normalizeRosterSlideshowSettings(settings) {
-  const defaults = getDefaultRosterSlideshowSettings();
-  if (!settings || typeof settings !== 'object') return defaults;
-
-  const members = Array.isArray(settings.members)
-    ? settings.members
-        .filter((entry) => entry && entry.id)
-        .map((entry) => ({
-          id: String(entry.id),
-          text: String(entry.text || ''),
-        }))
-    : [];
-
-  return {
-    enabled: Boolean(settings.enabled),
-    autoplay: settings.autoplay !== false,
-    speedSeconds: Math.max(3, Number(settings.speedSeconds) || defaults.speedSeconds),
-    pinnedMemberId: settings.pinnedMemberId ? String(settings.pinnedMemberId) : '',
-    members,
-  };
+  return rosterSlideshowSchema.toAdminModel(settings);
 }
 
 async function renderRosterSlideshowAdmin(members, reloadSettings = true) {
@@ -271,7 +249,7 @@ async function saveRosterSlideshowSettings() {
   if (status) status.textContent = '';
 
   try {
-    const rosterSlideshow = collectRosterSlideshowSettingsFromForm();
+    const rosterSlideshow = rosterSlideshowSchema.toApiPayload(collectRosterSlideshowSettingsFromForm());
     const res = await fetch(ROSTER_SETTINGS_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

@@ -1,8 +1,8 @@
 (() => {
   'use strict';
 
-  const DEFAULT_SPEED_SECONDS = 8;
   const DEFAULT_AVATAR = 'assets/img/default-avatar.png';
+  const settingsSchema = window.LGRosterSlideshowSettings;
 
   document.addEventListener('DOMContentLoaded', initRosterSlideshow);
 
@@ -15,7 +15,7 @@
         fetchJson(SITE_CONFIG.settingsApi || '/api/settings', {}),
         fetchJson(SITE_CONFIG.rosterApi || '/api/roster', []),
       ]);
-      const config = normalizeSlideshowSettings(settings.rosterSlideshow);
+      const config = settingsSchema.normalize(settings.rosterSlideshow);
       if (!config.enabled || !Array.isArray(members) || members.length === 0) return;
 
       const slides = buildSlides(config, members);
@@ -31,23 +31,6 @@
     const res = await fetch(url);
     if (!res.ok) return fallback;
     return await res.json();
-  }
-
-  function normalizeSlideshowSettings(value) {
-    const settings = value && typeof value === 'object' ? value : {};
-    const entries = Array.isArray(settings.entries) ? settings.entries
-      : Array.isArray(settings.members) ? settings.members
-        : [];
-    return {
-      enabled: Boolean(settings.enabled),
-      autoplay: settings.autoplay !== false,
-      speedSeconds: Math.max(3, Number(settings.speedSeconds) || DEFAULT_SPEED_SECONDS),
-      pinnedMemberId: settings.pinnedMemberId || '',
-      entries: entries.map((entry) => ({
-        memberId: entry.memberId || entry.id,
-        text: entry.text || '',
-      })),
-    };
   }
 
   function buildSlides(config, members) {

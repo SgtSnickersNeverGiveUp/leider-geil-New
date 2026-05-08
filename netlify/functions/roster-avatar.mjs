@@ -1,4 +1,5 @@
 import { getStore } from "@netlify/blobs";
+import { requireAdmin } from "./_admin-auth.mjs";
 
 const STORE_NAME = "roster-avatars";
 
@@ -41,6 +42,9 @@ export default async (req) => {
 
   // POST – Upload a new avatar image
   if (req.method === "POST") {
+    const adminError = requireAdmin(req);
+    if (adminError) return adminError;
+
     try {
       const contentType = req.headers.get("content-type") || "image/jpeg";
 
@@ -96,6 +100,9 @@ export default async (req) => {
 
   // DELETE – Remove avatar
   if (req.method === "DELETE") {
+    const adminError = requireAdmin(req);
+    if (adminError) return adminError;
+
     try {
       await store.delete(memberId);
       await store.delete(`${memberId}-meta`);
