@@ -87,28 +87,47 @@
     .sidebar__nav { list-style: none; display: flex; flex-direction: column; gap: .25rem; }
 
     .sidebar__link {
+      --nav-accent-rgb: 15, 242, 169;
       display: flex;
       align-items: center;
       gap: .75rem;
       padding: .7rem 1rem;
+      border: 1px solid rgba(var(--nav-accent-rgb), .2);
       border-radius: var(--radius);
+      background:
+        linear-gradient(90deg, rgba(var(--nav-accent-rgb), .1), rgba(20, 20, 28, .35));
       font-family: var(--ff-heading);
       font-size: .95rem;
       text-transform: uppercase;
       letter-spacing: .04em;
-      color: var(--clr-text-muted);
+      color: rgb(var(--nav-accent-rgb));
       transition: all .25s var(--ease);
       cursor: pointer;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .02);
     }
 
+    .sidebar__link[data-page="page-bewerbungen"] { --nav-accent-rgb: 15, 242, 169; }
+    .sidebar__link[data-page="page-roster"] { --nav-accent-rgb: 255, 156, 67; }
+    .sidebar__link[data-page="page-events"] { --nav-accent-rgb: 120, 119, 255; }
+    .sidebar__link[data-page="page-videos"] { --nav-accent-rgb: 255, 59, 130; }
+    .sidebar__link[data-page="page-news"] { --nav-accent-rgb: 255, 214, 64; }
+    .sidebar__link[data-page="page-banner"] { --nav-accent-rgb: 56, 189, 248; }
+    .sidebar__link[data-page="page-event-anmeldungen"] { --nav-accent-rgb: 168, 85, 247; }
+    .sidebar__link[data-page="page-community-shouts"] { --nav-accent-rgb: 34, 197, 94; }
+
     .sidebar__link:hover, .sidebar__link--active {
-      background: var(--clr-surface-alt);
-      color: var(--clr-text);
+      border-color: rgba(var(--nav-accent-rgb), .62);
+      background:
+        linear-gradient(90deg, rgba(var(--nav-accent-rgb), .24), rgba(26, 26, 46, .75));
+      color: #fff;
+      box-shadow:
+        inset 3px 0 0 rgb(var(--nav-accent-rgb)),
+        0 0 18px rgba(var(--nav-accent-rgb), .14);
     }
 
     .sidebar__link--active {
-      border-left: 3px solid var(--clr-accent-arc);
-      color: var(--clr-accent-arc);
+      color: rgb(var(--nav-accent-rgb));
+      text-shadow: 0 0 14px rgba(var(--nav-accent-rgb), .45);
     }
 
     .sidebar__link svg { width: 18px; height: 18px; flex-shrink: 0; }
