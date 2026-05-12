@@ -435,8 +435,8 @@ function openEditEvent(id) {
             </select>
           </div>
           <div class="admin-form__group">
-            <label class="admin-form__label">Beschreibung</label>
-            <input class="admin-form__input" type="text" id="edit-event-desc" value="${escapeHtml(ev.description || '')}">
+            <label class="admin-form__label" for="edit-event-desc">Beschreibung</label>
+            <textarea class="admin-form__textarea admin-form__textarea--event-description" id="edit-event-desc" rows="8">${escapeHtml(ev.description || '')}</textarea>
           </div>
           <div class="admin-form__group">
             <label class="admin-form__label">Bild</label>
