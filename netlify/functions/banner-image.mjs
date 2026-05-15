@@ -6,6 +6,11 @@ const BANNER_KEY = "header-banner";
 const META_KEY = "header-banner-meta";
 
 export default async (req) => {
+  if (req.method === "POST") {
+    const adminGuard = requireAdmin(req);
+    if (adminGuard) return adminGuard;
+  }
+
   const store = getStore(STORE_NAME);
 
   // GET – Serve the stored banner image
@@ -35,9 +40,6 @@ export default async (req) => {
 
   // POST – Upload a new banner image
   if (req.method === "POST") {
-    const adminGuard = requireAdmin(req);
-    if (adminGuard) return adminGuard;
-
     try {
       const contentType = req.headers.get("content-type") || "image/jpeg";
       const buffer = await req.arrayBuffer();

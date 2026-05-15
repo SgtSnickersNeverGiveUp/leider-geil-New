@@ -34,15 +34,20 @@ async function listShouts(store, includePending = false) {
 }
 
 export default async (req) => {
-  const store = getStore(STORE_NAME);
   const url = new URL(req.url);
 
-  if (req.method === "GET") {
-    if (url.searchParams.get("all") === "1") {
-      const adminGuard = requireAdmin(req);
-      if (adminGuard) return adminGuard;
-    }
+  if (
+    (req.method === "GET" && url.searchParams.get("all") === "1") ||
+    req.method === "PUT" ||
+    req.method === "DELETE"
+  ) {
+    const adminGuard = requireAdmin(req);
+    if (adminGuard) return adminGuard;
+  }
 
+  const store = getStore(STORE_NAME);
+
+  if (req.method === "GET") {
     try {
       const includePending = url.searchParams.get("all") === "1";
       const shouts = await listShouts(store, includePending);
@@ -86,9 +91,6 @@ export default async (req) => {
   }
 
   if (req.method === "PUT") {
-    const adminGuard = requireAdmin(req);
-    if (adminGuard) return adminGuard;
-
     try {
       const body = await req.json();
       const id = sanitizeText(body.id, 80);
@@ -111,9 +113,6 @@ export default async (req) => {
   }
 
   if (req.method === "DELETE") {
-    const adminGuard = requireAdmin(req);
-    if (adminGuard) return adminGuard;
-
     try {
       const id = sanitizeText(url.searchParams.get("id"), 80);
       if (!id) return jsonResponse({ error: "ID fehlt." }, 400);

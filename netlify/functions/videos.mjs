@@ -4,14 +4,16 @@ import { requireAdmin } from "./admin-auth.mjs";
 const STORE_NAME = "videos";
 
 export default async (req) => {
+  if (req.method === "POST" || req.method === "DELETE") {
+    const adminGuard = requireAdmin(req);
+    if (adminGuard) return adminGuard;
+  }
+
   const store = getStore(STORE_NAME);
 
   // POST – Add new video
     // POST – Add new video
   if (req.method === "POST") {
-    const adminGuard = requireAdmin(req);
-    if (adminGuard) return adminGuard;
-
     try {
       const body = await req.json();
       const { url, title, platform: rawPlatform } = body;
@@ -128,9 +130,6 @@ export default async (req) => {
 
   // DELETE – Remove video by id
   if (req.method === "DELETE") {
-    const adminGuard = requireAdmin(req);
-    if (adminGuard) return adminGuard;
-
     try {
       const url = new URL(req.url);
       const id = url.searchParams.get("id");

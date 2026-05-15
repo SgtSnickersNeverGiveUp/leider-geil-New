@@ -56,13 +56,15 @@ async function seedIfEmpty(store) {
 }
 
 export default async (req) => {
+  if (req.method === "POST" || req.method === "PUT" || req.method === "DELETE") {
+    const adminGuard = requireAdmin(req);
+    if (adminGuard) return adminGuard;
+  }
+
   const store = getStore(STORE_NAME);
 
   // POST – Add new event
   if (req.method === "POST") {
-    const adminGuard = requireAdmin(req);
-    if (adminGuard) return adminGuard;
-
     try {
       const body = await req.json();
       const { title, date, game } = body;
@@ -128,9 +130,6 @@ export default async (req) => {
 
   // PUT – Update existing event
   if (req.method === "PUT") {
-    const adminGuard = requireAdmin(req);
-    if (adminGuard) return adminGuard;
-
     try {
       const body = await req.json();
       const { id } = body;
@@ -176,9 +175,6 @@ export default async (req) => {
 
   // DELETE – Remove event by id
   if (req.method === "DELETE") {
-    const adminGuard = requireAdmin(req);
-    if (adminGuard) return adminGuard;
-
     try {
       const url = new URL(req.url);
       const id = url.searchParams.get("id");

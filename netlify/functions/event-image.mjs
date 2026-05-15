@@ -4,6 +4,11 @@ import { requireAdmin } from "./admin-auth.mjs";
 const STORE_NAME = "event-images";
 
 export default async (req) => {
+  if (req.method === "POST" || req.method === "DELETE") {
+    const adminGuard = requireAdmin(req);
+    if (adminGuard) return adminGuard;
+  }
+
   const store = getStore(STORE_NAME);
   const url = new URL(req.url);
   const eventId = url.searchParams.get("id");
@@ -42,9 +47,6 @@ export default async (req) => {
 
   // POST – Upload a new event image
   if (req.method === "POST") {
-    const adminGuard = requireAdmin(req);
-    if (adminGuard) return adminGuard;
-
     try {
       const contentType = req.headers.get("content-type") || "image/jpeg";
 
@@ -100,9 +102,6 @@ export default async (req) => {
 
   // DELETE – Remove event image
   if (req.method === "DELETE") {
-    const adminGuard = requireAdmin(req);
-    if (adminGuard) return adminGuard;
-
     try {
       await store.delete(eventId);
       await store.delete(`${eventId}-meta`);

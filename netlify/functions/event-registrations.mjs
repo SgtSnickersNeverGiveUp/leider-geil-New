@@ -4,6 +4,11 @@ import { requireAdmin } from "./admin-auth.mjs";
 const STORE_NAME = "event-registrations";
 
 export default async (req, context) => {
+  if (req.method === "GET" || req.method === "DELETE") {
+    const adminGuard = requireAdmin(req);
+    if (adminGuard) return adminGuard;
+  }
+
   const store = getStore(STORE_NAME);
 
   // POST – Submit new event registration
@@ -47,9 +52,6 @@ export default async (req, context) => {
 
   // GET – List all event registrations
   if (req.method === "GET") {
-    const adminGuard = requireAdmin(req);
-    if (adminGuard) return adminGuard;
-
     try {
       const { blobs } = await store.list();
       const registrations = [];
@@ -76,9 +78,6 @@ export default async (req, context) => {
 
   // DELETE – Remove event registration by id
   if (req.method === "DELETE") {
-    const adminGuard = requireAdmin(req);
-    if (adminGuard) return adminGuard;
-
     try {
       const url = new URL(req.url);
       const id = url.searchParams.get("id");

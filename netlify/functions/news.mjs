@@ -28,6 +28,11 @@ async function writeNews(store, news) {
 }
 
 export default async (req) => {
+  if (req.method === "POST") {
+    const adminGuard = requireAdmin(req);
+    if (adminGuard) return adminGuard;
+  }
+
   const store = getStore(STORE_NAME);
 
   if (req.method === "GET") {
@@ -36,9 +41,6 @@ export default async (req) => {
   }
 
   if (req.method === "POST") {
-    const adminGuard = requireAdmin(req);
-    if (adminGuard) return adminGuard;
-
     try {
       const body = await req.json();
       const news = Array.isArray(body) ? body : [];
