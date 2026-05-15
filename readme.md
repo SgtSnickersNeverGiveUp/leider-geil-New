@@ -25,6 +25,12 @@ Der Adminbereich unter `/lg-dashboard.html` ist per Login geschützt. Setze in N
 
 Optional kann `ADMIN_SESSION_SECRET` gesetzt werden, um die Session-Cookies unabhängig vom Passwort zu signieren.
 
+## Code-Trennung
+
+- Öffentlicher Index-/Seiten-Code liegt unter `assets/js/public/`.
+- Admin-Login und Dashboard-Code liegen unter `assets/js/admin/`.
+- `config.js` enthält nur öffentliche Seitenkonfiguration; Admin-Seiten laden diese Datei nicht.
+
 ---
 
 **Lizenz**  

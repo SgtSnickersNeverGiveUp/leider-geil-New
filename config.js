@@ -1,50 +1,39 @@
 /* =========================================================
-   config.js – Zentrale Konfiguration für „Leider Geil"
-   Alle Platzhalter hier anpassen, kein Quellcode-Ändern nötig.
+   Public site configuration for "Leider Geil".
+   Admin-only scripts keep their endpoints under assets/js/admin/.
    ========================================================= */
 
-const SITE_CONFIG = {
+window.SITE_CONFIG = {
+  clanName: 'Leider Geil',
+  clanTagline: 'PC-Clan - PUBG & ARC Raiders & Co.',
+  heroHeading: 'Willkommen bei Leider Geil',
 
-  /* ── Clan-Infos ──────────────────────────────────────── */
-  clanName: "Leider Geil",
-  clanTagline: "PC-Clan – PUBG & ARC Raiders & Co.",
-  heroHeading: "Willkommen bei Leider Geil",
+  videoPUBG: 'https://www.youtube.com/embed/VIDEO_ID_PUBG?autoplay=1&mute=1&loop=1&controls=0&playlist=VIDEO_ID_PUBG',
+  videoARC: 'https://www.youtube.com/embed/VIDEO_ID_ARC?autoplay=1&mute=1&loop=1&controls=0&playlist=VIDEO_ID_ARC',
 
-  /* ── Hero-Videos (Embed-URLs) ────────────────────────── */
-  videoPUBG: "https://www.youtube.com/embed/VIDEO_ID_PUBG?autoplay=1&mute=1&loop=1&controls=0&playlist=VIDEO_ID_PUBG",
-  videoARC: "https://www.youtube.com/embed/VIDEO_ID_ARC?autoplay=1&mute=1&loop=1&controls=0&playlist=VIDEO_ID_ARC",
+  discordServerId: '1123970503435100211',
+  discordInviteUrl: 'https://discord.gg/dCxDZnMXbu',
+  discordWidgetApi: 'https://discord.com/api/guilds/1123970503435100211/widget.json',
 
-  /* ── Discord ─────────────────────────────────────────── */
-  discordServerId: "1123970503435100211",
-  discordInviteUrl: "https://discord.gg/dCxDZnMXbu",
-  // Öffentliches Widget – kein Token nötig
-  discordWidgetApi: "https://discord.com/api/guilds/1123970503435100211/widget.json",
+  twitchChannel: 'sgtsnickersnevergiveup',
+  twitchStatusApi: '/api/twitch-status',
 
-  /* ── Twitch ──────────────────────────────────────────── */
-  twitchChannel: "sgtsnickersnevergiveup",
-  twitchStatusApi: "/api/twitch-status",
+  applyEndpoint: '/api/applications',
+  communityShoutsApi: '/api/community-shouts',
+  eventRegistrationsApi: '/api/event-registrations',
+  eventsApi: '/api/events',
+  newsApi: '/api/news',
+  rosterApi: '/api/roster',
+  settingsApi: '/api/settings',
+  videosApi: '/api/videos',
 
-  /* ── Bewerbungs-Endpoint ─────────────────────────────── */
-  applyEndpoint: "/api/applications",
+  rosterPath: 'assets/data/roster.json',
+  eventsPath: 'assets/data/events.json',
 
-  /* ── API-Endpunkte ──────────────────────────────────── */
-  rosterApi: "/api/roster",
-  rosterAvatarApi: "/api/roster-avatar",
-  eventsApi: "/api/events",
-  eventImageApi: "/api/event-image",
-  videosApi: "/api/videos",
-  newsApi: "/api/news",
-  settingsApi: "/api/settings",
-  communityShoutsApi: "/api/community-shouts",
-  eventRegistrationsApi: "/api/event-registrations",
-
-  /* ── Datenpfade (Fallback) ─────────────────────────── */
-  rosterPath: "assets/data/roster.json",
-  eventsPath: "assets/data/events.json",
-
-  /* ── Refresh-Intervalle (ms) ─────────────────────────── */
   discordRefreshInterval: 60000,
   twitchRefreshInterval: 60000,
 };
+
+const SITE_CONFIG = window.SITE_CONFIG;
 
 
