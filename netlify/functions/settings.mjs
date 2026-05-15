@@ -1,9 +1,15 @@
 import { getStore } from "@netlify/blobs";
+import { requireAdmin } from "./admin-auth.mjs";
 
 const STORE_NAME = "settings";
 const SETTINGS_KEY = "site-settings";
 
 export default async (req) => {
+  if (req.method === "POST") {
+    const adminGuard = requireAdmin(req);
+    if (adminGuard) return adminGuard;
+  }
+
   const store = getStore(STORE_NAME);
 
   // GET – Return current settings

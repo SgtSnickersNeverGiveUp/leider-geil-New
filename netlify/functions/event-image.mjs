@@ -1,8 +1,14 @@
 import { getStore } from "@netlify/blobs";
+import { requireAdmin } from "./admin-auth.mjs";
 
 const STORE_NAME = "event-images";
 
 export default async (req) => {
+  if (req.method === "POST" || req.method === "DELETE") {
+    const adminGuard = requireAdmin(req);
+    if (adminGuard) return adminGuard;
+  }
+
   const store = getStore(STORE_NAME);
   const url = new URL(req.url);
   const eventId = url.searchParams.get("id");

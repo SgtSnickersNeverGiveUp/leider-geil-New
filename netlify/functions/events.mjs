@@ -1,4 +1,5 @@
 import { getStore } from "@netlify/blobs";
+import { requireAdmin } from "./admin-auth.mjs";
 
 const STORE_NAME = "events";
 
@@ -55,6 +56,11 @@ async function seedIfEmpty(store) {
 }
 
 export default async (req) => {
+  if (req.method === "POST" || req.method === "PUT" || req.method === "DELETE") {
+    const adminGuard = requireAdmin(req);
+    if (adminGuard) return adminGuard;
+  }
+
   const store = getStore(STORE_NAME);
 
   // POST – Add new event

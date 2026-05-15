@@ -1,4 +1,5 @@
 import { getStore } from "@netlify/blobs";
+import { requireAdmin } from "./admin-auth.mjs";
 
 const STORE_NAME = "community-shouts";
 const MAX_NAME_LENGTH = 32;
@@ -33,8 +34,18 @@ async function listShouts(store, includePending = false) {
 }
 
 export default async (req) => {
-  const store = getStore(STORE_NAME);
   const url = new URL(req.url);
+
+  if (
+    (req.method === "GET" && url.searchParams.get("all") === "1") ||
+    req.method === "PUT" ||
+    req.method === "DELETE"
+  ) {
+    const adminGuard = requireAdmin(req);
+    if (adminGuard) return adminGuard;
+  }
+
+  const store = getStore(STORE_NAME);
 
   if (req.method === "GET") {
     try {

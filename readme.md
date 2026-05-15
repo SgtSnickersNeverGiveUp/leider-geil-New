@@ -17,6 +17,14 @@ Willkommen bei **Clan Leider‑Geil** – deine zentrale Anlaufstelle für Gamin
 
 > **Hinweis** – Inhalte werden über die getrennten Pflegeoberflächen und API-Endpunkte verwaltet.
 
+## Admin-Zugang
+
+Der Adminbereich unter `/lg-dashboard.html` ist per Login geschützt. Setze in Netlify mindestens diese Umgebungsvariable:
+
+- `ADMIN_PASSWORD` - Passwort für den Admin-Login
+
+Optional kann `ADMIN_SESSION_SECRET` gesetzt werden, um die Session-Cookies unabhängig vom Passwort zu signieren.
+
 ---
 
 **Lizenz**  

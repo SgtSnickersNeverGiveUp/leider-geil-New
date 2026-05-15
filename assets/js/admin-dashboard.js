@@ -9,6 +9,44 @@ const NEWS_API_URL = '/api/news';
 const SETTINGS_API = '/api/settings';
 const BANNER_IMAGE_API = '/api/banner-image';
 const COMMUNITY_SHOUTS_API = '/api/community-shouts';
+
+function redirectToAdminLogin() {
+  const redirect = `${window.location.pathname}${window.location.search}`;
+  window.location.assign(`/admin-login.html?redirect=${encodeURIComponent(redirect)}`);
+}
+
+async function ensureAdminSession() {
+  try {
+    const res = await fetch('/api/admin-session', { credentials: 'same-origin' });
+    if (!res.ok) {
+      redirectToAdminLogin();
+      return false;
+    }
+
+    const session = await res.json();
+    if (!session.authenticated) {
+      redirectToAdminLogin();
+      return false;
+    }
+
+    return true;
+  } catch {
+    redirectToAdminLogin();
+    return false;
+  }
+}
+
+async function logoutAdmin() {
+  try {
+    await fetch('/api/admin-logout', {
+      method: 'POST',
+      credentials: 'same-origin',
+    });
+  } finally {
+    redirectToAdminLogin();
+  }
+}
+
 async function loadTickerSettings() {
   try {
     const res = await fetch(SETTINGS_API);
@@ -1089,6 +1127,7 @@ document.getElementById('btn-refresh-videos').addEventListener('click', loadVide
 document.getElementById('btn-refresh-banner').addEventListener('click', loadBannerSettings);
 document.getElementById('btn-refresh-evt-registrations').addEventListener('click', loadEventRegistrations);
 document.getElementById('btn-refresh-community-shouts')?.addEventListener('click', loadCommunityShouts);
+document.getElementById('admin-logout')?.addEventListener('click', logoutAdmin);
 
 document.getElementById('modal-close').addEventListener('click', closeModal);
 document.getElementById('modal-close-btn').addEventListener('click', closeModal);
@@ -1115,13 +1154,15 @@ async function checkTwitchStatus() {
     </div>
   `;
   
-  // Dashboard trotzdem laden!
-  console.log('✅ Twitch umgangen – lade Bewerbungen...');
-  loadApplications();  // ← WICHTIG: Direkt Bewerbungen laden
+  console.log('Twitch Status wird aktuell im Dashboard uebersprungen.');
 }
 // ══════════════════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════════════════
-loadApplications();
-checkTwitchStatus();
-setInterval(checkTwitchStatus, 60000);
+(async function initAdminDashboard() {
+  if (!(await ensureAdminSession())) return;
+
+  loadApplications();
+  checkTwitchStatus();
+  setInterval(checkTwitchStatus, 60000);
+})();
