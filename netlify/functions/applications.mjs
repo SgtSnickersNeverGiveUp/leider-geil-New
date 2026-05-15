@@ -1,4 +1,5 @@
 import { getStore } from "@netlify/blobs";
+import { requireAdmin } from "./admin-auth.mjs";
 
 const STORE_NAME = "applications";
 
@@ -45,6 +46,9 @@ export default async (req, context) => {
 
   // GET – List all applications
   if (req.method === "GET") {
+    const adminGuard = requireAdmin(req);
+    if (adminGuard) return adminGuard;
+
     try {
       const { blobs } = await store.list();
       const applications = [];
@@ -71,6 +75,9 @@ export default async (req, context) => {
 
   // DELETE – Remove application by id
   if (req.method === "DELETE") {
+    const adminGuard = requireAdmin(req);
+    if (adminGuard) return adminGuard;
+
     try {
       const url = new URL(req.url);
       const id = url.searchParams.get("id");

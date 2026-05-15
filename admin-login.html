@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login - Leider Geil</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Rajdhani:wght@500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/assets/css/admin-dashboard.css">
+</head>
+<body class="admin-login-page">
+  <main class="admin-login-card">
+    <p class="admin-login-card__eyebrow">Leider Geil Admin</p>
+    <h1 class="admin-login-card__title">Dashboard Login</h1>
+    <p class="admin-login-card__text">Bitte gib das Admin-Passwort ein, um den gesch&uuml;tzten Bereich zu &ouml;ffnen.</p>
+
+    <form class="admin-login-form" id="admin-login-form">
+      <label class="admin-form__label" for="admin-password">Passwort</label>
+      <input class="admin-form__input" type="password" id="admin-password" autocomplete="current-password" required autofocus>
+      <button class="admin-form__submit" type="submit" id="admin-login-submit">Einloggen</button>
+    </form>
+
+    <div class="admin-login-status" id="admin-login-status" role="status" aria-live="polite"></div>
+
+    <a class="admin-login-card__back" href="/">Zur&uuml;ck zur Seite</a>
+  </main>
+
+  <script src="/assets/js/admin-login.js"></script>
+</body>
+</html>

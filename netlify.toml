@@ -7,6 +7,14 @@ redirects = []
   [functions."*"]
   node_bundler = "esbuild"
 
+[[edge_functions]]
+path = "/lg-dashboard"
+function = "admin-auth"
+
+[[edge_functions]]
+path = "/lg-dashboard.html"
+function = "admin-auth"
+
 [build]
 publish = "."
 publishOrigin = "config"

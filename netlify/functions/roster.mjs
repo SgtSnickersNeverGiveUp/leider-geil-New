@@ -1,4 +1,5 @@
 import { getStore } from "@netlify/blobs";
+import { requireAdmin } from "./admin-auth.mjs";
 
 const STORE_NAME = "roster";
 
@@ -63,6 +64,9 @@ export default async (req) => {
 
   // POST – Add new member
   if (req.method === "POST") {
+    const adminGuard = requireAdmin(req);
+    if (adminGuard) return adminGuard;
+
     try {
       const body = await req.json();
       const { name, role, avatar } = body;
@@ -127,6 +131,9 @@ export default async (req) => {
 
   // PUT – Update existing member
   if (req.method === "PUT") {
+    const adminGuard = requireAdmin(req);
+    if (adminGuard) return adminGuard;
+
     try {
       const body = await req.json();
       const { id, name, role, avatar, games, stats } = body;
@@ -174,6 +181,9 @@ export default async (req) => {
 
   // DELETE – Remove member by id
   if (req.method === "DELETE") {
+    const adminGuard = requireAdmin(req);
+    if (adminGuard) return adminGuard;
+
     try {
       const url = new URL(req.url);
       const id = url.searchParams.get("id");
