@@ -463,7 +463,6 @@ function openEditMember(id) {
       try {
         const memberId = document.getElementById('edit-member-id').value;
         const name = document.getElementById('edit-member-name').value.trim();
-        const role = document.getElementById('edit-member-role').value.trim();
         const editGames = [...document.querySelectorAll('input[name="edit-games"]:checked')].map(c => c.value);
         const editClanRole = document.getElementById('edit-member-clan-role').value;
         const editBio = document.getElementById('edit-member-bio').value.trim();
@@ -485,7 +484,7 @@ function openEditMember(id) {
         const updateRes = await fetch(ROSTER_API, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: memberId, name, role, avatar: avatarUrl, games: editGames, clanRole: editClanRole, bio: editBio, funTags: editFunTags }),
+          body: JSON.stringify({ id: memberId, name, avatar: avatarUrl, games: editGames, clanRole: editClanRole, bio: editBio, funTags: editFunTags }),
         });
         if (!updateRes.ok) {
           const data = await updateRes.json();
