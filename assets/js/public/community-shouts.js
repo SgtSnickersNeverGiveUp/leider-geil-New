@@ -2,6 +2,7 @@
   'use strict';
 
   const MAX_VISIBLE_SHOUTS = 4;
+  const config = window.SITE_CONFIG || {};
 
   document.addEventListener('DOMContentLoaded', () => {
     const root = document.getElementById('community-shouts');
@@ -14,12 +15,12 @@
     const form = document.getElementById('community-shouts-form');
     const status = document.getElementById('community-shouts-status');
     const list = document.getElementById('community-shouts-list');
-    const apiUrl = SITE_CONFIG.communityShoutsApi || '/api/community-shouts';
+    const apiUrl = config.communityShoutsApi || '/api/community-shouts';
 
     loadApprovedShouts(apiUrl, list);
 
-    form?.addEventListener('submit', async (e) => {
-      e.preventDefault();
+    form?.addEventListener('submit', async (event) => {
+      event.preventDefault();
       if (!form || !status) return;
 
       const formData = new FormData(form);
@@ -47,7 +48,7 @@
         status.textContent = 'Shout empfangen. Wartet auf Admin-Freigabe, bevor er auf der Wall erscheint.';
       } catch (err) {
         status.classList.add('community-shouts__status--error');
-        status.textContent = 'Shout konnte nicht gesendet werden. Bitte später erneut versuchen.';
+        status.textContent = 'Shout konnte nicht gesendet werden. Bitte spaeter erneut versuchen.';
       }
     });
   }

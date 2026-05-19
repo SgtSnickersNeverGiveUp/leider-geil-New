@@ -1,6 +1,6 @@
 /* =========================================================
-   config.js – Zentrale Konfiguration für „Leider Geil"
-   Alle Platzhalter hier anpassen, kein Quellcode-Ändern nötig.
+   Public-Konfiguration fuer die oeffentlichen Seiten.
+   Admin-spezifische Endpunkte stehen in assets/js/admin/config.js.
    ========================================================= */
 
 const SITE_CONFIG = {
@@ -24,18 +24,14 @@ const SITE_CONFIG = {
   twitchChannel: "sgtsnickersnevergiveup",
   twitchStatusApi: "/api/twitch-status",
 
-  /* ── Bewerbungs-Endpoint ─────────────────────────────── */
-  applyEndpoint: "/api/applications",
-
-  /* ── API-Endpunkte ──────────────────────────────────── */
+  /* ── Public API-Endpunkte ────────────────────────────── */
   rosterApi: "/api/roster",
-  rosterAvatarApi: "/api/roster-avatar",
   eventsApi: "/api/events",
-  eventImageApi: "/api/event-image",
   videosApi: "/api/videos",
   newsApi: "/api/news",
   settingsApi: "/api/settings",
   communityShoutsApi: "/api/community-shouts",
+  applicationsApi: "/api/applications",
   eventRegistrationsApi: "/api/event-registrations",
 
   /* ── Datenpfade (Fallback) ─────────────────────────── */
@@ -47,4 +43,4 @@ const SITE_CONFIG = {
   twitchRefreshInterval: 60000,
 };
 
-
+window.SITE_CONFIG = SITE_CONFIG;

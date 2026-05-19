@@ -1,14 +1,15 @@
 'use strict';
 
-const API_URL = '/api/applications';
-const EVENTS_API = '/api/events';
-const EVENT_IMAGE_API = '/api/event-image';
-const VIDEOS_API = '/api/videos';
-const EVT_REGISTRATIONS_API = '/api/event-registrations';
-const NEWS_API_URL = '/api/news';
-const SETTINGS_API = '/api/settings';
-const BANNER_IMAGE_API = '/api/banner-image';
-const COMMUNITY_SHOUTS_API = '/api/community-shouts';
+const ADMIN_API = window.LG_ADMIN_CONFIG?.api || {};
+const API_URL = ADMIN_API.applications || '/api/applications';
+const EVENTS_API = ADMIN_API.events || '/api/events';
+const EVENT_IMAGE_API = ADMIN_API.eventImage || '/api/event-image';
+const VIDEOS_API = ADMIN_API.videos || '/api/videos';
+const EVT_REGISTRATIONS_API = ADMIN_API.eventRegistrations || '/api/event-registrations';
+const NEWS_API_URL = ADMIN_API.news || '/api/news';
+const SETTINGS_API = ADMIN_API.settings || '/api/settings';
+const BANNER_IMAGE_API = ADMIN_API.bannerImage || '/api/banner-image';
+const COMMUNITY_SHOUTS_API = ADMIN_API.communityShouts || '/api/community-shouts';
 
 function redirectToAdminLogin() {
   const redirect = `${window.location.pathname}${window.location.search}`;
@@ -17,7 +18,7 @@ function redirectToAdminLogin() {
 
 async function ensureAdminSession() {
   try {
-    const res = await fetch('/api/admin-session', { credentials: 'same-origin' });
+    const res = await fetch(ADMIN_API.adminSession || '/api/admin-session', { credentials: 'same-origin' });
     if (!res.ok) {
       redirectToAdminLogin();
       return false;
@@ -38,7 +39,7 @@ async function ensureAdminSession() {
 
 async function logoutAdmin() {
   try {
-    await fetch('/api/admin-logout', {
+    await fetch(ADMIN_API.adminLogout || '/api/admin-logout', {
       method: 'POST',
       credentials: 'same-origin',
     });
@@ -105,6 +106,7 @@ navLinks.forEach(link => {
 // ══════════════════════════════════════════════════════════
 
 let currentApplications = [];
+let currentModalId = null;
 
 async function loadApplications() {
   const body = document.getElementById('applications-body');
@@ -152,24 +154,74 @@ function renderApplications() {
       <tbody>
         ${currentApplications.map(app => `
           <tr>
-            <td><strong>${app.gamingId}</strong></td>
-            <td>${app.alter}</td>
+            <td><strong>${escapeHtml(app.gamingId)}</strong></td>
+            <td>${escapeHtml(app.alter)}</td>
             <td>
               ${app.hauptspiel === 'PUBG' ? '<span class="tag tag--pubg">PUBG</span>' : 
                 app.hauptspiel === 'ARC Raiders' ? '<span class="tag tag--arc">ARC</span>' : 
                 '<span class="tag tag--both">PUBG + ARC</span>'}
             </td>
-            <td>${app.rolle}</td>
-            <td class="app-about">${app.ueberMich.substring(0,80)}${app.ueberMich.length > 80 ? '...' : ''}</td>
+            <td>${escapeHtml(app.rolle)}</td>
+            <td class="app-about">${escapeHtml(truncate(app.ueberMich || '', 80))}</td>
             <td class="app-date">${new Date(app.createdAt).toLocaleString('de-DE')}</td>
             <td>
-  <button class="btn-sm" onclick="alert('Details: ${app.gamingId} | ${app.ueberMich}')">Details</button>
+  <button class="btn-sm" onclick="showApplicationDetail('${escapeHtml(app.id)}')">Details</button>
   <button class="btn-delete" onclick="deleteApplication('${app.id}')">Löschen</button>
 </td>
           </tr>
         `).join('')}
       </tbody>
     </table>`;
+}
+
+function showApplicationDetail(id) {
+  const app = currentApplications.find((item) => item.id === id);
+  if (!app) return;
+
+  currentModalId = id;
+  currentEvtModalId = null;
+
+  document.getElementById('modal-title').textContent = `Bewerbung: ${app.gamingId}`;
+  document.getElementById('modal-body').innerHTML = `
+    <div class="modal__field">
+      <div class="modal__label">Gaming-ID</div>
+      <div class="modal__value">${escapeHtml(app.gamingId)}</div>
+    </div>
+    <div class="modal__field">
+      <div class="modal__label">Alter</div>
+      <div class="modal__value">${escapeHtml(app.alter)}</div>
+    </div>
+    <div class="modal__field">
+      <div class="modal__label">Spiel</div>
+      <div class="modal__value">${escapeHtml(app.hauptspiel)}</div>
+    </div>
+    <div class="modal__field">
+      <div class="modal__label">Rolle</div>
+      <div class="modal__value">${escapeHtml(app.rolle)}</div>
+    </div>
+    <div class="modal__field">
+      <div class="modal__label">Ueber mich</div>
+      <div class="modal__value" style="white-space:pre-wrap;">${escapeHtml(app.ueberMich || '-')}</div>
+    </div>
+    <div class="modal__field">
+      <div class="modal__label">Eingegangen am</div>
+      <div class="modal__value">${formatDate(app.createdAt)}</div>
+    </div>`;
+
+  document.getElementById('modal-overlay').classList.add('active');
+}
+
+async function deleteApplication(id) {
+  if (!confirm('Bewerbung wirklich loeschen?')) return;
+
+  try {
+    const res = await fetch(`${API_URL}?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    closeModal();
+    await loadApplications();
+  } catch (err) {
+    alert('Fehler beim Loeschen: ' + err.message);
+  }
 }
 
 function updateStats() {
@@ -179,8 +231,9 @@ function updateStats() {
 }
 
 function closeModal() {
-  // Einfache Close-Funktion
   document.getElementById('modal-overlay')?.classList.remove('active');
+  currentModalId = null;
+  currentEvtModalId = null;
 }
 // ══════════════════════════════════════════════════════════
 // CLAN NEWS Ticker

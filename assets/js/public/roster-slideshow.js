@@ -3,6 +3,7 @@
 
   const DEFAULT_SPEED_SECONDS = 8;
   const DEFAULT_AVATAR = 'assets/img/default-avatar.png';
+  const config = window.SITE_CONFIG || {};
 
   document.addEventListener('DOMContentLoaded', initRosterSlideshow);
 
@@ -12,16 +13,16 @@
 
     try {
       const [settings, members] = await Promise.all([
-        fetchJson(SITE_CONFIG.settingsApi || '/api/settings', {}),
-        fetchJson(SITE_CONFIG.rosterApi || '/api/roster', []),
+        fetchJson(config.settingsApi || '/api/settings', {}),
+        fetchJson(config.rosterApi || '/api/roster', []),
       ]);
-      const config = normalizeSlideshowSettings(settings.rosterSlideshow);
-      if (!config.enabled || !Array.isArray(members) || members.length === 0) return;
+      const slideshowConfig = normalizeSlideshowSettings(settings.rosterSlideshow);
+      if (!slideshowConfig.enabled || !Array.isArray(members) || members.length === 0) return;
 
-      const slides = buildSlides(config, members);
+      const slides = buildSlides(slideshowConfig, members);
       if (slides.length === 0) return;
 
-      startSlideshow(root, slides, config);
+      startSlideshow(root, slides, slideshowConfig);
     } catch (err) {
       console.warn('[Roster Slideshow]', err.message);
     }
@@ -38,6 +39,7 @@
     const entries = Array.isArray(settings.entries) ? settings.entries
       : Array.isArray(settings.members) ? settings.members
         : [];
+
     return {
       enabled: Boolean(settings.enabled),
       autoplay: settings.autoplay !== false,
@@ -50,13 +52,13 @@
     };
   }
 
-  function buildSlides(config, members) {
+  function buildSlides(slideshowConfig, members) {
     const memberById = new Map(members.map((member) => [member.id, member]));
-    const entries = config.entries
+    const entries = slideshowConfig.entries
       .filter((entry) => entry && entry.enabled !== false && memberById.has(entry.memberId));
 
-    if (!config.autoplay && config.pinnedMemberId) {
-      const pinnedEntry = entries.find((entry) => entry.memberId === config.pinnedMemberId);
+    if (!slideshowConfig.autoplay && slideshowConfig.pinnedMemberId) {
+      const pinnedEntry = entries.find((entry) => entry.memberId === slideshowConfig.pinnedMemberId);
       return pinnedEntry ? [createSlide(memberById.get(pinnedEntry.memberId), pinnedEntry)] : [];
     }
 
@@ -75,7 +77,7 @@
     };
   }
 
-  function startSlideshow(root, slides, config) {
+  function startSlideshow(root, slides, slideshowConfig) {
     const elements = {
       avatar: document.getElementById('roster-slideshow-avatar'),
       eyebrow: document.getElementById('roster-slideshow-eyebrow'),
@@ -83,17 +85,16 @@
       role: document.getElementById('roster-slideshow-role'),
       games: document.getElementById('roster-slideshow-games'),
       text: document.getElementById('roster-slideshow-text'),
-      progress: document.getElementById('roster-slideshow-progress'),
     };
 
     let index = 0;
-    const speedMs = config.speedSeconds * 1000;
-    const canRotate = config.autoplay && slides.length > 1;
+    const speedMs = slideshowConfig.speedSeconds * 1000;
+    const canRotate = slideshowConfig.autoplay && slides.length > 1;
 
     const showSlide = () => {
       renderSlide(elements, slides[index], canRotate ? 'Member Spotlight' : 'Fixer Spotlight');
       root.hidden = false;
-      root.style.setProperty('--roster-slideshow-speed', `${config.speedSeconds}s`);
+      root.style.setProperty('--roster-slideshow-speed', `${slideshowConfig.speedSeconds}s`);
       root.classList.toggle('is-playing', canRotate);
       root.classList.toggle('roster-slideshow--pinned', !canRotate);
       index = (index + 1) % slides.length;
