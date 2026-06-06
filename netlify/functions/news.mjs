@@ -21,14 +21,13 @@ async function readNews(store) {
 }
 
 export default async (req) => {
-  const store = getStore(STORE_NAME);
-
-  if (req.method === "GET") {
-    const news = await readNews(store);
-    return jsonResponse(news);
+  if (req.method !== "GET") {
+    return jsonResponse({ error: "Method not allowed" }, 405);
   }
 
-  return jsonResponse({ error: "Method not allowed" }, 405);
+  const store = getStore(STORE_NAME);
+  const news = await readNews(store);
+  return jsonResponse(news);
 };
 
 export const config = {

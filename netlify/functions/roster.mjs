@@ -59,36 +59,36 @@ async function seedIfEmpty(store) {
 }
 
 export default async (req) => {
+  if (req.method !== "GET") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+      status: 405,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   const store = getStore(STORE_NAME);
 
   // Public GET – List all members.
-  if (req.method === "GET") {
-    try {
-      await seedIfEmpty(store);
-      const { blobs } = await store.list();
-      const members = [];
+  try {
+    await seedIfEmpty(store);
+    const { blobs } = await store.list();
+    const members = [];
 
-      for (const blob of blobs) {
-        const data = await store.get(blob.key, { type: "json" });
-        if (data) members.push(data);
-      }
-
-      return new Response(JSON.stringify(members), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
-    } catch (err) {
-      return new Response(JSON.stringify({ error: "Fehler beim Laden." }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      });
+    for (const blob of blobs) {
+      const data = await store.get(blob.key, { type: "json" });
+      if (data) members.push(data);
     }
-  }
 
-  return new Response(JSON.stringify({ error: "Method not allowed" }), {
-    status: 405,
-    headers: { "Content-Type": "application/json" },
-  });
+    return new Response(JSON.stringify(members), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (err) {
+    return new Response(JSON.stringify({ error: "Fehler beim Laden." }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 };
 
 export const config = {

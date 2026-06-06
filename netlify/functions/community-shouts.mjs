@@ -33,6 +33,10 @@ async function listShouts(store, includePending = false) {
 }
 
 export default async (req) => {
+  if (req.method !== "GET" && req.method !== "POST") {
+    return jsonResponse({ error: "Method not allowed" }, 405);
+  }
+
   const store = getStore(STORE_NAME);
 
   if (req.method === "GET") {
@@ -76,8 +80,6 @@ export default async (req) => {
       return jsonResponse({ error: "Shout konnte nicht gespeichert werden." }, 500);
     }
   }
-
-  return jsonResponse({ error: "Method not allowed" }, 405);
 };
 
 export const config = {

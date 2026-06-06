@@ -55,39 +55,39 @@ async function seedIfEmpty(store) {
 }
 
 export default async (req) => {
+  if (req.method !== "GET") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+      status: 405,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   const store = getStore(STORE_NAME);
 
   // Public GET – List all events.
-  if (req.method === "GET") {
-    try {
-      await seedIfEmpty(store);
-      const { blobs } = await store.list();
-      const events = [];
+  try {
+    await seedIfEmpty(store);
+    const { blobs } = await store.list();
+    const events = [];
 
-      for (const blob of blobs) {
-        const data = await store.get(blob.key, { type: "json" });
-        if (data) events.push(data);
-      }
-
-      // Sort newest first
-      events.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-      return new Response(JSON.stringify(events), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
-    } catch (err) {
-      return new Response(JSON.stringify({ error: "Fehler beim Laden." }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      });
+    for (const blob of blobs) {
+      const data = await store.get(blob.key, { type: "json" });
+      if (data) events.push(data);
     }
-  }
 
-  return new Response(JSON.stringify({ error: "Method not allowed" }), {
-    status: 405,
-    headers: { "Content-Type": "application/json" },
-  });
+    // Sort newest first
+    events.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    return new Response(JSON.stringify(events), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (err) {
+    return new Response(JSON.stringify({ error: "Fehler beim Laden." }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 };
 
 export const config = {
