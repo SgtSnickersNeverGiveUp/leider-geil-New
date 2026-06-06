@@ -10,6 +10,28 @@ const SETTINGS_API = '/api/settings';
 const BANNER_IMAGE_API = '/api/banner-image';
 const COMMUNITY_SHOUTS_API = '/api/community-shouts';
 
+const EVENT_GAME_OPTIONS = [
+  'PUBG',
+  'PUBG NEWS',
+  'ARC Raiders',
+  'ARC Raiders NEWS',
+  'NEWS',
+  'Mixed',
+];
+
+function renderEventGameOptions(selectedGame) {
+  return EVENT_GAME_OPTIONS
+    .map((game) => `<option value="${escapeHtml(game)}" ${selectedGame === game ? 'selected' : ''}>${escapeHtml(game)}</option>`)
+    .join('');
+}
+
+function getEventGameVariant(game) {
+  if (game === 'PUBG' || game === 'PUBG NEWS') return 'pubg';
+  if (game === 'ARC Raiders' || game === 'ARC Raiders NEWS') return 'arc';
+  if (game === 'NEWS') return 'news';
+  return '';
+}
+
 function redirectToAdminLogin() {
   const redirect = `${window.location.pathname}${window.location.search}`;
   window.location.assign(`/admin-login.html?redirect=${encodeURIComponent(redirect)}`);
@@ -401,6 +423,9 @@ function renderEventsAdmin(events) {
     const thumbHtml = ev.image
       ? `<img class="admin-event-thumb" src="${escapeHtml(ev.image)}${ev.image.startsWith('/api/event-image') ? (ev.image.includes('?') ? '&' : '?') + 't=' + Math.floor(Date.now() / 60000) : ''}" alt="" loading="lazy" onerror="this.style.display='none'">`
       : '';
+    const game = ev.game || 'Mixed';
+    const gameVariant = getEventGameVariant(game);
+    const gameClass = gameVariant ? ` admin-event-game--${gameVariant}` : '';
     return `
       <div class="admin-event-item">
         ${thumbHtml}
@@ -408,13 +433,7 @@ function renderEventsAdmin(events) {
           <div class="admin-event-title">${escapeHtml(ev.title)}</div>
           <div class="admin-event-meta">
             <span>${dateStr}</span>
-            <span>${
-  ev.game === 'PUBG'
-    ? 'PUBG'
-    : ev.game === 'ARC Raiders'
-      ? 'ARC Raiders'
-      : 'Mixed'
-}</span>
+            <span class="admin-event-game${gameClass}">${escapeHtml(game)}</span>
 
           </div>
         </div>
@@ -467,9 +486,7 @@ function openEditEvent(id) {
           <div class="admin-form__group">
             <label class="admin-form__label">Spiel</label>
             <select class="admin-form__select" id="edit-event-game" required>
-              <option value="PUBG" ${ev.game === 'PUBG' ? 'selected' : ''}>PUBG</option>
-              <option value="ARC Raiders" ${ev.game === 'ARC Raiders' ? 'selected' : ''}>ARC Raiders</option>
-              <option value="Mixed" ${ev.game === 'Mixed' ? 'selected' : ''}>Mixed</option>
+              ${renderEventGameOptions(ev.game || 'Mixed')}
             </select>
           </div>
           <div class="admin-form__group">

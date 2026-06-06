@@ -14,6 +14,7 @@
   --clr-text-muted:   #7a7a8e;
   --clr-accent-arc:   #0FF2A9;
   --clr-accent-pubg:  #FF9C43;
+  --clr-accent-news:  #FFD640;
   --clr-danger:       #ff3b5c;
   --clr-glass:        rgba(20, 20, 28, .55);
   --clr-glass-border: rgba(255, 255, 255, .06);
@@ -37,6 +38,7 @@
   --radius-lg:  16px;
   --shadow-glow-arc:  0 0 20px rgba(15, 242, 169, .25);
   --shadow-glow-pubg: 0 0 20px rgba(255, 156, 67,  .25);
+  --shadow-glow-news: 0 0 20px rgba(255, 214, 64,  .25);
   --shadow-card:      0 8px 32px rgba(0, 0, 0, .4);
 
   /* Transition */
@@ -1010,10 +1012,18 @@ img { max-width: 100%; display: block; }
   box-shadow: var(--shadow-glow-arc);
 }
 
-.timeline__dot--pubg  { border-color: var(--clr-accent-pubg); }
+.timeline__dot--arc { border-color: var(--clr-accent-arc); }
+
+.timeline__dot--pubg { border-color: var(--clr-accent-pubg); }
 .timeline__item:hover .timeline__dot--pubg {
   background: var(--clr-accent-pubg);
   box-shadow: var(--shadow-glow-pubg);
+}
+
+.timeline__dot--news { border-color: var(--clr-accent-news); }
+.timeline__item:hover .timeline__dot--news {
+  background: var(--clr-accent-news);
+  box-shadow: var(--shadow-glow-news);
 }
 
 .timeline__card {
@@ -1027,6 +1037,14 @@ img { max-width: 100%; display: block; }
 
 .timeline__item:hover .timeline__card {
   border-color: var(--clr-accent-arc);
+}
+
+.timeline__item--pubg:hover .timeline__card {
+  border-color: var(--clr-accent-pubg);
+}
+
+.timeline__item--news:hover .timeline__card {
+  border-color: var(--clr-accent-news);
 }
 
 .timeline__date {
@@ -1082,7 +1100,31 @@ img { max-width: 100%; display: block; }
 }
 
 .timeline__game {
-  opacity: .75;
+  display: inline-block;
+  padding: 2px 8px;
+  border: 1px solid var(--clr-border);
+  border-radius: 4px;
+  color: var(--clr-text-muted);
+  opacity: .9;
+  text-transform: uppercase;
+}
+
+.timeline__game--arc {
+  background: rgba(15, 242, 169, .08);
+  border-color: rgba(15, 242, 169, .45);
+  color: var(--clr-accent-arc);
+}
+
+.timeline__game--pubg {
+  background: rgba(255, 156, 67, .08);
+  border-color: rgba(255, 156, 67, .45);
+  color: var(--clr-accent-pubg);
+}
+
+.timeline__game--news {
+  background: rgba(255, 214, 64, .08);
+  border-color: rgba(255, 214, 64, .45);
+  color: var(--clr-accent-news);
 }
 
 .timeline__image {
