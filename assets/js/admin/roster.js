@@ -1,8 +1,9 @@
 'use strict';
 
-const ROSTER_API = '/api/roster';
-const ROSTER_AVATAR_API = '/api/roster-avatar';
-const ROSTER_SETTINGS_API = '/api/settings';
+const ROSTER_ADMIN_CONFIG = window.LG_ADMIN_CONFIG || {};
+const ROSTER_API = ROSTER_ADMIN_CONFIG.rosterApi || '/api/roster';
+const ROSTER_AVATAR_API = ROSTER_ADMIN_CONFIG.rosterAvatarApi || '/api/roster-avatar';
+const ROSTER_SETTINGS_API = ROSTER_ADMIN_CONFIG.settingsApi || '/api/settings';
 
 // ══════════════════════════════════════════════════════════
 // CLAN ROSTER

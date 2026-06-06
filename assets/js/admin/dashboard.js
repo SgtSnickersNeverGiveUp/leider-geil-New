@@ -1,14 +1,15 @@
 'use strict';
 
-const API_URL = '/api/applications';
-const EVENTS_API = '/api/events';
-const EVENT_IMAGE_API = '/api/event-image';
-const VIDEOS_API = '/api/videos';
-const EVT_REGISTRATIONS_API = '/api/event-registrations';
-const NEWS_API_URL = '/api/news';
-const SETTINGS_API = '/api/settings';
-const BANNER_IMAGE_API = '/api/banner-image';
-const COMMUNITY_SHOUTS_API = '/api/community-shouts';
+const DASHBOARD_ADMIN_CONFIG = window.LG_ADMIN_CONFIG || {};
+const API_URL = DASHBOARD_ADMIN_CONFIG.applicationsApi || '/api/applications';
+const EVENTS_API = DASHBOARD_ADMIN_CONFIG.eventsApi || '/api/events';
+const EVENT_IMAGE_API = DASHBOARD_ADMIN_CONFIG.eventImageApi || '/api/event-image';
+const VIDEOS_API = DASHBOARD_ADMIN_CONFIG.videosApi || '/api/videos';
+const EVT_REGISTRATIONS_API = DASHBOARD_ADMIN_CONFIG.eventRegistrationsApi || '/api/event-registrations';
+const NEWS_API_URL = DASHBOARD_ADMIN_CONFIG.newsApi || '/api/news';
+const SETTINGS_API = DASHBOARD_ADMIN_CONFIG.settingsApi || '/api/settings';
+const BANNER_IMAGE_API = DASHBOARD_ADMIN_CONFIG.bannerImageApi || '/api/banner-image';
+const COMMUNITY_SHOUTS_API = DASHBOARD_ADMIN_CONFIG.communityShoutsApi || '/api/community-shouts';
 
 const EVENT_GAME_OPTIONS = [
   'PUBG',
@@ -34,12 +35,12 @@ function getEventGameVariant(game) {
 
 function redirectToAdminLogin() {
   const redirect = `${window.location.pathname}${window.location.search}`;
-  window.location.assign(`/admin-login.html?redirect=${encodeURIComponent(redirect)}`);
+  window.location.assign(`${DASHBOARD_ADMIN_CONFIG.loginPage || '/admin-login.html'}?redirect=${encodeURIComponent(redirect)}`);
 }
 
 async function ensureAdminSession() {
   try {
-    const res = await fetch('/api/admin-session', { credentials: 'same-origin' });
+    const res = await fetch(DASHBOARD_ADMIN_CONFIG.adminSessionApi || '/api/admin-session', { credentials: 'same-origin' });
     if (!res.ok) {
       redirectToAdminLogin();
       return false;
@@ -60,7 +61,7 @@ async function ensureAdminSession() {
 
 async function logoutAdmin() {
   try {
-    await fetch('/api/admin-logout', {
+    await fetch(DASHBOARD_ADMIN_CONFIG.adminLogoutApi || '/api/admin-logout', {
       method: 'POST',
       credentials: 'same-origin',
     });

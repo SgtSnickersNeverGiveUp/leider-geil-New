@@ -47,7 +47,7 @@
         status.textContent = 'Shout empfangen. Wartet auf Admin-Freigabe, bevor er auf der Wall erscheint.';
       } catch (err) {
         status.classList.add('community-shouts__status--error');
-        status.textContent = 'Shout konnte nicht gesendet werden. Bitte später erneut versuchen.';
+        status.textContent = 'Shout konnte nicht gesendet werden. Bitte spaeter erneut versuchen.';
       }
     });
   }

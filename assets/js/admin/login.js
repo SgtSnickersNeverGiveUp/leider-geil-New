@@ -1,13 +1,15 @@
 'use strict';
 
+const LOGIN_ADMIN_CONFIG = window.LG_ADMIN_CONFIG || {};
 const loginForm = document.getElementById('admin-login-form');
 const passwordInput = document.getElementById('admin-password');
 const submitButton = document.getElementById('admin-login-submit');
 const statusEl = document.getElementById('admin-login-status');
 
 function getRedirectTarget() {
-  const redirect = new URLSearchParams(window.location.search).get('redirect') || '/lg-dashboard.html';
-  if (!redirect.startsWith('/') || redirect.startsWith('//')) return '/lg-dashboard.html';
+  const dashboardPage = LOGIN_ADMIN_CONFIG.dashboardPage || '/lg-dashboard.html';
+  const redirect = new URLSearchParams(window.location.search).get('redirect') || dashboardPage;
+  if (!redirect.startsWith('/') || redirect.startsWith('//')) return dashboardPage;
   return redirect;
 }
 
@@ -18,7 +20,7 @@ function setStatus(message, type = 'info') {
 
 async function checkExistingSession() {
   try {
-    const res = await fetch('/api/admin-session', { credentials: 'same-origin' });
+    const res = await fetch(LOGIN_ADMIN_CONFIG.adminSessionApi || '/api/admin-session', { credentials: 'same-origin' });
     if (!res.ok) return;
 
     const session = await res.json();
@@ -44,7 +46,7 @@ loginForm.addEventListener('submit', async (event) => {
   setStatus('Login wird geprueft...');
 
   try {
-    const res = await fetch('/api/admin-login', {
+    const res = await fetch(LOGIN_ADMIN_CONFIG.adminLoginApi || '/api/admin-login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'same-origin',

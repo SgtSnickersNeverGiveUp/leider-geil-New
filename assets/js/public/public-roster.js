@@ -34,7 +34,7 @@
     const status = activeRosterFilter ? renderRosterFilterStatus(members.length) : '';
 
     if (members.length === 0) {
-      container.innerHTML = `${status}<div class="empty-state">Keine Mitglieder für diesen Filter gefunden.</div>`;
+      container.innerHTML = `${status}<div class="empty-state">Keine Mitglieder fuer diesen Filter gefunden.</div>`;
       return;
     }
 

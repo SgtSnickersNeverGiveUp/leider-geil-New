@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   Promise.all([
     fetch(settingsApi).then((r) => r.json()),
-    fetch(newsApi).then((r) => r.json())
+    fetch(newsApi).then((r) => r.json()),
   ])
     .then(([settings, items]) => {
       if (!Array.isArray(items) || items.length === 0) return;
