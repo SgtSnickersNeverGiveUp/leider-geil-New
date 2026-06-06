@@ -5,6 +5,13 @@
 const $  = (sel, ctx = document) => ctx.querySelector(sel);
 const $$ = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
 
+function getTimelineGameVariant(game) {
+  if (game === 'PUBG' || game === 'PUBG NEWS') return 'pubg';
+  if (game === 'ARC Raiders' || game === 'ARC Raiders NEWS') return 'arc';
+  if (game === 'NEWS') return 'news';
+  return '';
+}
+
 /* ── 1. Video‑Quellen setzen ───────────────────────────────────────── */
 function initVideos() {
   const pubgFrame = $('#video-pubg');
@@ -94,10 +101,11 @@ async function renderTimeline() {
     wrap.innerHTML = events.map(e => {
       const game = e.game || 'Mixed';
       const type = e.type || 'event';
+      const gameVariant = getTimelineGameVariant(game);
 
-      const dotClass = game === 'PUBG' ? 'timeline__dot--pubg'
-        : game === 'ARC Raiders' ? 'timeline__dot--arc'
-        : '';
+      const itemClass = gameVariant ? `timeline__item--${gameVariant}` : '';
+      const dotClass = gameVariant ? `timeline__dot--${gameVariant}` : '';
+      const gameClass = gameVariant ? `timeline__game--${gameVariant}` : '';
 
       const typeClass = type === 'match' ? 'timeline__type--match' : 'timeline__type--event';
 
@@ -123,7 +131,7 @@ async function renderTimeline() {
         : '';
 
       return `
-        <div class="timeline__item" data-id="${e.id || ''}">
+        <div class="timeline__item ${itemClass}" data-id="${e.id || ''}">
           <div class="timeline__dot ${dotClass}"></div>
           <div class="timeline__card">
             ${imgHtml}
@@ -132,7 +140,7 @@ async function renderTimeline() {
             <p class="timeline__desc">${e.description || ''}</p>
             <div class="timeline__meta">
               <span class="timeline__type ${typeClass}">${type}</span>
-              <span class="timeline__game">${game}</span>
+              <span class="timeline__game ${gameClass}">${game}</span>
             </div>
           </div>
         </div>`;
