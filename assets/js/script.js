@@ -401,7 +401,7 @@ function initRecruitFormDiscord() {
   });
 }
 
-/* ── 14. Event‑Anmeldungen über Discord (Netlify Form + Webhook) ──────── */
+/* ── 14. Event‑Anmeldungen speichern + Discord/Netlify Nebenwege ──────── */
 function initEventSignupDiscord() {
   const eventForm = document.getElementById("event-form");
   if (!eventForm) return;
@@ -410,6 +410,8 @@ function initEventSignupDiscord() {
     e.preventDefault();
 
     const formData = new FormData(eventForm);
+    const submitBtn = eventForm.querySelector('button[type="submit"]');
+    const status = document.getElementById("event-form-success");
 
     const name        = formData.get("name-gaming-id");
     const email       = formData.get("email");
@@ -418,17 +420,46 @@ function initEventSignupDiscord() {
     const anzahl      = formData.get("anzahl-spieler");
     const bemerkungen = formData.get("bemerkungen");
 
-    /* Netlify‑Form normal abschicken */
-    await fetch("/", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams(formData).toString(),
-    });
+    if (status) status.style.display = "none";
+    if (submitBtn) submitBtn.disabled = true;
 
-    /* Discord‑Webhook für Event‑Anmeldungen */
-    if (typeof DISCORD_WEBHOOK_EVENT === "string" && DISCORD_WEBHOOK_EVENT) {
-      try {
-        await fetch(DISCORD_WEBHOOK_EVENT, {
+    try {
+      const apiRes = await fetch(SITE_CONFIG.eventRegistrationsApi || "/api/event-registrations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          email,
+          spiel,
+          clan,
+          spielerAnzahl: anzahl,
+          bemerkungen,
+        }),
+      });
+
+      if (!apiRes.ok) {
+        let message = `HTTP ${apiRes.status}`;
+        try {
+          const data = await apiRes.json();
+          if (data.error) message = data.error;
+        } catch {
+          // Keep the HTTP status if the server did not return JSON.
+        }
+        throw new Error(message);
+      }
+
+      /* Netlify‑Form weiterhin abschicken, damit bestehende Form-Workflows erhalten bleiben. */
+      fetch("/", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams(formData).toString(),
+      }).catch((err) => {
+        console.error("Netlify Form (Event) Fehler:", err);
+      });
+
+      /* Discord‑Webhook für Event‑Anmeldungen */
+      if (typeof DISCORD_WEBHOOK_EVENT === "string" && DISCORD_WEBHOOK_EVENT) {
+        fetch(DISCORD_WEBHOOK_EVENT, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -441,14 +472,18 @@ function initEventSignupDiscord() {
               `Anzahl Spieler: ${anzahl}\n` +
               `Bemerkungen: ${bemerkungen || "-"}`,
           }),
+        }).catch((err) => {
+          console.error("Discord Webhook (Event) Fehler:", err);
         });
-      } catch (err) {
-        console.error("Discord Webhook (Event) Fehler:", err);
       }
-    }
 
-    eventForm.reset();
-    const status = document.getElementById("event-form-success");
-    if (status) status.style.display = "block";
+      eventForm.reset();
+      if (status) status.style.display = "block";
+    } catch (err) {
+      console.error("Event-Anmeldung speichern fehlgeschlagen:", err);
+      alert("Anmeldung konnte nicht gespeichert werden. Bitte versuche es später erneut.");
+    } finally {
+      if (submitBtn) submitBtn.disabled = false;
+    }
   });
 }
