@@ -1,54 +1,37 @@
 import { getStore } from "@netlify/blobs";
-import { requireAdmin } from "./admin-auth.mjs";
 
 const STORE_NAME = "settings";
 const SETTINGS_KEY = "site-settings";
+const PUBLIC_SETTING_KEYS = [
+  "bannerUrl",
+  "tickerSpeedSeconds",
+  "tickerSeparator",
+  "rosterSlideshow",
+];
+
+function pickPublicSettings(settings) {
+  return PUBLIC_SETTING_KEYS.reduce((publicSettings, key) => {
+    if (settings && Object.prototype.hasOwnProperty.call(settings, key)) {
+      publicSettings[key] = settings[key];
+    }
+    return publicSettings;
+  }, {});
+}
 
 export default async (req) => {
-  if (req.method === "POST") {
-    const adminGuard = requireAdmin(req);
-    if (adminGuard) return adminGuard;
-  }
-
   const store = getStore(STORE_NAME);
 
-  // GET – Return current settings
+  // Public GET – Return only settings used by public pages.
   if (req.method === "GET") {
     try {
       const settings = await store.get(SETTINGS_KEY, { type: "json" });
-      return new Response(JSON.stringify(settings || {}), {
+      return new Response(JSON.stringify(pickPublicSettings(settings || {})), {
         status: 200,
         headers: { "Content-Type": "application/json" },
       });
     } catch (err) {
       return new Response(JSON.stringify({}), {
         status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-  }
-
-  // POST – Save settings
-  if (req.method === "POST") {
-    try {
-      const body = await req.json();
-
-      // Merge with existing settings
-      let existing = {};
-      try {
-        existing = (await store.get(SETTINGS_KEY, { type: "json" })) || {};
-      } catch {}
-
-      const updated = { ...existing, ...body, updatedAt: new Date().toISOString() };
-      await store.setJSON(SETTINGS_KEY, updated);
-
-      return new Response(JSON.stringify({ success: true, settings: updated }), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
-    } catch (err) {
-      return new Response(JSON.stringify({ error: "Fehler beim Speichern." }), {
-        status: 500,
         headers: { "Content-Type": "application/json" },
       });
     }

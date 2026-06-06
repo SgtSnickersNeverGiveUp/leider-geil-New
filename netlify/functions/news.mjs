@@ -1,5 +1,4 @@
 import { getStore } from "@netlify/blobs";
-import { requireAdmin } from "./admin-auth.mjs";
 
 const STORE_NAME = "clan-news";
 const NEWS_KEY = "news.json";
@@ -21,35 +20,12 @@ async function readNews(store) {
   }
 }
 
-async function writeNews(store, news) {
-  await store.setJSON(NEWS_KEY, news, {
-    metadata: { type: "clan-news" },
-  });
-}
-
 export default async (req) => {
-  if (req.method === "POST") {
-    const adminGuard = requireAdmin(req);
-    if (adminGuard) return adminGuard;
-  }
-
   const store = getStore(STORE_NAME);
 
   if (req.method === "GET") {
     const news = await readNews(store);
     return jsonResponse(news);
-  }
-
-  if (req.method === "POST") {
-    try {
-      const body = await req.json();
-      const news = Array.isArray(body) ? body : [];
-      await writeNews(store, news);
-      return jsonResponse({ ok: true, count: news.length });
-    } catch (err) {
-      console.error("[News] save failed", err);
-      return jsonResponse({ error: "Invalid JSON" }, 400);
-    }
   }
 
   return jsonResponse({ error: "Method not allowed" }, 405);

@@ -17,6 +17,12 @@ Willkommen bei **Clan Leider‑Geil** – deine zentrale Anlaufstelle für Gamin
 
 > **Hinweis** – Inhalte werden über die getrennten Pflegeoberflächen und API-Endpunkte verwaltet.
 
+## API-Trennung
+
+- Öffentliche Seiten verwenden nur Public-Endpunkte wie `/api/roster`, `/api/events`, `/api/settings`, `/api/applications` und `/api/event-registrations`.
+- Schreibende Pflege- und Moderationsfunktionen liegen getrennt unter `/api/admin/...` und sind durch den Admin-Login geschützt.
+- Medien-Uploads laufen über Admin-Endpunkte; die gespeicherten Bild-URLs bleiben öffentliche GET-Ressourcen wie `/api/event-image` oder `/api/roster-avatar`.
+
 ## Admin-Zugang
 
 Der Adminbereich unter `/lg-dashboard.html` ist per Login geschützt. Setze in Netlify mindestens diese Umgebungsvariable:

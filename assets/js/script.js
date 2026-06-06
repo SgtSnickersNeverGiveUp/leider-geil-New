@@ -343,9 +343,9 @@ document.addEventListener('DOMContentLoaded', () => {
   initRipple();
   initEventForm();
 
-  /* NEU: Bewerbungs‑ und Event‑Form → Discord */
-  initRecruitFormDiscord();
-  initEventSignupDiscord();
+  /* Öffentliche Formular-Submits */
+  initRecruitFormSubmit();
+  initEventSignupSubmit();
 
   /* Daten laden */
   renderTimeline();
@@ -358,8 +358,8 @@ document.addEventListener('DOMContentLoaded', () => {
   startLiveUpdates();
 });
 
-/* ── 13. Bewerbungen über Discord (Netlify Form + Webhook) ────────────── */
-function initRecruitFormDiscord() {
+/* ── 13. Bewerbungen öffentlich speichern ─────────────────────────────── */
+function initRecruitFormSubmit() {
   const recruitForm = document.getElementById("recruit-form");
   if (!recruitForm) return;
 
@@ -367,6 +367,7 @@ function initRecruitFormDiscord() {
     e.preventDefault();
 
     const formData = new FormData(recruitForm);
+    const submitBtn = recruitForm.querySelector('button[type="submit"]');
     const honey = formData.get("website");
     if (honey) return; // Bot
 
@@ -376,41 +377,53 @@ function initRecruitFormDiscord() {
     const rolle     = formData.get("rolle");
     const about     = formData.get("ueber-mich");
 
-    /* Netlify‑Form normal abschicken */
-    await fetch("/", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams(formData).toString(),
-    });
+    if (submitBtn) submitBtn.disabled = true;
 
-    /* Discord‑Webhook für Bewerbungen */
-    if (typeof DISCORD_WEBHOOK_BEWERBUNG === "string" && DISCORD_WEBHOOK_BEWERBUNG) {
-      try {
-        await fetch(DISCORD_WEBHOOK_BEWERBUNG, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            content:
-              "**Neue Clan‑Bewerbung**\n" +
-              `Gaming‑ID: ${gamingId}\n` +
-              `Alter: ${alter}\n` +
-              `Spiel: ${spiel}\n` +
-              `Rolle: ${rolle}\n` +
-              `Über mich: ${about}`,
-          }),
-        });
-      } catch (err) {
-        console.error("Discord Webhook (Bewerbung) Fehler:", err);
+    try {
+      const apiRes = await fetch(SITE_CONFIG.applyEndpoint || "/api/applications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          gamingId,
+          alter,
+          hauptspiel: spiel,
+          rolle,
+          ueberMich: about,
+        }),
+      });
+
+      if (!apiRes.ok) {
+        let message = `HTTP ${apiRes.status}`;
+        try {
+          const data = await apiRes.json();
+          if (data.error) message = data.error;
+        } catch {
+          // Keep the HTTP status if the server did not return JSON.
+        }
+        throw new Error(message);
       }
-    }
 
-    recruitForm.reset();
-    alert("Bewerbung gesendet – vielen Dank!");
+      fetch("/", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams(formData).toString(),
+      }).catch((err) => {
+        console.error("Netlify Form (Bewerbung) Fehler:", err);
+      });
+
+      recruitForm.reset();
+      alert("Bewerbung gesendet – vielen Dank!");
+    } catch (err) {
+      console.error("Bewerbung speichern fehlgeschlagen:", err);
+      alert("Bewerbung konnte nicht gespeichert werden. Bitte versuche es später erneut.");
+    } finally {
+      if (submitBtn) submitBtn.disabled = false;
+    }
   });
 }
 
-/* ── 14. Event‑Anmeldungen speichern + Discord/Netlify Nebenwege ──────── */
-function initEventSignupDiscord() {
+/* ── 14. Event‑Anmeldungen öffentlich speichern ───────────────────────── */
+function initEventSignupSubmit() {
   const eventForm = document.getElementById("event-form");
   if (!eventForm) return;
 
@@ -456,7 +469,6 @@ function initEventSignupDiscord() {
         throw new Error(message);
       }
 
-      /* Netlify‑Form weiterhin abschicken, damit bestehende Form-Workflows erhalten bleiben. */
       fetch("/", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -464,26 +476,6 @@ function initEventSignupDiscord() {
       }).catch((err) => {
         console.error("Netlify Form (Event) Fehler:", err);
       });
-
-      /* Discord‑Webhook für Event‑Anmeldungen */
-      if (typeof DISCORD_WEBHOOK_EVENT === "string" && DISCORD_WEBHOOK_EVENT) {
-        fetch(DISCORD_WEBHOOK_EVENT, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            content:
-              "**Neue Event‑Anmeldung**\n" +
-              `Name / Gaming‑ID: ${name}\n` +
-              `E‑Mail: ${email}\n` +
-              `Spiel: ${spiel}\n` +
-              `Clan: ${clan}\n` +
-              `Anzahl Spieler: ${anzahl}\n` +
-              `Bemerkungen: ${bemerkungen || "-"}`,
-          }),
-        }).catch((err) => {
-          console.error("Discord Webhook (Event) Fehler:", err);
-        });
-      }
 
       eventForm.reset();
       if (status) status.style.display = "block";

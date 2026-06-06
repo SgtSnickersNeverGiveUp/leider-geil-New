@@ -1,14 +1,14 @@
 'use strict';
 
-const API_URL = '/api/applications';
-const EVENTS_API = '/api/events';
-const EVENT_IMAGE_API = '/api/event-image';
-const VIDEOS_API = '/api/videos';
-const EVT_REGISTRATIONS_API = '/api/event-registrations';
-const NEWS_API_URL = '/api/news';
-const SETTINGS_API = '/api/settings';
-const BANNER_IMAGE_API = '/api/banner-image';
-const COMMUNITY_SHOUTS_API = '/api/community-shouts';
+const API_URL = '/api/admin/applications';
+const EVENTS_API = '/api/admin/events';
+const EVENT_IMAGE_API = '/api/admin/event-image';
+const VIDEOS_API = '/api/admin/videos';
+const EVT_REGISTRATIONS_API = '/api/admin/event-registrations';
+const NEWS_API_URL = '/api/admin/news';
+const SETTINGS_API = '/api/admin/settings';
+const BANNER_IMAGE_API = '/api/admin/banner-image';
+const COMMUNITY_SHOUTS_API = '/api/admin/community-shouts';
 
 const EVENT_GAME_OPTIONS = [
   'PUBG',
@@ -135,7 +135,7 @@ async function loadApplications() {
   body.innerHTML = '<div class="loading">Lade Bewerbungen</div>';
 
   try {
-    const res = await fetch(API_URL); // '/api/applications'
+    const res = await fetch(API_URL);
     if (!res.ok) throw new Error('API error ' + res.status);
     currentApplications = await res.json();
   } catch (err) {
@@ -1035,7 +1035,7 @@ async function loadCommunityShouts() {
   body.innerHTML = '<div class="loading">Lade Community Shouts</div>';
 
   try {
-    const res = await fetch(`${COMMUNITY_SHOUTS_API}?all=1`);
+    const res = await fetch(COMMUNITY_SHOUTS_API);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     currentCommunityShouts = await res.json();
     renderCommunityShoutsAdmin();

@@ -1,16 +1,10 @@
 import { getStore } from "@netlify/blobs";
-import { requireAdmin } from "./admin-auth.mjs";
 
 const STORE_NAME = "banner";
 const BANNER_KEY = "header-banner";
 const META_KEY = "header-banner-meta";
 
 export default async (req) => {
-  if (req.method === "POST") {
-    const adminGuard = requireAdmin(req);
-    if (adminGuard) return adminGuard;
-  }
-
   const store = getStore(STORE_NAME);
 
   // GET – Serve the stored banner image
@@ -35,53 +29,6 @@ export default async (req) => {
       });
     } catch (err) {
       return new Response("Banner not found", { status: 404 });
-    }
-  }
-
-  // POST – Upload a new banner image
-  if (req.method === "POST") {
-    try {
-      const contentType = req.headers.get("content-type") || "image/jpeg";
-      const buffer = await req.arrayBuffer();
-
-      if (buffer.byteLength === 0) {
-        return new Response(JSON.stringify({ error: "Keine Datei empfangen." }), {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        });
-      }
-
-      // Max 10MB
-      if (buffer.byteLength > 10 * 1024 * 1024) {
-        return new Response(JSON.stringify({ error: "Datei zu groß (max. 10 MB)." }), {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        });
-      }
-
-      // Store image binary
-      await store.set(BANNER_KEY, new Uint8Array(buffer));
-
-      // Store metadata
-      await store.setJSON(META_KEY, {
-        contentType,
-        size: buffer.byteLength,
-        uploadedAt: new Date().toISOString(),
-      });
-
-      return new Response(JSON.stringify({
-        success: true,
-        url: "/api/banner-image",
-        size: buffer.byteLength,
-      }), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
-    } catch (err) {
-      return new Response(JSON.stringify({ error: "Fehler beim Upload." }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      });
     }
   }
 

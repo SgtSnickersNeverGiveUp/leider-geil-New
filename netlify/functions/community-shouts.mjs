@@ -1,5 +1,4 @@
 import { getStore } from "@netlify/blobs";
-import { requireAdmin } from "./admin-auth.mjs";
 
 const STORE_NAME = "community-shouts";
 const MAX_NAME_LENGTH = 32;
@@ -34,23 +33,11 @@ async function listShouts(store, includePending = false) {
 }
 
 export default async (req) => {
-  const url = new URL(req.url);
-
-  if (
-    (req.method === "GET" && url.searchParams.get("all") === "1") ||
-    req.method === "PUT" ||
-    req.method === "DELETE"
-  ) {
-    const adminGuard = requireAdmin(req);
-    if (adminGuard) return adminGuard;
-  }
-
   const store = getStore(STORE_NAME);
 
   if (req.method === "GET") {
     try {
-      const includePending = url.searchParams.get("all") === "1";
-      const shouts = await listShouts(store, includePending);
+      const shouts = await listShouts(store);
       return jsonResponse(shouts);
     } catch (err) {
       return jsonResponse({ error: "Shouts konnten nicht geladen werden." }, 500);
@@ -87,40 +74,6 @@ export default async (req) => {
       return jsonResponse({ success: true, pending: true, id }, 201);
     } catch (err) {
       return jsonResponse({ error: "Shout konnte nicht gespeichert werden." }, 500);
-    }
-  }
-
-  if (req.method === "PUT") {
-    try {
-      const body = await req.json();
-      const id = sanitizeText(body.id, 80);
-      if (!id) return jsonResponse({ error: "ID fehlt." }, 400);
-
-      const existing = await store.get(id, { type: "json" });
-      if (!existing) return jsonResponse({ error: "Shout nicht gefunden." }, 404);
-
-      const updated = {
-        ...existing,
-        approved: Boolean(body.approved),
-        moderatedAt: new Date().toISOString(),
-      };
-
-      await store.setJSON(id, updated);
-      return jsonResponse({ success: true, shout: updated });
-    } catch (err) {
-      return jsonResponse({ error: "Shout konnte nicht aktualisiert werden." }, 500);
-    }
-  }
-
-  if (req.method === "DELETE") {
-    try {
-      const id = sanitizeText(url.searchParams.get("id"), 80);
-      if (!id) return jsonResponse({ error: "ID fehlt." }, 400);
-
-      await store.delete(id);
-      return jsonResponse({ success: true });
-    } catch (err) {
-      return jsonResponse({ error: "Shout konnte nicht gelöscht werden." }, 500);
     }
   }
 
