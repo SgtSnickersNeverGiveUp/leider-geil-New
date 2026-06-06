@@ -127,6 +127,8 @@ navLinks.forEach(link => {
 // ══════════════════════════════════════════════════════════
 
 let currentApplications = [];
+let currentModalId = null;
+let currentEvtModalId = null;
 
 async function loadApplications() {
   const body = document.getElementById('applications-body');
@@ -201,8 +203,9 @@ function updateStats() {
 }
 
 function closeModal() {
-  // Einfache Close-Funktion
   document.getElementById('modal-overlay')?.classList.remove('active');
+  currentModalId = null;
+  currentEvtModalId = null;
 }
 // ══════════════════════════════════════════════════════════
 // CLAN NEWS Ticker
@@ -893,7 +896,6 @@ document.getElementById('banner-remove').addEventListener('click', async () => {
 // EVENT-ANMELDUNGEN (Event Registrations)
 // ══════════════════════════════════════════════════════════
 let currentEventRegistrations = [];
-let currentEvtModalId = null;
 
 async function loadEventRegistrations() {
   const body = document.getElementById('evt-registrations-body');
@@ -974,19 +976,19 @@ function showEvtDetail(id) {
   currentEvtModalId = id;
   currentModalId = null;
 
-  document.getElementById('modal-title').textContent = `Event-Anmeldung: ${reg.name}`;
+  document.getElementById('modal-title').textContent = `Event-Anmeldung: ${reg.name || 'Details'}`;
   document.getElementById('modal-body').innerHTML = `
     <div class="modal__field">
       <div class="modal__label">Name / Gaming-ID</div>
-      <div class="modal__value">${escapeHtml(reg.name)}</div>
+      <div class="modal__value">${escapeHtml(reg.name || '–')}</div>
     </div>
     <div class="modal__field">
       <div class="modal__label">E-Mail</div>
-      <div class="modal__value">${escapeHtml(reg.email)}</div>
+      <div class="modal__value">${escapeHtml(reg.email || '–')}</div>
     </div>
     <div class="modal__field">
       <div class="modal__label">Spiel</div>
-      <div class="modal__value">${escapeHtml(reg.spiel)}</div>
+      <div class="modal__value">${escapeHtml(reg.spiel || '–')}</div>
     </div>
     <div class="modal__field">
       <div class="modal__label">Clan-Name</div>
