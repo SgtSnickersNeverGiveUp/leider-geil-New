@@ -2,6 +2,7 @@
 
 (function () {
 const ADMIN_CONFIG = window.LG_ADMIN_CONFIG || {};
+const ADMIN_MEDIA_PREVIEW = window.LG_ADMIN_MEDIA_PREVIEW || {};
 const ADMIN_ROSTER_API_BASE = ADMIN_CONFIG.apiBase || '/api/admin';
 const ROSTER_API = ADMIN_CONFIG.rosterApi || `${ADMIN_ROSTER_API_BASE}/roster`;
 const ROSTER_AVATAR_API = ADMIN_CONFIG.rosterAvatarApi || `${ADMIN_ROSTER_API_BASE}/roster-avatar`;
@@ -17,8 +18,8 @@ function escapeHtml(value) {
 }
 
 function toAdminRosterAvatarPreviewUrl(avatarUrl) {
-  if (typeof ADMIN_CONFIG.toAdminMediaPreviewUrl === 'function') {
-    return ADMIN_CONFIG.toAdminMediaPreviewUrl(avatarUrl, 'rosterAvatar');
+  if (typeof ADMIN_MEDIA_PREVIEW.toAdminMediaPreviewUrl === 'function') {
+    return ADMIN_MEDIA_PREVIEW.toAdminMediaPreviewUrl(avatarUrl, 'rosterAvatar');
   }
   return String(avatarUrl || '');
 }

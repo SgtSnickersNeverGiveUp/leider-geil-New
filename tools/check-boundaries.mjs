@@ -46,9 +46,11 @@ async function main() {
   await assertHtmlScriptReferences();
   await assertCssBoundaries();
   await assertAdminCoreBoundary();
+  await assertAdminMediaPreviewBoundary();
   await assertAdminHomepageEditorBoundary();
   await assertAdminDashboardShellBoundary();
   await assertNetlifyFunctionBoundary();
+  await assertPublicIndexProjectionBoundary();
   await assertPublicSettingsHelperBoundary();
   await assertSharedContentDataBoundary();
   await assertRemovedFilesStayRemoved();
@@ -128,6 +130,7 @@ async function assertHtmlScriptReferences() {
   ]);
   const adminScriptAllowList = new Set([
     "/assets/js/admin/config.js",
+    "/assets/js/admin/media-preview.js",
     "/assets/js/admin/dashboard.js",
     "/assets/js/admin/login.js",
     "/assets/js/admin/roster.js",
@@ -201,6 +204,29 @@ async function assertAdminCoreBoundary() {
       '.replace("/api/admin/", "/api/")',
     ]);
   }
+}
+
+async function assertAdminMediaPreviewBoundary() {
+  const adminConfigPath = path.join(repoRoot, "assets/js/admin/config.js");
+  const adminConfig = await readText(adminConfigPath);
+  assertNotContains(adminConfigPath, adminConfig, [
+    "toPublicApiPath",
+    "createMediaPreviewEndpoint",
+    "getPublicMediaSuffix",
+    "toAdminMediaPreviewUrl",
+    "isManagedPublicMediaUrl",
+    "publicApi",
+  ]);
+
+  const adminMediaPreviewPath = path.join(repoRoot, "assets/js/admin/media-preview.js");
+  const adminMediaPreview = await readText(adminMediaPreviewPath);
+  assertNotContains(adminMediaPreviewPath, adminMediaPreview, [
+    "/api/event-image",
+    "/api/banner-image",
+    "/api/roster-avatar",
+    ".replace('/api/admin/', '/api/')",
+    '.replace("/api/admin/", "/api/")',
+  ]);
 }
 
 async function assertAdminDashboardShellBoundary() {
@@ -284,6 +310,16 @@ async function assertNetlifyFunctionBoundary() {
   assertNotContains(path.join(repoRoot, "netlify/functions/admin-public-settings.mjs"), adminPublicSettings, [
     'path: "/api/admin/settings"',
     "./_shared/public-settings-data.mjs",
+  ]);
+}
+
+async function assertPublicIndexProjectionBoundary() {
+  const publicIndexPath = path.join(repoRoot, "assets/js/public/index.js");
+  const publicIndex = await readText(publicIndexPath);
+  assertNotContains(publicIndexPath, publicIndex, [
+    "getTimelineGameVariant",
+    "PUBG NEWS",
+    "ARC Raiders NEWS",
   ]);
 }
 

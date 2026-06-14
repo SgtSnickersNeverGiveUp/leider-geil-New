@@ -2,6 +2,7 @@
 
 (function () {
 const ADMIN_CONFIG = window.LG_ADMIN_CONFIG || {};
+const ADMIN_MEDIA_PREVIEW = window.LG_ADMIN_MEDIA_PREVIEW || {};
 const ADMIN_DASHBOARD_API_BASE = ADMIN_CONFIG.apiBase || '/api/admin';
 const API_URL = ADMIN_CONFIG.applicationsApi || `${ADMIN_DASHBOARD_API_BASE}/applications`;
 const EVENTS_API = ADMIN_CONFIG.eventsApi || `${ADMIN_DASHBOARD_API_BASE}/events`;
@@ -36,8 +37,8 @@ function getEventGameVariant(game) {
 }
 
 function toAdminEventImagePreviewUrl(imageUrl) {
-  if (typeof ADMIN_CONFIG.toAdminMediaPreviewUrl === 'function') {
-    return ADMIN_CONFIG.toAdminMediaPreviewUrl(imageUrl, 'eventImage');
+  if (typeof ADMIN_MEDIA_PREVIEW.toAdminMediaPreviewUrl === 'function') {
+    return ADMIN_MEDIA_PREVIEW.toAdminMediaPreviewUrl(imageUrl, 'eventImage');
   }
   return String(imageUrl || '');
 }

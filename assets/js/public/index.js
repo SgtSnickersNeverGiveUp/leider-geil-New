@@ -7,13 +7,6 @@ const VISITOR_COUNTER_STORAGE_KEY = 'lg-homepage-visitor-counted';
 const select = (selector, context = document) => context.querySelector(selector);
 const selectAll = (selector, context = document) => [...context.querySelectorAll(selector)];
 
-function getTimelineGameVariant(game) {
-  if (game === 'PUBG' || game === 'PUBG NEWS') return 'pubg';
-  if (game === 'ARC Raiders' || game === 'ARC Raiders NEWS') return 'arc';
-  if (game === 'NEWS') return 'news';
-  return '';
-}
-
 async function renderTimeline() {
   const wrap = select('#timeline');
   if (!wrap) return;
@@ -37,7 +30,7 @@ async function renderTimeline() {
     wrap.innerHTML = events.map((event) => {
       const game = event.game || 'Mixed';
       const type = event.type || 'event';
-      const gameVariant = getTimelineGameVariant(game);
+      const gameVariant = event.gameVariant || '';
 
       const itemClass = gameVariant ? `timeline__item--${gameVariant}` : '';
       const dotClass = gameVariant ? `timeline__dot--${gameVariant}` : '';

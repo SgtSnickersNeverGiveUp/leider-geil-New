@@ -2,6 +2,7 @@
 
 (function () {
 const ADMIN_CONFIG = window.LG_ADMIN_CONFIG || {};
+const ADMIN_MEDIA_PREVIEW = window.LG_ADMIN_MEDIA_PREVIEW || {};
 const ADMIN_HOMEPAGE_API_BASE = ADMIN_CONFIG.apiBase || '/api/admin';
 const HOMEPAGE_SETTINGS_API = ADMIN_CONFIG.homepageSettingsApi || `${ADMIN_HOMEPAGE_API_BASE}/public-settings`;
 const BANNER_IMAGE_API = ADMIN_CONFIG.bannerImageApi || `${ADMIN_HOMEPAGE_API_BASE}/banner-image`;
@@ -20,8 +21,8 @@ function escapeHtml(value) {
 }
 
 function toAdminBannerPreviewUrl(bannerUrl) {
-  if (typeof ADMIN_CONFIG.toAdminMediaPreviewUrl === 'function') {
-    return ADMIN_CONFIG.toAdminMediaPreviewUrl(bannerUrl, 'bannerImage');
+  if (typeof ADMIN_MEDIA_PREVIEW.toAdminMediaPreviewUrl === 'function') {
+    return ADMIN_MEDIA_PREVIEW.toAdminMediaPreviewUrl(bannerUrl, 'bannerImage');
   }
   return String(bannerUrl || '');
 }
@@ -63,8 +64,8 @@ async function loadBannerSettings() {
           Quelle: ${escapeHtml(settings.bannerUrl)}
         </p>`;
 
-      const isManagedUpload = typeof ADMIN_CONFIG.isManagedPublicMediaUrl === 'function'
-        && ADMIN_CONFIG.isManagedPublicMediaUrl(settings.bannerUrl, 'bannerImage');
+      const isManagedUpload = typeof ADMIN_MEDIA_PREVIEW.isManagedPublicMediaUrl === 'function'
+        && ADMIN_MEDIA_PREVIEW.isManagedPublicMediaUrl(settings.bannerUrl, 'bannerImage');
       if (!isManagedUpload) {
         document.getElementById('admin-homepage-banner-url').value = settings.bannerUrl;
       }
