@@ -4,7 +4,7 @@
 const ADMIN_CONFIG = window.LG_ADMIN_CONFIG || {};
 const ADMIN_HOMEPAGE_API_BASE = ADMIN_CONFIG.apiBase || '/api/admin';
 const NEWS_API_URL = ADMIN_CONFIG.newsApi || `${ADMIN_HOMEPAGE_API_BASE}/news`;
-const HOMEPAGE_SETTINGS_API = ADMIN_CONFIG.homepageSettingsApi || `${ADMIN_HOMEPAGE_API_BASE}/public-settings`;
+const HOMEPAGE_SETTINGS_API = ADMIN_CONFIG.homepageSettingsApi || `${ADMIN_HOMEPAGE_API_BASE}/homepage-settings`;
 
 let currentNews = [];
 let initialized = false;

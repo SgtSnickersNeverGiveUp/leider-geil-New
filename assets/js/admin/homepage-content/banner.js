@@ -4,7 +4,7 @@
 const ADMIN_CONFIG = window.LG_ADMIN_CONFIG || {};
 const ADMIN_MEDIA_PREVIEW = window.LG_ADMIN_MEDIA_PREVIEW || {};
 const ADMIN_HOMEPAGE_API_BASE = ADMIN_CONFIG.apiBase || '/api/admin';
-const HOMEPAGE_SETTINGS_API = ADMIN_CONFIG.homepageSettingsApi || `${ADMIN_HOMEPAGE_API_BASE}/public-settings`;
+const HOMEPAGE_SETTINGS_API = ADMIN_CONFIG.homepageSettingsApi || `${ADMIN_HOMEPAGE_API_BASE}/homepage-settings`;
 const BANNER_IMAGE_API = ADMIN_CONFIG.bannerImageApi || `${ADMIN_HOMEPAGE_API_BASE}/banner-image`;
 const BANNER_IMAGE_PREVIEW_API = ADMIN_CONFIG.bannerImagePreviewApi || `${ADMIN_HOMEPAGE_API_BASE}/banner-image`;
 

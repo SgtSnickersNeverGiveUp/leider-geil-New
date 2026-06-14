@@ -1,7 +1,7 @@
-export const PUBLIC_CONTENT_SETTINGS_STORE_NAME = "settings";
-export const PUBLIC_CONTENT_SETTINGS_KEY = "site-settings";
+export const HOMEPAGE_CONTENT_SETTINGS_STORE_NAME = "settings";
+export const HOMEPAGE_CONTENT_SETTINGS_KEY = "site-settings";
 
-export const PUBLIC_CONTENT_SETTING_KEYS = [
+export const HOMEPAGE_CONTENT_SETTING_KEYS = [
   "bannerUrl",
   "tickerSpeedSeconds",
   "tickerSeparator",
@@ -19,8 +19,8 @@ export const MAX_SLIDESHOW_SPEED_SECONDS = 60;
 export const DEFAULT_SLIDESHOW_SPEED_SECONDS = 8;
 export const MAX_SLIDESHOW_TEXT_LENGTH = 180;
 
-export function pickStoredPublicContentSettings(settings = {}) {
-  return PUBLIC_CONTENT_SETTING_KEYS.reduce((acc, key) => {
+export function pickStoredHomepageContentSettings(settings = {}) {
+  return HOMEPAGE_CONTENT_SETTING_KEYS.reduce((acc, key) => {
     if (Object.prototype.hasOwnProperty.call(settings, key)) {
       acc[key] = settings[key];
     }

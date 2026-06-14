@@ -1,7 +1,7 @@
 import { getStore } from "@netlify/blobs";
 import {
-  PUBLIC_CONTENT_SETTINGS_KEY,
-  PUBLIC_CONTENT_SETTINGS_STORE_NAME,
+  HOMEPAGE_CONTENT_SETTINGS_KEY,
+  HOMEPAGE_CONTENT_SETTINGS_STORE_NAME,
   pickPublicSettings,
 } from "./_shared/public-settings-data.mjs";
 
@@ -14,8 +14,8 @@ export default async (req) => {
   }
 
   try {
-    const store = getStore(PUBLIC_CONTENT_SETTINGS_STORE_NAME);
-    const settings = (await store.get(PUBLIC_CONTENT_SETTINGS_KEY, { type: "json" })) || {};
+    const store = getStore(HOMEPAGE_CONTENT_SETTINGS_STORE_NAME);
+    const settings = (await store.get(HOMEPAGE_CONTENT_SETTINGS_KEY, { type: "json" })) || {};
     const publicSettings = pickPublicSettings(settings);
 
     return new Response(JSON.stringify(publicSettings), {

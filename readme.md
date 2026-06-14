@@ -26,7 +26,7 @@ Willkommen bei **Clan Leider‑Geil** – deine zentrale Anlaufstelle für Gamin
 - Gemeinsame Server-Datenlogik liegt in `netlify/functions/_shared/`; Public-Handler geben daraus nur explizit sanitizte Public-Objekte aus.
 - Public- und Admin-Netlify-Handler duerfen nicht gegenseitig die jeweiligen Projection-/Mutation-Helper importieren; neutrale Store-/Schema-Helfer bleiben in `_shared/` erlaubt (`homepage-content-settings-schema.mjs` fuer Startseiten-Settings).
 - Netlify-Functions und Edge-Routen werden gegen Public-/Admin-API-Pfade, Projection-Imports und die Admin-Auth-Routen in `netlify.toml` geprueft.
-- Public- und Admin-Views fuer Startseiten-Settings sind getrennt: `public-settings-data.mjs` enthaelt nur Public-Ausgabe (`entries/memberId`), `admin-public-settings-data.mjs` nur Admin-Sanitizing und Admin-Ausgabe (`members/id`).
+- Public- und Admin-Views fuer Startseiten-Settings sind getrennt: `public-settings-data.mjs` enthaelt nur Public-Ausgabe (`entries/memberId`), `admin-homepage-settings-data.mjs` nur Admin-Sanitizing und Admin-Ausgabe (`members/id`). Der Admin-Editor nutzt `/api/admin/homepage-settings`, die Index-Seite bleibt bei `/api/public-settings`.
 - Oeffentliche Formulare speichern direkt ueber die Public-API-Endpunkte. Die alte Netlify-Forms/Discord-Hook-Doppelstrecke wird nicht mehr verwendet.
 
 ## Admin-Zugang

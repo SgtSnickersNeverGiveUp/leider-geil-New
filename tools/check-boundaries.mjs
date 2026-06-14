@@ -23,7 +23,9 @@ const removedFiles = [
   "assets/js/script.js",
   "config.js",
   "netlify/functions/admin-settings.mjs",
+  "netlify/functions/admin-public-settings.mjs",
   "netlify/functions/settings.mjs",
+  "netlify/functions/_shared/admin-public-settings-data.mjs",
   "netlify/functions/_shared/settings-data.mjs",
   "netlify/functions/_shared/public-content-settings-schema.mjs",
   "netlify/functions/_shared/media-url-contract.mjs",
@@ -351,6 +353,7 @@ async function assertAdminCoreBoundary() {
       "/assets/js/public/",
       "/assets/js/admin/public-content/",
       "/api/public-settings",
+      "/api/admin/public-settings",
       "/api/event-image",
       "/api/banner-image",
       "/api/roster-avatar",
@@ -512,13 +515,16 @@ async function assertNetlifyFunctionBoundary() {
   const publicSettings = await readText(path.join(repoRoot, "netlify/functions/public-settings.mjs"));
   assertNotContains(path.join(repoRoot, "netlify/functions/public-settings.mjs"), publicSettings, [
     "admin-public-settings-data.mjs",
-    "pickAdminPublicContentSettings",
-    "sanitizePublicContentSettingsPatch",
+    "admin-homepage-settings-data.mjs",
+    "pickAdminHomepageSettings",
+    "sanitizeAdminHomepageSettingsPatch",
   ]);
 
-  const adminPublicSettings = await readText(path.join(repoRoot, "netlify/functions/admin-public-settings.mjs"));
-  assertNotContains(path.join(repoRoot, "netlify/functions/admin-public-settings.mjs"), adminPublicSettings, [
+  const adminHomepageSettingsPath = path.join(repoRoot, "netlify/functions/admin-homepage-settings.mjs");
+  const adminHomepageSettings = await readText(adminHomepageSettingsPath);
+  assertNotContains(adminHomepageSettingsPath, adminHomepageSettings, [
     'path: "/api/admin/settings"',
+    'path: "/api/admin/public-settings"',
     "./_shared/public-settings-data.mjs",
   ]);
 }
@@ -588,11 +594,12 @@ async function assertPublicSettingsHelperBoundary() {
   assertNotContains(publicSettingsHelperPath, publicSettingsHelper, [
     "Admin",
     "./admin-public-settings-data.mjs",
-    "sanitizePublicContentSettingsPatch",
-    "mergePublicContentSettings",
+    "./admin-homepage-settings-data.mjs",
+    "sanitizeAdminHomepageSettingsPatch",
+    "mergeAdminHomepageSettings",
   ]);
 
-  const adminSettingsHelperPath = path.join(repoRoot, "netlify/functions/_shared/admin-public-settings-data.mjs");
+  const adminSettingsHelperPath = path.join(repoRoot, "netlify/functions/_shared/admin-homepage-settings-data.mjs");
   const adminSettingsHelper = await readText(adminSettingsHelperPath);
   assertNotContains(adminSettingsHelperPath, adminSettingsHelper, [
     "./public-settings-data.mjs",
@@ -604,10 +611,11 @@ async function assertPublicSettingsHelperBoundary() {
   const settingsSchema = await readText(settingsSchemaPath);
   assertNotContains(settingsSchemaPath, settingsSchema, [
     "pickPublicSettings",
-    "pickAdminPublicContentSettings",
-    "sanitizePublicContentSettingsPatch",
-    "mergePublicContentSettings",
+    "pickAdminHomepageSettings",
+    "sanitizeAdminHomepageSettingsPatch",
+    "mergeAdminHomepageSettings",
     "toPublicRosterSlideshow",
+    "PUBLIC_CONTENT",
     "settings.entries",
     "entry.memberId",
   ]);

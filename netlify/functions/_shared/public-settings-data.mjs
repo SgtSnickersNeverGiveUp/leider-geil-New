@@ -1,17 +1,17 @@
 import {
-  PUBLIC_CONTENT_SETTINGS_KEY,
-  PUBLIC_CONTENT_SETTINGS_STORE_NAME,
+  HOMEPAGE_CONTENT_SETTINGS_KEY,
+  HOMEPAGE_CONTENT_SETTINGS_STORE_NAME,
   normalizeStoredRosterSlideshow,
-  pickStoredPublicContentSettings,
+  pickStoredHomepageContentSettings,
 } from "./homepage-content-settings-schema.mjs";
 
 export {
-  PUBLIC_CONTENT_SETTINGS_KEY,
-  PUBLIC_CONTENT_SETTINGS_STORE_NAME,
+  HOMEPAGE_CONTENT_SETTINGS_KEY,
+  HOMEPAGE_CONTENT_SETTINGS_STORE_NAME,
 } from "./homepage-content-settings-schema.mjs";
 
 export function pickPublicSettings(settings = {}) {
-  const publicSettings = pickStoredPublicContentSettings(settings);
+  const publicSettings = pickStoredHomepageContentSettings(settings);
   if (Object.prototype.hasOwnProperty.call(publicSettings, "rosterSlideshow")) {
     publicSettings.rosterSlideshow = toPublicRosterSlideshow(publicSettings.rosterSlideshow);
   }

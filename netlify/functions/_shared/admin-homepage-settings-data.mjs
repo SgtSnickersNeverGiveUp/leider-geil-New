@@ -2,27 +2,27 @@ import {
   DEFAULT_SLIDESHOW_SPEED_SECONDS,
   DEFAULT_TICKER_SEPARATOR,
   DEFAULT_TICKER_SPEED_SECONDS,
+  HOMEPAGE_CONTENT_SETTINGS_KEY,
+  HOMEPAGE_CONTENT_SETTINGS_STORE_NAME,
   MAX_SLIDESHOW_SPEED_SECONDS,
   MAX_SLIDESHOW_TEXT_LENGTH,
   MAX_TICKER_SEPARATOR_LENGTH,
   MAX_TICKER_SPEED_SECONDS,
   MIN_SLIDESHOW_SPEED_SECONDS,
   MIN_TICKER_SPEED_SECONDS,
-  PUBLIC_CONTENT_SETTINGS_KEY,
-  PUBLIC_CONTENT_SETTINGS_STORE_NAME,
   clampNumber,
   normalizeStoredRosterSlideshow,
-  pickStoredPublicContentSettings,
+  pickStoredHomepageContentSettings,
 } from "./homepage-content-settings-schema.mjs";
 import { ADMIN_MEDIA_URLS, toAdminMediaPreviewUrl } from "./admin-media-url-contract.mjs";
 
 export {
-  PUBLIC_CONTENT_SETTINGS_KEY,
-  PUBLIC_CONTENT_SETTINGS_STORE_NAME,
+  HOMEPAGE_CONTENT_SETTINGS_KEY,
+  HOMEPAGE_CONTENT_SETTINGS_STORE_NAME,
 } from "./homepage-content-settings-schema.mjs";
 
-export function pickAdminPublicContentSettings(settings = {}) {
-  const picked = pickStoredPublicContentSettings(settings);
+export function pickAdminHomepageSettings(settings = {}) {
+  const picked = pickStoredHomepageContentSettings(settings);
   const bannerUrl = picked.bannerUrl || "";
 
   if (bannerUrl) {
@@ -39,7 +39,7 @@ export function pickAdminPublicContentSettings(settings = {}) {
   return picked;
 }
 
-export function sanitizePublicContentSettingsPatch(value = {}) {
+export function sanitizeAdminHomepageSettingsPatch(value = {}) {
   const patch = value && typeof value === "object" && !Array.isArray(value) ? value : {};
   const sanitized = {};
 
@@ -68,10 +68,10 @@ export function sanitizePublicContentSettingsPatch(value = {}) {
   return sanitized;
 }
 
-export function mergePublicContentSettings(existing = {}, patch = {}) {
+export function mergeAdminHomepageSettings(existing = {}, patch = {}) {
   return {
     ...existing,
-    ...sanitizePublicContentSettingsPatch(patch),
+    ...sanitizeAdminHomepageSettingsPatch(patch),
     updatedAt: new Date().toISOString(),
   };
 }

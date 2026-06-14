@@ -3,7 +3,7 @@
 (function () {
 const ADMIN_CONFIG = window.LG_ADMIN_CONFIG || {};
 const ADMIN_HOMEPAGE_API_BASE = ADMIN_CONFIG.apiBase || '/api/admin';
-const HOMEPAGE_SETTINGS_API = ADMIN_CONFIG.homepageSettingsApi || `${ADMIN_HOMEPAGE_API_BASE}/public-settings`;
+const HOMEPAGE_SETTINGS_API = ADMIN_CONFIG.homepageSettingsApi || `${ADMIN_HOMEPAGE_API_BASE}/homepage-settings`;
 const ROSTER_API = ADMIN_CONFIG.rosterApi || `${ADMIN_HOMEPAGE_API_BASE}/roster`;
 
 let currentRosterMembers = [];
