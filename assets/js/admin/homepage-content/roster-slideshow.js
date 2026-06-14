@@ -120,7 +120,7 @@ function render() {
     return `
       <div class="admin-homepage-roster-slideshow__item" data-admin-homepage-slideshow-member-id="${escapeHtml(entry.id)}">
         <img class="admin-homepage-roster-slideshow__avatar" src="${avatarSrc}" alt="${escapeHtml(member.name)}" loading="lazy"
-             onerror="this.style.display='none'">
+             data-admin-homepage-slideshow-avatar>
         <div>
           <div class="admin-homepage-roster-slideshow__name">${escapeHtml(member.name)}</div>
           <div class="admin-homepage-roster-slideshow__meta">${escapeHtml(member.clanRole || member.role || 'Member')}</div>
@@ -134,6 +134,15 @@ function render() {
         <button type="button" class="btn-delete" data-admin-homepage-slideshow-remove="${escapeHtml(entry.id)}">Entfernen</button>
       </div>`;
   }).join('');
+  bindRosterSlideshowAvatarFallbacks(selectedBody);
+}
+
+function bindRosterSlideshowAvatarFallbacks(container) {
+  container.querySelectorAll('[data-admin-homepage-slideshow-avatar]').forEach((image) => {
+    image.addEventListener('error', () => {
+      image.style.display = 'none';
+    }, { once: true });
+  });
 }
 
 function addRosterSlideshowMember() {

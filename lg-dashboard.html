@@ -164,7 +164,7 @@
               </div>
               <div class="custom-game-row">
                 <input class="admin-form__input" type="text" id="roster-custom-game" placeholder="Weiteres Spiel hinzufügen…">
-                <button type="button" class="btn-sm" onclick="LGAdminRoster.addCustomGame('roster')">+</button>
+                <button type="button" class="btn-sm" id="roster-custom-game-add">+</button>
               </div>
             </div>
             <div class="admin-form__group">
@@ -181,7 +181,7 @@
             <div class="admin-form__group">
               <label class="admin-form__label">Profilbild (JPEG/PNG/WebP, max. 5 MB)</label>
               <div class="admin-form__hint">Empfehlung: Quadratisch oder 4:5, ca. 500–800 px breit, damit alle Karten einheitlich aussehen.</div>
-              <div class="avatar-upload-area" id="roster-avatar-area" onclick="document.getElementById('roster-avatar-file').click()">
+              <div class="avatar-upload-area" id="roster-avatar-area">
                 <img class="avatar-upload-area__preview" id="roster-avatar-preview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect fill='%231a1a2e' width='64' height='64'/%3E%3Ctext x='50%25' y='55%25' text-anchor='middle' fill='%237a7a8e' font-size='22'%3E%3F%3C/text%3E%3C/svg%3E" alt="Vorschau">
                 <div class="avatar-upload-area__text">
                   <strong>Klicken</strong> um ein Bild auszuwählen<br>
@@ -273,7 +273,7 @@
             </div>
             <div class="admin-form__group">
               <label class="admin-form__label">Bild (JPEG/PNG/WebP, max. 5 MB, optional)</label>
-              <div class="image-upload-area" id="event-image-area" onclick="document.getElementById('event-image-file').click()">
+              <div class="image-upload-area" id="event-image-area">
                 <img class="image-upload-area__preview" id="event-image-preview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 50'%3E%3Crect fill='%231a1a2e' width='80' height='50'/%3E%3Ctext x='50%25' y='55%25' text-anchor='middle' fill='%237a7a8e' font-size='14'%3E%3F%3C/text%3E%3C/svg%3E" alt="Vorschau">
                 <div class="image-upload-area__text">
                   <strong>Klicken</strong> um ein Bild auszuwählen<br>

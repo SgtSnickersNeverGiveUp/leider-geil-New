@@ -64,11 +64,11 @@ function renderNewsAdmin() {
         <label class="admin-form__label">Eintrag ${i + 1}</label>
         <div style="display:flex;flex-direction:column;gap:.25rem;">
           <textarea class="admin-form__textarea"
-                    data-index="${i}"
+                    data-admin-homepage-news-index="${i}"
                     rows="2"
                     placeholder="Ticker-Text...">${escapeHtml(item.text || '')}</textarea>
           <div style="display:flex;align-items:center;gap:.5rem;">
-            <select class="admin-form__select" data-type-index="${i}">
+            <select class="admin-form__select" data-admin-homepage-news-type-index="${i}">
               <option value="birthday" ${type === 'birthday' ? 'selected' : ''}>Birthday</option>
               <option value="member" ${type === 'member' ? 'selected' : ''}>Member</option>
               <option value="event" ${type === 'event' ? 'selected' : ''}>Event</option>
@@ -103,14 +103,14 @@ function initEventListeners() {
   });
 
   listEl.addEventListener('input', (e) => {
-    const idx = e.target.getAttribute('data-index');
+    const idx = e.target.getAttribute('data-admin-homepage-news-index');
     if (idx !== null && currentNews[Number(idx)]) {
       currentNews[Number(idx)].text = e.target.value;
     }
   });
 
   listEl.addEventListener('change', (e) => {
-    const idx = e.target.getAttribute('data-type-index');
+    const idx = e.target.getAttribute('data-admin-homepage-news-type-index');
     if (idx !== null && currentNews[Number(idx)]) {
       currentNews[Number(idx)].type = e.target.value;
     }

@@ -382,8 +382,8 @@ async function assertHtmlInlineBehaviorBoundary(htmlBoundaryFiles) {
       failures.push(`${relative}: move inline <script> code into the dedicated ${boundary} browser bundle`);
     }
 
-    if (boundary === "public" && /\son[a-z]+\s*=/i.test(content)) {
-      failures.push(`${relative}: public pages must not use inline event handlers`);
+    if (/\son[a-z]+\s*=/i.test(content)) {
+      failures.push(`${relative}: ${boundary} pages must not use inline event handlers`);
     }
   }
 }
@@ -437,6 +437,10 @@ async function assertAdminCoreBoundary() {
   for (const file of files.filter((item) => item.endsWith(".js"))) {
     const content = await readText(file);
     assertApiPathsMatchBoundary(file, content, "admin");
+    if (/<[^>]*\son[a-z]+\s*=/i.test(content)) {
+      failures.push(`${path.relative(repoRoot, file)}: admin browser markup must not generate inline event handlers`);
+    }
+
     assertNotContains(file, content, [
       "SITE_CONFIG",
       "/assets/js/public/",
@@ -568,6 +572,10 @@ async function assertAdminHomepageEditorBoundary() {
       "visitor-counter",
       ".banner-tab-btn",
       "roster-slideshow-admin",
+      "data-index=",
+      "data-type-index=",
+      "getAttribute('data-index')",
+      "getAttribute('data-type-index')",
       "data-slideshow-",
       "data-news-remove",
     ]);

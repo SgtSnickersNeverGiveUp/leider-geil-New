@@ -85,7 +85,7 @@ function renderEventsAdmin(events) {
   body.innerHTML = events.map(ev => {
     const dateStr = new Date(ev.date).toLocaleDateString('de-DE', { year: 'numeric', month: 'long', day: 'numeric' });
     const thumbHtml = ev.image
-      ? `<img class="admin-event-thumb" src="${escapeHtml(getEventImagePreviewSrc(ev))}" alt="" loading="lazy" onerror="this.style.display='none'">`
+      ? `<img class="admin-event-thumb" src="${escapeHtml(getEventImagePreviewSrc(ev))}" alt="" loading="lazy" data-admin-events-hide-on-error>`
       : '';
     const game = ev.game || 'Mixed';
     const gameVariant = getEventGameVariant(game);
@@ -101,11 +101,36 @@ function renderEventsAdmin(events) {
           </div>
         </div>
         <div class="admin-event-actions">
-          <button class="btn-sm" onclick="LGAdminEvents.openEditEvent('${escapeHtml(ev.id)}')">&#9998;</button>
-          <button class="btn-delete" onclick="LGAdminEvents.deleteEvent('${escapeHtml(ev.id)}')">Loeschen</button>
+          <button class="btn-sm" data-admin-events-edit="${escapeHtml(ev.id)}">&#9998;</button>
+          <button class="btn-delete" data-admin-events-delete="${escapeHtml(ev.id)}">Loeschen</button>
         </div>
       </div>`;
   }).join('');
+  bindEventImageFallbacks(body);
+}
+
+function bindEventImageFallbacks(container) {
+  container.querySelectorAll('[data-admin-events-hide-on-error]').forEach((image) => {
+    image.addEventListener('error', () => {
+      image.style.display = 'none';
+    }, { once: true });
+  });
+}
+
+function bindEventListActions() {
+  const body = document.getElementById('events-list-body');
+  body?.addEventListener('click', (e) => {
+    const editButton = e.target.closest('[data-admin-events-edit]');
+    if (editButton) {
+      openEditEvent(editButton.getAttribute('data-admin-events-edit'));
+      return;
+    }
+
+    const deleteButton = e.target.closest('[data-admin-events-delete]');
+    if (deleteButton) {
+      deleteEvent(deleteButton.getAttribute('data-admin-events-delete'));
+    }
+  });
 }
 
 async function deleteEvent(id) {
@@ -157,9 +182,8 @@ function openEditEvent(id) {
           </div>
           <div class="admin-form__group">
             <label class="admin-form__label">Bild</label>
-            <div class="image-upload-area" id="edit-event-image-area" onclick="document.getElementById('edit-event-image-file').click()">
-              <img class="image-upload-area__preview" id="edit-event-image-preview" src="${imgSrc}" alt="Vorschau"
-                   onerror="this.src='${EVENT_IMAGE_PLACEHOLDER}'">
+            <div class="image-upload-area" id="edit-event-image-area">
+              <img class="image-upload-area__preview" id="edit-event-image-preview" src="${imgSrc}" alt="Vorschau">
               <div class="image-upload-area__text">
                 <strong>Klicken</strong> um ein neues Bild auszuwaehlen
               </div>
@@ -183,8 +207,12 @@ function openEditEvent(id) {
 
     overlay.addEventListener('click', (e) => { if (e.target === overlay) closeEditEvent(); });
     document.getElementById('edit-event-cancel').addEventListener('click', closeEditEvent);
+    document.getElementById('edit-event-image-preview')?.addEventListener('error', (e) => {
+      e.currentTarget.src = EVENT_IMAGE_PLACEHOLDER;
+    }, { once: true });
 
-    document.getElementById('edit-event-image-file').addEventListener('change', (e) => {
+    const editEventImageInput = document.getElementById('edit-event-image-file');
+    editEventImageInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (!file) return;
       const allowed = ['image/jpeg', 'image/png', 'image/webp'];
@@ -207,6 +235,7 @@ function openEditEvent(id) {
     });
 
     const editArea = document.getElementById('edit-event-image-area');
+    editArea.addEventListener('click', () => editEventImageInput.click());
     editArea.addEventListener('dragover', (e) => { e.preventDefault(); editArea.style.borderColor = 'var(--clr-accent-arc)'; });
     editArea.addEventListener('dragleave', () => { editArea.style.borderColor = ''; });
     editArea.addEventListener('drop', (e) => {
@@ -363,6 +392,7 @@ function registerEventImageUploadHandlers() {
   const eventImageArea = document.getElementById('event-image-area');
   const eventImageFileInput = document.getElementById('event-image-file');
 
+  eventImageArea?.addEventListener('click', () => eventImageFileInput?.click());
   eventImageArea?.addEventListener('dragover', (e) => {
     e.preventDefault();
     eventImageArea.style.borderColor = 'var(--clr-accent-arc)';
@@ -400,6 +430,7 @@ function registerPageLoader() {
 document.getElementById('btn-refresh-events')?.addEventListener('click', loadEvents);
 document.getElementById('events-form')?.addEventListener('submit', handleEventsSubmit);
 registerEventImageUploadHandlers();
+bindEventListActions();
 registerPageLoader();
 
 window.LGAdminEvents = Object.freeze({

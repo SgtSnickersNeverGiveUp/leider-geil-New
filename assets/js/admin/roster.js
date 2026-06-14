@@ -7,6 +7,7 @@ const ROSTER_API = ADMIN_CONFIG.rosterApi || `${ADMIN_ROSTER_API_BASE}/roster`;
 const ROSTER_AVATAR_API = ADMIN_CONFIG.rosterAvatarApi || `${ADMIN_ROSTER_API_BASE}/roster-avatar`;
 const ROSTER_AVATAR_PREVIEW_API = ADMIN_CONFIG.rosterAvatarPreviewApi || `${ADMIN_ROSTER_API_BASE}/roster-avatar`;
 const ADMIN_MEDIA_PREVIEW = window.LG_ADMIN_MEDIA_PREVIEW || {};
+const ROSTER_AVATAR_PLACEHOLDER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect fill='%231a1a2e' width='64' height='64'/%3E%3Ctext x='50%25' y='55%25' text-anchor='middle' fill='%237a7a8e' font-size='22'%3E%3F%3C/text%3E%3C/svg%3E";
 
 function escapeHtml(value) {
   return String(value || '')
@@ -30,6 +31,11 @@ function cacheBustAdminAvatarPreview(member) {
   return `${value}${value.includes('?') ? '&' : '?'}t=${Math.floor(Date.now() / 60000)}`;
 }
 
+function getRosterAvatarFallback(name) {
+  const initials = encodeURIComponent(String(name || '?').slice(0, 2).toUpperCase());
+  return `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3E%3Crect fill='%231a1a2e' width='80' height='80'/%3E%3Ctext x='50%25' y='55%25' text-anchor='middle' fill='%237a7a8e' font-size='24'%3E${initials}%3C/text%3E%3C/svg%3E`;
+}
+
 // ══════════════════════════════════════════════════════════
 // CLAN ROSTER
 // ══════════════════════════════════════════════════════════
@@ -38,16 +44,18 @@ let editAvatarFile = null;
 
 // Drag & drop support for new member form
 const rosterAvatarArea = document.getElementById('roster-avatar-area');
-rosterAvatarArea.addEventListener('dragover', (e) => { e.preventDefault(); rosterAvatarArea.style.borderColor = 'var(--clr-accent-arc)'; });
-rosterAvatarArea.addEventListener('dragleave', () => { rosterAvatarArea.style.borderColor = ''; });
-rosterAvatarArea.addEventListener('drop', (e) => {
+const rosterAvatarFileInput = document.getElementById('roster-avatar-file');
+rosterAvatarArea?.addEventListener('click', () => rosterAvatarFileInput?.click());
+rosterAvatarArea?.addEventListener('dragover', (e) => { e.preventDefault(); rosterAvatarArea.style.borderColor = 'var(--clr-accent-arc)'; });
+rosterAvatarArea?.addEventListener('dragleave', () => { rosterAvatarArea.style.borderColor = ''; });
+rosterAvatarArea?.addEventListener('drop', (e) => {
   e.preventDefault();
   rosterAvatarArea.style.borderColor = '';
   const file = e.dataTransfer.files[0];
   if (file) handleAvatarFileSelect(file);
 });
 
-document.getElementById('roster-avatar-file').addEventListener('change', (e) => {
+rosterAvatarFileInput?.addEventListener('change', (e) => {
   if (e.target.files[0]) handleAvatarFileSelect(e.target.files[0]);
 });
 
@@ -109,7 +117,8 @@ function renderRosterAdmin(members) {
   }
 
   body.innerHTML = `<div class="admin-roster-grid">${members.map(m => {
-    const avatarSrc = m.avatar ? escapeHtml(cacheBustAdminAvatarPreview(m)) : '';
+    const avatarFallback = getRosterAvatarFallback(m.name);
+    const avatarSrc = m.avatar ? escapeHtml(cacheBustAdminAvatarPreview(m)) : avatarFallback;
 
     const gamesHtml = (m.games || []).map(g => {
       const cls = g === 'PUBG' ? 'pubg' : g === 'ARC Raiders' ? 'arc' : 'other';
@@ -129,10 +138,10 @@ function renderRosterAdmin(members) {
 
     return `
     <div class="admin-roster-card" data-id="${escapeHtml(m.id)}">
-      <button class="btn-sm admin-roster-card__edit" onclick="LGAdminRoster.openEditMember('${escapeHtml(m.id)}')">&#9998;</button>
-      <button class="btn-delete admin-roster-card__delete" onclick="LGAdminRoster.deleteRosterMember('${escapeHtml(m.id)}')">&#10005;</button>
+      <button class="btn-sm admin-roster-card__edit" data-admin-roster-edit-member="${escapeHtml(m.id)}">&#9998;</button>
+      <button class="btn-delete admin-roster-card__delete" data-admin-roster-delete-member="${escapeHtml(m.id)}">&#10005;</button>
       <img class="admin-roster-cardavatar" src="${avatarSrc}" alt="${escapeHtml(m.name)}" loading="lazy"
-     onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 80 80%27%3E%3Crect fill=%27%231a1a2e%27 width=%2780%27 height=%2780%27/%3E%3Ctext x=%2750%25%27 y=%2755%25%27 text-anchor=%27middle%27 fill=%27%237a7a8e%27 font-size=%2724%27%3E${escapeHtml(m.name.slice(0,2).toUpperCase())}%3C/text%3E%3C/svg%3E'">
+           data-admin-roster-avatar-fallback="${escapeHtml(avatarFallback)}">
       <div class="admin-roster-card__name">${escapeHtml(m.name)}</div>
       <div class="admin-roster-card__role">
   ${escapeHtml(m.clanRole || m.role || '')}
@@ -142,6 +151,32 @@ function renderRosterAdmin(members) {
       ${bioHtml}
     </div>`;
   }).join('')}</div>`;
+  bindRosterCardAvatarFallbacks(body);
+}
+
+function bindRosterCardAvatarFallbacks(container) {
+  container.querySelectorAll('[data-admin-roster-avatar-fallback]').forEach((image) => {
+    image.addEventListener('error', () => {
+      const fallback = image.getAttribute('data-admin-roster-avatar-fallback') || ROSTER_AVATAR_PLACEHOLDER;
+      image.src = fallback;
+    }, { once: true });
+  });
+}
+
+function bindRosterListActions() {
+  const body = document.getElementById('roster-list-body');
+  body?.addEventListener('click', (e) => {
+    const editButton = e.target.closest('[data-admin-roster-edit-member]');
+    if (editButton) {
+      openEditMember(editButton.getAttribute('data-admin-roster-edit-member'));
+      return;
+    }
+
+    const deleteButton = e.target.closest('[data-admin-roster-delete-member]');
+    if (deleteButton) {
+      deleteRosterMember(deleteButton.getAttribute('data-admin-roster-delete-member'));
+    }
+  });
 }
 
 // Store all members for edit lookups
@@ -164,7 +199,7 @@ function openEditMember(id) {
 
     const avatarSrc = m.avatar
       ? cacheBustAdminAvatarPreview(m)
-      : "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect fill='%231a1a2e' width='64' height='64'/%3E%3Ctext x='50%25' y='55%25' text-anchor='middle' fill='%237a7a8e' font-size='22'%3E%3F%3C/text%3E%3C/svg%3E";
+      : ROSTER_AVATAR_PLACEHOLDER;
     const games = m.games || [];
     const clanRole = m.clanRole || 'Member';
     const bio = m.bio || '';
@@ -210,7 +245,7 @@ function openEditMember(id) {
             </div>
             <div class="custom-game-row">
               <input class="admin-form__input" type="text" id="edit-custom-game" placeholder="Weiteres Spiel hinzufügen…">
-              <button type="button" class="btn-sm" onclick="LGAdminRoster.addCustomGame('edit')">+</button>
+              <button type="button" class="btn-sm" id="edit-custom-game-add">+</button>
             </div>
           </div>
           <div class="admin-form__group">
@@ -225,9 +260,8 @@ function openEditMember(id) {
           <div class="admin-form__group">
             <label class="admin-form__label">Profilbild</label>
             <div class="admin-form__hint">Empfehlung: Quadratisch oder 4:5, ca. 500–800 px breit.</div>
-            <div class="avatar-upload-area" id="edit-avatar-area" onclick="document.getElementById('edit-avatar-file').click()">
-              <img class="avatar-upload-area__preview" id="edit-avatar-preview" src="${escapeHtml(avatarSrc)}" alt="Vorschau"
-                   onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect fill=%27%231a1a2e%27 width=%2764%27 height=%2764%27/%3E%3Ctext x=%2750%25%27 y=%2755%25%27 text-anchor=%27middle%27 fill=%27%237a7a8e%27 font-size=%2722%27%3E%3F%3C/text%3E%3C/svg%3E'">
+            <div class="avatar-upload-area" id="edit-avatar-area">
+              <img class="avatar-upload-area__preview" id="edit-avatar-preview" src="${escapeHtml(avatarSrc)}" alt="Vorschau">
               <div class="avatar-upload-area__text">
                 <strong>Klicken</strong> um ein neues Bild auszuwählen
               </div>
@@ -252,9 +286,14 @@ function openEditMember(id) {
     // Close on overlay click
     overlay.addEventListener('click', (e) => { if (e.target === overlay) closeEditModal(); });
     document.getElementById('edit-member-cancel').addEventListener('click', closeEditModal);
+    document.getElementById('edit-custom-game-add')?.addEventListener('click', () => addCustomGame('edit'));
+    document.getElementById('edit-avatar-preview')?.addEventListener('error', (e) => {
+      e.currentTarget.src = ROSTER_AVATAR_PLACEHOLDER;
+    }, { once: true });
 
     // File select
-    document.getElementById('edit-avatar-file').addEventListener('change', (e) => {
+    const editAvatarInput = document.getElementById('edit-avatar-file');
+    editAvatarInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (!file) return;
       const allowed = ['image/jpeg', 'image/png', 'image/webp'];
@@ -278,6 +317,7 @@ function openEditMember(id) {
 
     // Drag & drop on edit area
     const editArea = document.getElementById('edit-avatar-area');
+    editArea.addEventListener('click', () => editAvatarInput.click());
     editArea.addEventListener('dragover', (e) => { e.preventDefault(); editArea.style.borderColor = 'var(--clr-accent-arc)'; });
     editArea.addEventListener('dragleave', () => { editArea.style.borderColor = ''; });
     editArea.addEventListener('drop', (e) => {
@@ -426,7 +466,7 @@ document.getElementById('roster-form').addEventListener('submit', async (e) => {
     }
 
     document.getElementById('roster-form').reset();
-    document.getElementById('roster-avatar-preview').src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect fill='%231a1a2e' width='64' height='64'/%3E%3Ctext x='50%25' y='55%25' text-anchor='middle' fill='%237a7a8e' font-size='22'%3E%3F%3C/text%3E%3C/svg%3E";
+    document.getElementById('roster-avatar-preview').src = ROSTER_AVATAR_PLACEHOLDER;
     document.getElementById('roster-avatar-status').textContent = '';
     rosterAvatarFile = null;
     await loadRoster();
@@ -437,6 +477,9 @@ document.getElementById('roster-form').addEventListener('submit', async (e) => {
     btn.textContent = '+ Mitglied hinzufügen';
   }
 });
+
+document.getElementById('roster-custom-game-add')?.addEventListener('click', () => addCustomGame('roster'));
+bindRosterListActions();
 
 window.LGAdminRoster = {
   loadRoster,

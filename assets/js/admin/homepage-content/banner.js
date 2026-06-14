@@ -58,11 +58,12 @@ async function loadBannerSettings() {
       body.innerHTML = `
         <div class="admin-homepage-banner-preview">
           <span class="admin-homepage-banner-preview__label">1920 &times; 600</span>
-          <img src="${escapeHtml(imgUrl)}" alt="Header Banner" onerror="this.parentElement.innerHTML='<div class=\\'empty-state\\'><div class=\\'empty-state__icon\\'>&#9888;</div><div class=\\'empty-state__text\\'>Bild konnte nicht geladen werden.</div></div>'">
+          <img src="${escapeHtml(imgUrl)}" alt="Header Banner" data-admin-homepage-banner-preview-image>
         </div>
         <p style="font-family:var(--ff-mono);font-size:.75rem;color:var(--clr-text-muted);margin-top:.75rem;">
           Quelle: ${escapeHtml(settings.bannerUrl)}
         </p>`;
+      bindBannerPreviewErrorHandler(body);
 
       const bannerUrlInput = document.getElementById('admin-homepage-banner-url');
       if (bannerUrlInput) {
@@ -78,6 +79,19 @@ async function loadBannerSettings() {
   } catch (err) {
     body.innerHTML = `<div class="empty-state"><div class="empty-state__icon">&#9888;</div><div class="empty-state__text">Fehler: ${err.message}</div></div>`;
   }
+}
+
+function bindBannerPreviewErrorHandler(body) {
+  const previewImage = body.querySelector('[data-admin-homepage-banner-preview-image]');
+  previewImage?.addEventListener('error', () => {
+    const preview = previewImage.closest('.admin-homepage-banner-preview');
+    if (!preview) return;
+    preview.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state__icon">&#9888;</div>
+        <div class="empty-state__text">Bild konnte nicht geladen werden.</div>
+      </div>`;
+  }, { once: true });
 }
 
 async function saveBanner(e) {

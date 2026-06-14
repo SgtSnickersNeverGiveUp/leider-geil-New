@@ -83,8 +83,8 @@ function renderEventRegistrations() {
             <td class="app-about">${escapeHtml(truncate(reg.bemerkungen || '', 60))}</td>
             <td class="app-date">${formatDate(reg.createdAt)}</td>
             <td>
-              <button class="btn-sm" onclick="LGAdminEventRegistrations.showDetail('${escapeHtml(reg.id)}')">Details</button>
-              <button class="btn-delete" onclick="LGAdminEventRegistrations.deleteRegistration('${escapeHtml(reg.id)}')">Loeschen</button>
+              <button class="btn-sm" data-admin-event-registrations-show-detail="${escapeHtml(reg.id)}">Details</button>
+              <button class="btn-delete" data-admin-event-registrations-delete="${escapeHtml(reg.id)}">Loeschen</button>
             </td>
           </tr>
         `).join('')}
@@ -159,6 +159,22 @@ async function deleteRegistration(id) {
   }
 }
 
+function bindEventRegistrationListActions() {
+  const body = document.getElementById('evt-registrations-body');
+  body?.addEventListener('click', (e) => {
+    const detailButton = e.target.closest('[data-admin-event-registrations-show-detail]');
+    if (detailButton) {
+      showDetail(detailButton.getAttribute('data-admin-event-registrations-show-detail'));
+      return;
+    }
+
+    const deleteButton = e.target.closest('[data-admin-event-registrations-delete]');
+    if (deleteButton) {
+      deleteRegistration(deleteButton.getAttribute('data-admin-event-registrations-delete'));
+    }
+  });
+}
+
 function registerPageLoader() {
   const registration = {
     pageId: EVENT_REGISTRATIONS_PAGE_ID,
@@ -175,6 +191,7 @@ function registerPageLoader() {
 }
 
 document.getElementById('btn-refresh-evt-registrations')?.addEventListener('click', loadEventRegistrations);
+bindEventRegistrationListActions();
 registerPageLoader();
 
 window.LGAdminEventRegistrations = Object.freeze({

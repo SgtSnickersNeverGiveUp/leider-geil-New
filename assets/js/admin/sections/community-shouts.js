@@ -74,10 +74,12 @@ function renderCommunityShoutsAdmin() {
             <td class="app-about">${escapeHtml(shout.message)}</td>
             <td class="app-date">${formatDate(shout.createdAt)}</td>
             <td>
-              <button class="btn-sm" onclick="LGAdminCommunityShouts.setApproval('${escapeHtml(shout.id)}', ${!shout.approved})">
+              <button class="btn-sm"
+                      data-admin-community-shouts-set-approval="${escapeHtml(shout.id)}"
+                      data-admin-community-shouts-approved="${shout.approved ? 'false' : 'true'}">
                 ${shout.approved ? 'Ausblenden' : 'Freigeben'}
               </button>
-              <button class="btn-delete" onclick="LGAdminCommunityShouts.deleteShout('${escapeHtml(shout.id)}')">Loeschen</button>
+              <button class="btn-delete" data-admin-community-shouts-delete="${escapeHtml(shout.id)}">Loeschen</button>
             </td>
           </tr>
         `).join('')}
@@ -111,6 +113,25 @@ async function deleteShout(id) {
   }
 }
 
+function bindCommunityShoutListActions() {
+  const body = document.getElementById('community-shouts-admin-body');
+  body?.addEventListener('click', (e) => {
+    const approvalButton = e.target.closest('[data-admin-community-shouts-set-approval]');
+    if (approvalButton) {
+      setApproval(
+        approvalButton.getAttribute('data-admin-community-shouts-set-approval'),
+        approvalButton.getAttribute('data-admin-community-shouts-approved') === 'true',
+      );
+      return;
+    }
+
+    const deleteButton = e.target.closest('[data-admin-community-shouts-delete]');
+    if (deleteButton) {
+      deleteShout(deleteButton.getAttribute('data-admin-community-shouts-delete'));
+    }
+  });
+}
+
 function registerPageLoader() {
   const registration = {
     pageId: COMMUNITY_SHOUTS_PAGE_ID,
@@ -127,6 +148,7 @@ function registerPageLoader() {
 }
 
 document.getElementById('btn-refresh-community-shouts')?.addEventListener('click', loadCommunityShouts);
+bindCommunityShoutListActions();
 registerPageLoader();
 
 window.LGAdminCommunityShouts = Object.freeze({

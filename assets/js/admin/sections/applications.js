@@ -83,8 +83,8 @@ function renderApplications() {
             <td class="app-about">${escapeHtml(about.substring(0, 80))}${about.length > 80 ? '...' : ''}</td>
             <td class="app-date">${formatDate(app.createdAt)}</td>
             <td>
-              <button class="btn-sm" onclick="LGAdminApplications.openDetails('${id}')">Details</button>
-              <button class="btn-delete" onclick="LGAdminApplications.deleteApplication('${id}')">Loeschen</button>
+              <button class="btn-sm" data-admin-applications-open-detail="${id}">Details</button>
+              <button class="btn-delete" data-admin-applications-delete="${id}">Loeschen</button>
             </td>
           </tr>
         `;
@@ -139,6 +139,22 @@ function updateStats() {
   if (arc) arc.textContent = currentApplications.filter(a => a.hauptspiel === 'ARC Raiders' || a.hauptspiel === 'Beides').length;
 }
 
+function bindApplicationListActions() {
+  const body = document.getElementById('applications-body');
+  body?.addEventListener('click', (e) => {
+    const detailButton = e.target.closest('[data-admin-applications-open-detail]');
+    if (detailButton) {
+      openDetails(detailButton.getAttribute('data-admin-applications-open-detail'));
+      return;
+    }
+
+    const deleteButton = e.target.closest('[data-admin-applications-delete]');
+    if (deleteButton) {
+      deleteApplication(deleteButton.getAttribute('data-admin-applications-delete'));
+    }
+  });
+}
+
 function registerPageLoader() {
   const registration = {
     pageId: APPLICATIONS_PAGE_ID,
@@ -155,6 +171,7 @@ function registerPageLoader() {
 }
 
 document.getElementById('btn-refresh')?.addEventListener('click', loadApplications);
+bindApplicationListActions();
 registerPageLoader();
 
 window.LGAdminApplications = Object.freeze({

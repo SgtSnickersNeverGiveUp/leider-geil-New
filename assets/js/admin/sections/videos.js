@@ -45,7 +45,7 @@ function renderVideosAdmin(videos) {
       <img class="admin-video-card__thumb" src="${escapeHtml(v.thumbnail)}" alt="${escapeHtml(v.title)}" loading="lazy">
       <div class="admin-video-card__body">
         <span class="admin-video-card__title">${escapeHtml(v.title)}</span>
-        <button class="btn-delete" onclick="LGAdminVideos.deleteVideo('${escapeHtml(v.id)}')">&#10005;</button>
+        <button class="btn-delete" data-admin-videos-delete="${escapeHtml(v.id)}">&#10005;</button>
       </div>
     </div>
   `).join('')}</div>`;
@@ -95,6 +95,15 @@ async function handleVideosSubmit(e) {
   }
 }
 
+function bindVideoListActions() {
+  const body = document.getElementById('videos-list-body');
+  body?.addEventListener('click', (e) => {
+    const deleteButton = e.target.closest('[data-admin-videos-delete]');
+    if (!deleteButton) return;
+    deleteVideo(deleteButton.getAttribute('data-admin-videos-delete'));
+  });
+}
+
 function registerPageLoader() {
   const registration = {
     pageId: VIDEOS_PAGE_ID,
@@ -112,6 +121,7 @@ function registerPageLoader() {
 
 document.getElementById('btn-refresh-videos')?.addEventListener('click', loadVideos);
 document.getElementById('videos-form')?.addEventListener('submit', handleVideosSubmit);
+bindVideoListActions();
 registerPageLoader();
 
 window.LGAdminVideos = Object.freeze({
