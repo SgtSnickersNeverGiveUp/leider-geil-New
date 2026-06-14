@@ -1,5 +1,6 @@
 import { getStore } from "@netlify/blobs";
 import { requireAdmin } from "./admin-auth.mjs";
+import { toAdminCommunityShout } from "./_shared/admin-community-shouts-data.mjs";
 import {
   COMMUNITY_SHOUTS_STORE_NAME,
   listCommunityShouts,
@@ -25,7 +26,8 @@ export default async (req) => {
 
   if (req.method === "GET") {
     try {
-      return jsonResponse(await listCommunityShouts(store));
+      const shouts = (await listCommunityShouts(store)).map(toAdminCommunityShout);
+      return jsonResponse(shouts);
     } catch {
       return jsonResponse({ error: "Shouts konnten nicht geladen werden." }, 500);
     }
@@ -47,7 +49,7 @@ export default async (req) => {
       };
 
       await store.setJSON(id, updated);
-      return jsonResponse({ success: true, shout: updated });
+      return jsonResponse({ success: true, shout: toAdminCommunityShout(updated) });
     } catch {
       return jsonResponse({ error: "Shout konnte nicht aktualisiert werden." }, 500);
     }

@@ -37,13 +37,6 @@ function renderEventGameOptions(selectedGame) {
     .join('');
 }
 
-function getEventGameVariant(game) {
-  if (game === 'PUBG' || game === 'PUBG NEWS') return 'pubg';
-  if (game === 'ARC Raiders' || game === 'ARC Raiders NEWS') return 'arc';
-  if (game === 'NEWS') return 'news';
-  return '';
-}
-
 function cacheBustAdminPreview(imageUrl, previewApi) {
   const value = String(imageUrl || '');
   if (!value.startsWith(previewApi)) return value;
@@ -88,7 +81,7 @@ function renderEventsAdmin(events) {
       ? `<img class="admin-event-thumb" src="${escapeHtml(getEventImagePreviewSrc(ev))}" alt="" loading="lazy" data-admin-events-hide-on-error>`
       : '';
     const game = ev.game || 'Mixed';
-    const gameVariant = getEventGameVariant(game);
+    const gameVariant = ev.gameVariant || '';
     const gameClass = gameVariant ? ` admin-event-game--${gameVariant}` : '';
     return `
       <div class="admin-event-item">

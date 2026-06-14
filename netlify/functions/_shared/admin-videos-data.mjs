@@ -1,3 +1,15 @@
+export function toAdminVideo(video = {}) {
+  return {
+    id: video.id || "",
+    title: video.title || "",
+    url: video.url || "",
+    platform: video.platform || "youtube",
+    videoId: video.videoId || null,
+    thumbnail: video.thumbnail || "",
+    createdAt: video.createdAt || "",
+  };
+}
+
 export function buildVideoData({ url, title, platform: rawPlatform }) {
   if (!url || !title) {
     return { error: "URL und Titel sind Pflichtfelder." };

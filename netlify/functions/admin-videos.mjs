@@ -1,6 +1,6 @@
 import { getStore } from "@netlify/blobs";
 import { requireAdmin } from "./admin-auth.mjs";
-import { buildVideoData } from "./_shared/admin-videos-data.mjs";
+import { buildVideoData, toAdminVideo } from "./_shared/admin-videos-data.mjs";
 import { VIDEOS_STORE_NAME, listVideos } from "./_shared/videos-data.mjs";
 
 function jsonResponse(body, status = 200) {
@@ -22,7 +22,8 @@ export default async (req) => {
 
   if (req.method === "GET") {
     try {
-      return jsonResponse(await listVideos(store));
+      const videos = (await listVideos(store)).map(toAdminVideo);
+      return jsonResponse(videos);
     } catch {
       return jsonResponse({ error: "Fehler beim Laden." }, 500);
     }
@@ -41,7 +42,7 @@ export default async (req) => {
       };
 
       await store.setJSON(id, video);
-      return jsonResponse({ success: true, id, video }, 201);
+      return jsonResponse({ success: true, id, video: toAdminVideo(video) }, 201);
     } catch {
       return jsonResponse({ error: "Fehler beim Speichern." }, 500);
     }

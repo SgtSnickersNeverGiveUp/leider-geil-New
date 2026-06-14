@@ -79,6 +79,34 @@ const publicHandlerProjectionImports = [
   },
 ];
 
+const adminHandlerProjectionImports = [
+  {
+    storeImport: "./_shared/news-data.mjs",
+    projectionImport: "./_shared/admin-news-data.mjs",
+    projectionSymbol: "toAdminNewsItem",
+  },
+  {
+    storeImport: "./_shared/videos-data.mjs",
+    projectionImport: "./_shared/admin-videos-data.mjs",
+    projectionSymbol: "toAdminVideo",
+  },
+  {
+    storeImport: "./_shared/events-data.mjs",
+    projectionImport: "./_shared/admin-events-data.mjs",
+    projectionSymbol: "toAdminEvent",
+  },
+  {
+    storeImport: "./_shared/roster-data.mjs",
+    projectionImport: "./_shared/admin-roster-data.mjs",
+    projectionSymbol: "toAdminRosterMember",
+  },
+  {
+    storeImport: "./_shared/community-shouts-data.mjs",
+    projectionImport: "./_shared/admin-community-shouts-data.mjs",
+    projectionSymbol: "toAdminCommunityShout",
+  },
+];
+
 async function main() {
   const htmlBoundaryFiles = await discoverHtmlBoundaryFiles();
 
@@ -605,6 +633,14 @@ async function assertNetlifyFunctionBoundary() {
           failures.push(`${relative}: admin handler must not import public projection helper ${JSON.stringify(importPath)}`);
         }
       }
+      for (const { storeImport, projectionImport, projectionSymbol } of adminHandlerProjectionImports) {
+        if (imports.includes(storeImport) && !imports.includes(projectionImport)) {
+          failures.push(`${relative}: admin handler importing ${JSON.stringify(storeImport)} must also use ${JSON.stringify(projectionImport)}`);
+        }
+        if (imports.includes(storeImport) && !content.includes(projectionSymbol)) {
+          failures.push(`${relative}: admin handler importing ${JSON.stringify(storeImport)} must project records with ${projectionSymbol}`);
+        }
+      }
       continue;
     }
 
@@ -784,6 +820,10 @@ async function assertSharedContentDataBoundary() {
     {
       file: "netlify/functions/_shared/admin-roster-data.mjs",
       forbidden: ["toPublicRosterMember"],
+    },
+    {
+      file: "netlify/functions/_shared/admin-community-shouts-data.mjs",
+      forbidden: ["toPublicCommunityShout"],
     },
     {
       file: "netlify/functions/_shared/public-news-data.mjs",
