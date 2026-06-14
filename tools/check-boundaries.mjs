@@ -98,6 +98,7 @@ async function main() {
   await assertAdminDashboardShellBoundary();
   await assertNetlifyFunctionBoundary();
   await assertSharedImportBoundary();
+  await assertNetlifyBuildBoundary();
   await assertNetlifyRoutingBoundary();
   await assertEdgeFunctionBoundary();
   await assertPublicIndexProjectionBoundary();
@@ -641,6 +642,16 @@ async function assertNetlifyRoutingBoundary() {
     if (!protectedRoutes.has(routePath)) {
       failures.push(`netlify.toml: admin route ${JSON.stringify(routePath)} must be protected by admin-auth edge function`);
     }
+  }
+}
+
+async function assertNetlifyBuildBoundary() {
+  const netlifyTomlPath = path.join(repoRoot, "netlify.toml");
+  const netlifyToml = await readText(netlifyTomlPath);
+  const buildCommand = extractTomlValue(netlifyToml, "command");
+
+  if (!/\bnpm\s+test\b/.test(buildCommand)) {
+    failures.push("netlify.toml: build command must run npm test so admin/public boundary checks gate deploys");
   }
 }
 
