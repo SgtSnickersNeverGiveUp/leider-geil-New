@@ -98,10 +98,10 @@ async function renderTimeline() {
       updateView();
       moreBtn.style.display = '';
 
-      moreBtn.onclick = () => {
+      moreBtn.addEventListener('click', () => {
         expanded = !expanded;
         updateView();
-      };
+      });
     } else if (moreBtn) {
       moreBtn.style.display = 'none';
     }
@@ -152,9 +152,13 @@ async function renderHeaderBanner() {
         ? settings.bannerUrl + '?t=' + Math.floor(Date.now() / 60000)
         : settings.bannerUrl;
 
+      img.addEventListener('load', () => {
+        section.style.display = '';
+      }, { once: true });
+      img.addEventListener('error', () => {
+        section.style.display = 'none';
+      }, { once: true });
       img.src = imgUrl;
-      img.onload = () => { section.style.display = ''; };
-      img.onerror = () => { section.style.display = 'none'; };
     } else {
       section.style.display = 'none';
     }

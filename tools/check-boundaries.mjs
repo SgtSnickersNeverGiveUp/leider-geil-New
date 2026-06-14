@@ -224,6 +224,7 @@ async function assertPublicBrowserMarkupBoundary() {
     if (/<[^>]*\son[a-z]+\s*=/i.test(content)) {
       failures.push(`${relative}: public browser markup must not generate inline event handlers`);
     }
+    assertNoPropertyEventHandlers(file, content, "public");
 
     assertNotContains(file, content, [
       "admin-",
@@ -480,6 +481,7 @@ async function assertAdminCoreBoundary() {
     if (/<[^>]*\son[a-z]+\s*=/i.test(content)) {
       failures.push(`${path.relative(repoRoot, file)}: admin browser markup must not generate inline event handlers`);
     }
+    assertNoPropertyEventHandlers(file, content, "admin");
 
     assertNotContains(file, content, [
       "SITE_CONFIG",
@@ -1008,6 +1010,14 @@ function assertApiPathsMatchBoundary(file, content, boundary) {
     if (boundary === "admin" && apiPath.startsWith("/api/") && !apiPath.startsWith("/api/admin")) {
       failures.push(`${relative}: admin code must not reference public API path ${JSON.stringify(apiPath)}`);
     }
+  }
+}
+
+function assertNoPropertyEventHandlers(file, content, boundary) {
+  const relative = path.relative(repoRoot, file);
+  const matches = content.matchAll(/\.\s*on[a-z]+\s*=/gi);
+  for (const match of matches) {
+    failures.push(`${relative}: ${boundary} browser code must use addEventListener instead of property event handlers (${JSON.stringify(match[0].trim())})`);
   }
 }
 

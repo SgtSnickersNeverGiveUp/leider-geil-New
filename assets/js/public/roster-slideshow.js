@@ -82,6 +82,7 @@
     let index = 0;
     const speedMs = config.speedSeconds * 1000;
     const canRotate = config.autoplay && slides.length > 1;
+    elements.avatar?.addEventListener('error', useDefaultAvatar);
 
     const showSlide = () => {
       renderSlide(elements, slides[index], canRotate ? 'Member Spotlight' : 'Fixer Spotlight');
@@ -100,9 +101,8 @@
 
   function renderSlide(elements, slide, eyebrow) {
     if (elements.avatar) {
-      elements.avatar.src = slide.avatar;
       elements.avatar.alt = slide.name;
-      elements.avatar.onerror = () => { elements.avatar.src = DEFAULT_AVATAR; };
+      elements.avatar.src = slide.avatar;
     }
     if (elements.eyebrow) elements.eyebrow.textContent = eyebrow;
     if (elements.name) elements.name.textContent = slide.name;
@@ -113,6 +113,12 @@
         .map((game) => `<span>${escapeHtml(game)}</span>`)
         .join('');
     }
+  }
+
+  function useDefaultAvatar(event) {
+    const avatar = event.currentTarget;
+    if (!avatar || avatar.getAttribute('src') === DEFAULT_AVATAR) return;
+    avatar.src = DEFAULT_AVATAR;
   }
 
   function escapeHtml(value) {
