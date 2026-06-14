@@ -6,7 +6,7 @@ import {
   mergePublicContentSettings,
   pickAdminPublicContentSettings,
   sanitizePublicContentSettingsPatch,
-} from "./_shared/public-settings-data.mjs";
+} from "./_shared/admin-public-settings-data.mjs";
 
 export default async (req) => {
   if (req.method !== "GET" && req.method !== "POST") {
