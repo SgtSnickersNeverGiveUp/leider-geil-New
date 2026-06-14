@@ -1,11 +1,9 @@
 import { getStore } from "@netlify/blobs";
 import {
-  COMMUNITY_SHOUT_MAX_MESSAGE_LENGTH,
-  COMMUNITY_SHOUT_MAX_NAME_LENGTH,
   COMMUNITY_SHOUTS_STORE_NAME,
+  createPendingCommunityShout,
+  hasRequiredCommunityShoutFields,
   listApprovedCommunityShouts,
-  sanitizeCommunityShoutTag,
-  sanitizeCommunityShoutText,
 } from "./_shared/community-shouts-data.mjs";
 import { toPublicCommunityShout } from "./_shared/public-community-shouts-data.mjs";
 
@@ -40,26 +38,13 @@ export default async (req) => {
         return jsonResponse({ success: true, pending: true }, 201);
       }
 
-      const name = sanitizeCommunityShoutText(body.name, COMMUNITY_SHOUT_MAX_NAME_LENGTH);
-      const message = sanitizeCommunityShoutText(body.message, COMMUNITY_SHOUT_MAX_MESSAGE_LENGTH);
-      const tag = sanitizeCommunityShoutTag(body.tag);
-
-      if (!name || !message) {
+      const shout = createPendingCommunityShout(body);
+      if (!hasRequiredCommunityShoutFields(shout)) {
         return jsonResponse({ error: "Name und Nachricht sind Pflichtfelder." }, 400);
       }
 
-      const id = `shout_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-      const shout = {
-        id,
-        name,
-        message,
-        tag,
-        approved: false,
-        createdAt: new Date().toISOString(),
-      };
-
-      await store.setJSON(id, shout);
-      return jsonResponse({ success: true, pending: true, id }, 201);
+      await store.setJSON(shout.id, shout);
+      return jsonResponse({ success: true, pending: true, id: shout.id }, 201);
     } catch (err) {
       return jsonResponse({ error: "Shout konnte nicht gespeichert werden." }, 500);
     }

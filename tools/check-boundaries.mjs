@@ -105,6 +105,11 @@ const adminHandlerProjectionImports = [
     projectionImport: "./_shared/admin-community-shouts-data.mjs",
     projectionSymbol: "toAdminCommunityShout",
   },
+  {
+    storeImport: "./_shared/applications-data.mjs",
+    projectionImport: "./_shared/admin-applications-data.mjs",
+    projectionSymbol: "toAdminApplication",
+  },
 ];
 
 async function main() {
@@ -132,6 +137,7 @@ async function main() {
   await assertPublicIndexProjectionBoundary();
   await assertPublicSettingsHelperBoundary();
   await assertSharedContentDataBoundary();
+  await assertPublicWriteHandlerBoundary();
   await assertRemovedFilesStayRemoved();
 
   if (failures.length > 0) {
@@ -826,6 +832,14 @@ async function assertSharedContentDataBoundary() {
       forbidden: ["toPublicCommunityShout"],
     },
     {
+      file: "netlify/functions/_shared/applications-data.mjs",
+      forbidden: ["toPublicApplication", "toAdminApplication", "requireAdmin"],
+    },
+    {
+      file: "netlify/functions/_shared/admin-applications-data.mjs",
+      forbidden: ["toPublicApplication"],
+    },
+    {
       file: "netlify/functions/_shared/public-news-data.mjs",
       forbidden: ["writeNews", "requireAdmin"],
     },
@@ -852,6 +866,30 @@ async function assertSharedContentDataBoundary() {
     const content = await readText(absolutePath);
     assertNotContains(absolutePath, content, forbidden);
   }
+}
+
+async function assertPublicWriteHandlerBoundary() {
+  const communityShoutsPath = path.join(repoRoot, "netlify/functions/community-shouts.mjs");
+  const communityShouts = await readText(communityShoutsPath);
+  assertContains(communityShoutsPath, communityShouts, [
+    "createPendingCommunityShout",
+    "hasRequiredCommunityShoutFields",
+  ]);
+  assertNotContains(communityShoutsPath, communityShouts, [
+    "approved: false",
+    "createdAt: new Date().toISOString()",
+  ]);
+
+  const applicationsPath = path.join(repoRoot, "netlify/functions/applications.mjs");
+  const applications = await readText(applicationsPath);
+  assertContains(applicationsPath, applications, [
+    "createApplication",
+    "hasRequiredApplicationFields",
+  ]);
+  assertNotContains(applicationsPath, applications, [
+    'const STORE_NAME = "applications"',
+    "createdAt: new Date().toISOString()",
+  ]);
 }
 
 async function assertSharedImportBoundary() {
@@ -923,6 +961,15 @@ function assertNotContains(file, content, forbiddenValues) {
   for (const forbiddenValue of forbiddenValues) {
     if (content.includes(forbiddenValue)) {
       failures.push(`${relative}: must not contain ${JSON.stringify(forbiddenValue)}`);
+    }
+  }
+}
+
+function assertContains(file, content, requiredValues) {
+  const relative = path.relative(repoRoot, file);
+  for (const requiredValue of requiredValues) {
+    if (!content.includes(requiredValue)) {
+      failures.push(`${relative}: must contain ${JSON.stringify(requiredValue)}`);
     }
   }
 }

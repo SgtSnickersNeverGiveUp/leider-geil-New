@@ -1,7 +1,8 @@
 import { getStore } from "@netlify/blobs";
 import { requireAdmin } from "./admin-auth.mjs";
+import { toAdminApplication } from "./_shared/admin-applications-data.mjs";
+import { APPLICATIONS_STORE_NAME, listApplications } from "./_shared/applications-data.mjs";
 
-const STORE_NAME = "applications";
 const JSON_HEADERS = { "Content-Type": "application/json" };
 
 function jsonResponse(body, status = 200) {
@@ -9,19 +10,6 @@ function jsonResponse(body, status = 200) {
     status,
     headers: JSON_HEADERS,
   });
-}
-
-async function listApplications(store) {
-  const { blobs } = await store.list();
-  const applications = [];
-
-  for (const blob of blobs) {
-    const data = await store.get(blob.key, { type: "json" });
-    if (data) applications.push(data);
-  }
-
-  applications.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  return applications;
 }
 
 export default async (req) => {
@@ -32,11 +20,12 @@ export default async (req) => {
   const adminGuard = requireAdmin(req);
   if (adminGuard) return adminGuard;
 
-  const store = getStore(STORE_NAME);
+  const store = getStore(APPLICATIONS_STORE_NAME);
 
   if (req.method === "GET") {
     try {
-      return jsonResponse(await listApplications(store));
+      const applications = (await listApplications(store)).map(toAdminApplication);
+      return jsonResponse(applications);
     } catch {
       return jsonResponse({ error: "Fehler beim Laden." }, 500);
     }

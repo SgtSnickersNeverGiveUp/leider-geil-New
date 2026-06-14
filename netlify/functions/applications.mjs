@@ -1,7 +1,10 @@
 import { getStore } from "@netlify/blobs";
+import {
+  APPLICATIONS_STORE_NAME,
+  createApplication,
+  hasRequiredApplicationFields,
+} from "./_shared/applications-data.mjs";
 import { notifyApplicationSubmission } from "./_shared/discord-notifications.mjs";
-
-const STORE_NAME = "applications";
 
 export default async (req, context) => {
   if (req.method !== "POST") {
@@ -11,35 +14,22 @@ export default async (req, context) => {
     });
   }
 
-  const store = getStore(STORE_NAME);
+  const store = getStore(APPLICATIONS_STORE_NAME);
 
   // POST – Submit new application
   try {
-    const body = await req.json();
-    const { gamingId, alter, hauptspiel, rolle, ueberMich } = body;
-
-    if (!gamingId || !alter || !hauptspiel || !rolle || !ueberMich) {
+    const application = createApplication(await req.json());
+    if (!hasRequiredApplicationFields(application)) {
       return new Response(JSON.stringify({ error: "Alle Felder müssen ausgefüllt sein." }), {
         status: 400,
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    const id = `app_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-    const application = {
-      id,
-      gamingId,
-      alter: Number(alter),
-      hauptspiel,
-      rolle,
-      ueberMich,
-      createdAt: new Date().toISOString(),
-    };
-
-    await store.setJSON(id, application);
+    await store.setJSON(application.id, application);
     await notifyApplicationSubmission(application);
 
-    return new Response(JSON.stringify({ success: true, id }), {
+    return new Response(JSON.stringify({ success: true, id: application.id }), {
       status: 201,
       headers: { "Content-Type": "application/json" },
     });

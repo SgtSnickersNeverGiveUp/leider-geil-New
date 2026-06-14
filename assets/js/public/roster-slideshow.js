@@ -15,7 +15,7 @@
         fetchJson(SITE_CONFIG.settingsApi || '/api/public-settings', {}),
         fetchJson(SITE_CONFIG.rosterApi || '/api/roster', []),
       ]);
-      const config = normalizeSlideshowSettings(settings.rosterSlideshow);
+      const config = readPublicSlideshowSettings(settings.rosterSlideshow);
       if (!config.enabled || !Array.isArray(members) || members.length === 0) return;
 
       const slides = buildSlides(config, members);
@@ -33,25 +33,21 @@
     return await res.json();
   }
 
-  function normalizeSlideshowSettings(value) {
+  function readPublicSlideshowSettings(value) {
     const settings = value && typeof value === 'object' ? value : {};
-    const entries = Array.isArray(settings.entries) ? settings.entries : [];
     return {
-      enabled: Boolean(settings.enabled),
+      enabled: settings.enabled === true,
       autoplay: settings.autoplay !== false,
-      speedSeconds: Math.max(3, Number(settings.speedSeconds) || DEFAULT_SPEED_SECONDS),
-      pinnedMemberId: settings.pinnedMemberId || '',
-      entries: entries.map((entry) => ({
-        memberId: String(entry.memberId || ''),
-        text: entry.text || '',
-      })),
+      speedSeconds: Number(settings.speedSeconds) || DEFAULT_SPEED_SECONDS,
+      pinnedMemberId: String(settings.pinnedMemberId || ''),
+      entries: Array.isArray(settings.entries) ? settings.entries : [],
     };
   }
 
   function buildSlides(config, members) {
     const memberById = new Map(members.map((member) => [member.id, member]));
     const entries = config.entries
-      .filter((entry) => entry && entry.enabled !== false && memberById.has(entry.memberId));
+      .filter((entry) => entry && memberById.has(entry.memberId));
 
     if (!config.autoplay && config.pinnedMemberId) {
       const pinnedEntry = entries.find((entry) => entry.memberId === config.pinnedMemberId);
@@ -69,7 +65,6 @@
       avatar: member.avatar || DEFAULT_AVATAR,
       games: member.games || [],
       text: entry.text || member.bio || 'Leider Geil Member im Spotlight.',
-      pinned: Boolean(entry.pinned),
     };
   }
 
