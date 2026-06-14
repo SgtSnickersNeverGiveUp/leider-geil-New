@@ -17,17 +17,6 @@ const adminHtmlFiles = [
   "admin-login.html",
 ];
 
-const adminCoreJsFiles = [
-  "assets/js/admin/config.js",
-  "assets/js/admin/dashboard.js",
-  "assets/js/admin/login.js",
-  "assets/js/admin/roster.js",
-  "assets/js/admin/homepage-content/page.js",
-  "assets/js/admin/homepage-content/banner.js",
-  "assets/js/admin/homepage-content/news-ticker.js",
-  "assets/js/admin/homepage-content/roster-slideshow.js",
-];
-
 const removedFiles = [
   "assets/data/events.json",
   "assets/data/news.json",
@@ -192,10 +181,10 @@ async function assertCssBoundaries() {
 }
 
 async function assertAdminCoreBoundary() {
-  for (const file of adminCoreJsFiles) {
-    const absolutePath = path.join(repoRoot, file);
-    const content = await readText(absolutePath);
-    assertNotContains(absolutePath, content, [
+  const files = await listFiles(path.join(repoRoot, "assets/js/admin"));
+  for (const file of files.filter((item) => item.endsWith(".js"))) {
+    const content = await readText(file);
+    assertNotContains(file, content, [
       "SITE_CONFIG",
       "/assets/js/public/",
       "/assets/js/admin/public-content/",
