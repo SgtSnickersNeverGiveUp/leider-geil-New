@@ -22,9 +22,9 @@ const adminCoreJsFiles = [
   "assets/js/admin/dashboard.js",
   "assets/js/admin/login.js",
   "assets/js/admin/roster.js",
-  "assets/js/admin/public-content/banner.js",
-  "assets/js/admin/public-content/news-ticker.js",
-  "assets/js/admin/public-content/roster-slideshow.js",
+  "assets/js/admin/homepage-content/banner.js",
+  "assets/js/admin/homepage-content/news-ticker.js",
+  "assets/js/admin/homepage-content/roster-slideshow.js",
 ];
 
 const removedFiles = [
@@ -38,6 +38,9 @@ const removedFiles = [
   "assets/js/community-shouts.js",
   "assets/js/public-roster.js",
   "assets/js/roster-slideshow.js",
+  "assets/js/admin/public-content/banner.js",
+  "assets/js/admin/public-content/news-ticker.js",
+  "assets/js/admin/public-content/roster-slideshow.js",
   "assets/js/script.js",
   "config.js",
   "netlify/functions/admin-settings.mjs",
@@ -50,6 +53,7 @@ async function main() {
   await assertPublicJsBoundary();
   await assertHtmlBoundaries();
   await assertHtmlScriptReferences();
+  await assertCssBoundaries();
   await assertAdminCoreBoundary();
   await assertNetlifyFunctionBoundary();
   await assertPublicSettingsHelperBoundary();
@@ -108,6 +112,7 @@ async function assertHtmlBoundaries() {
     assertNotContains(absolutePath, content, [
       "/assets/js/public/",
       "/assets/css/styles.css",
+      "/assets/js/admin/public-content/",
       "SITE_CONFIG",
     ]);
   }
@@ -130,9 +135,9 @@ async function assertHtmlScriptReferences() {
     "/assets/js/admin/dashboard.js",
     "/assets/js/admin/login.js",
     "/assets/js/admin/roster.js",
-    "/assets/js/admin/public-content/banner.js",
-    "/assets/js/admin/public-content/news-ticker.js",
-    "/assets/js/admin/public-content/roster-slideshow.js",
+    "/assets/js/admin/homepage-content/banner.js",
+    "/assets/js/admin/homepage-content/news-ticker.js",
+    "/assets/js/admin/homepage-content/roster-slideshow.js",
   ]);
 
   for (const file of publicHtmlFiles) {
@@ -154,6 +159,25 @@ async function assertHtmlScriptReferences() {
   }
 }
 
+async function assertCssBoundaries() {
+  const publicStylesPath = path.join(repoRoot, "assets/css/styles.css");
+  const publicStyles = await readText(publicStylesPath);
+  assertNotContains(publicStylesPath, publicStyles, [
+    ".admin-",
+    "admin-dashboard",
+  ]);
+
+  const adminStylesPath = path.join(repoRoot, "assets/css/admin-dashboard.css");
+  const adminStyles = await readText(adminStylesPath);
+  assertNotContains(adminStylesPath, adminStyles, [
+    ".hero",
+    ".navbar",
+    ".site-header",
+    ".site-footer",
+    ".top-community",
+  ]);
+}
+
 async function assertAdminCoreBoundary() {
   for (const file of adminCoreJsFiles) {
     const absolutePath = path.join(repoRoot, file);
@@ -161,7 +185,13 @@ async function assertAdminCoreBoundary() {
     assertNotContains(absolutePath, content, [
       "SITE_CONFIG",
       "/assets/js/public/",
+      "/assets/js/admin/public-content/",
       "/api/public-settings",
+      "LGAdminPublic",
+      "publicContentSettingsApi",
+      "publicEventImageApi",
+      "publicBannerImageApi",
+      "publicRosterAvatarApi",
     ]);
   }
 }
@@ -202,6 +232,7 @@ async function assertPublicSettingsHelperBoundary() {
   const publicSettingsHelper = await readText(publicSettingsHelperPath);
   assertNotContains(publicSettingsHelperPath, publicSettingsHelper, [
     "Admin",
+    "./admin-public-settings-data.mjs",
     "sanitizePublicContentSettingsPatch",
     "mergePublicContentSettings",
   ]);
@@ -209,7 +240,18 @@ async function assertPublicSettingsHelperBoundary() {
   const adminSettingsHelperPath = path.join(repoRoot, "netlify/functions/_shared/admin-public-settings-data.mjs");
   const adminSettingsHelper = await readText(adminSettingsHelperPath);
   assertNotContains(adminSettingsHelperPath, adminSettingsHelper, [
+    "./public-settings-data.mjs",
     "pickPublicSettings",
+    "toPublicRosterSlideshow",
+  ]);
+
+  const settingsSchemaPath = path.join(repoRoot, "netlify/functions/_shared/public-content-settings-schema.mjs");
+  const settingsSchema = await readText(settingsSchemaPath);
+  assertNotContains(settingsSchemaPath, settingsSchema, [
+    "pickPublicSettings",
+    "pickAdminPublicContentSettings",
+    "sanitizePublicContentSettingsPatch",
+    "mergePublicContentSettings",
     "toPublicRosterSlideshow",
   ]);
 }

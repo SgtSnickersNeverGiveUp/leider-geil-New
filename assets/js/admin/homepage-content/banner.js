@@ -2,10 +2,10 @@
 
 (function () {
 const ADMIN_CONFIG = window.LG_ADMIN_CONFIG || {};
-const ADMIN_PUBLIC_CONTENT_API_BASE = ADMIN_CONFIG.apiBase || '/api/admin';
-const PUBLIC_CONTENT_SETTINGS_API = ADMIN_CONFIG.publicContentSettingsApi || `${ADMIN_PUBLIC_CONTENT_API_BASE}/public-settings`;
-const BANNER_IMAGE_API = ADMIN_CONFIG.bannerImageApi || `${ADMIN_PUBLIC_CONTENT_API_BASE}/banner-image`;
-const PUBLIC_BANNER_IMAGE_API = ADMIN_CONFIG.publicBannerImageApi || '/api/banner-image';
+const ADMIN_HOMEPAGE_API_BASE = ADMIN_CONFIG.apiBase || '/api/admin';
+const HOMEPAGE_SETTINGS_API = ADMIN_CONFIG.homepageSettingsApi || `${ADMIN_HOMEPAGE_API_BASE}/public-settings`;
+const BANNER_IMAGE_API = ADMIN_CONFIG.bannerImageApi || `${ADMIN_HOMEPAGE_API_BASE}/banner-image`;
+const BANNER_IMAGE_PREVIEW_API = ADMIN_CONFIG.bannerImagePreviewApi || '/api/banner-image';
 
 let currentBannerTab = 'url';
 let initialized = false;
@@ -34,12 +34,12 @@ async function loadBannerSettings() {
   body.innerHTML = '<div class="loading">Lade Banner</div>';
 
   try {
-    const res = await fetch(PUBLIC_CONTENT_SETTINGS_API);
+    const res = await fetch(HOMEPAGE_SETTINGS_API);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const settings = await res.json();
 
     if (settings.bannerUrl) {
-      const imgUrl = settings.bannerUrl === PUBLIC_BANNER_IMAGE_API
+      const imgUrl = settings.bannerUrl === BANNER_IMAGE_PREVIEW_API
         ? settings.bannerUrl + '?t=' + Date.now()
         : settings.bannerUrl;
 
@@ -52,7 +52,7 @@ async function loadBannerSettings() {
           Quelle: ${escapeHtml(settings.bannerUrl)}
         </p>`;
 
-      if (settings.bannerUrl !== PUBLIC_BANNER_IMAGE_API) {
+      if (settings.bannerUrl !== BANNER_IMAGE_PREVIEW_API) {
         document.getElementById('banner-url').value = settings.bannerUrl;
       }
     } else {
@@ -111,7 +111,7 @@ async function saveBanner(e) {
       statusEl.textContent = 'Upload erfolgreich!';
     }
 
-    const res = await fetch(PUBLIC_CONTENT_SETTINGS_API, {
+    const res = await fetch(HOMEPAGE_SETTINGS_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ bannerUrl }),
@@ -132,7 +132,7 @@ async function removeBanner() {
   if (!confirm('Banner wirklich entfernen?')) return;
 
   try {
-    const res = await fetch(PUBLIC_CONTENT_SETTINGS_API, {
+    const res = await fetch(HOMEPAGE_SETTINGS_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ bannerUrl: '' }),
@@ -165,7 +165,7 @@ async function load() {
   await loadBannerSettings();
 }
 
-window.LGAdminPublicBanner = {
+window.LGAdminHomepageBanner = {
   load,
 };
 })();

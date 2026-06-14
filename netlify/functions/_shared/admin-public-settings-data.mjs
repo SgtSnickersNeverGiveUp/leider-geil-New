@@ -1,27 +1,27 @@
 import {
-  PUBLIC_CONTENT_SETTING_KEYS,
+  DEFAULT_SLIDESHOW_SPEED_SECONDS,
+  DEFAULT_TICKER_SEPARATOR,
+  DEFAULT_TICKER_SPEED_SECONDS,
+  MAX_SLIDESHOW_SPEED_SECONDS,
+  MAX_SLIDESHOW_TEXT_LENGTH,
+  MAX_TICKER_SEPARATOR_LENGTH,
+  MAX_TICKER_SPEED_SECONDS,
+  MIN_SLIDESHOW_SPEED_SECONDS,
+  MIN_TICKER_SPEED_SECONDS,
+  PUBLIC_CONTENT_SETTINGS_KEY,
+  PUBLIC_CONTENT_SETTINGS_STORE_NAME,
   clampNumber,
-} from "./public-settings-data.mjs";
+  normalizeStoredRosterSlideshow,
+  pickStoredPublicContentSettings,
+} from "./public-content-settings-schema.mjs";
 
 export {
   PUBLIC_CONTENT_SETTINGS_KEY,
   PUBLIC_CONTENT_SETTINGS_STORE_NAME,
-} from "./public-settings-data.mjs";
-
-const MIN_TICKER_SPEED_SECONDS = 5;
-const MAX_TICKER_SPEED_SECONDS = 120;
-const MIN_SLIDESHOW_SPEED_SECONDS = 3;
-const MAX_SLIDESHOW_SPEED_SECONDS = 60;
-const MAX_TICKER_SEPARATOR_LENGTH = 40;
-const MAX_SLIDESHOW_TEXT_LENGTH = 180;
+} from "./public-content-settings-schema.mjs";
 
 export function pickAdminPublicContentSettings(settings = {}) {
-  return PUBLIC_CONTENT_SETTING_KEYS.reduce((acc, key) => {
-    if (Object.prototype.hasOwnProperty.call(settings, key)) {
-      acc[key] = settings[key];
-    }
-    return acc;
-  }, {});
+  return pickStoredPublicContentSettings(settings);
 }
 
 export function sanitizePublicContentSettingsPatch(value = {}) {
@@ -37,12 +37,12 @@ export function sanitizePublicContentSettingsPatch(value = {}) {
       patch.tickerSpeedSeconds,
       MIN_TICKER_SPEED_SECONDS,
       MAX_TICKER_SPEED_SECONDS,
-      40,
+      DEFAULT_TICKER_SPEED_SECONDS,
     );
   }
 
   if (Object.prototype.hasOwnProperty.call(patch, "tickerSeparator")) {
-    sanitized.tickerSeparator = String(patch.tickerSeparator || "   \u25cf   ")
+    sanitized.tickerSeparator = String(patch.tickerSeparator || DEFAULT_TICKER_SEPARATOR)
       .slice(0, MAX_TICKER_SEPARATOR_LENGTH);
   }
 
@@ -62,24 +62,18 @@ export function mergePublicContentSettings(existing = {}, patch = {}) {
 }
 
 function sanitizeAdminRosterSlideshow(value = {}) {
-  const settings = value && typeof value === "object" && !Array.isArray(value) ? value : {};
-  const editableEntries = Array.isArray(settings.members)
-    ? settings.members
-    : Array.isArray(settings.entries)
-      ? settings.entries
-      : [];
-
+  const settings = normalizeStoredRosterSlideshow(value);
   return {
-    enabled: Boolean(settings.enabled),
-    autoplay: settings.autoplay !== false,
+    enabled: settings.enabled,
+    autoplay: settings.autoplay,
     speedSeconds: clampNumber(
       settings.speedSeconds,
       MIN_SLIDESHOW_SPEED_SECONDS,
       MAX_SLIDESHOW_SPEED_SECONDS,
-      8,
+      DEFAULT_SLIDESHOW_SPEED_SECONDS,
     ),
-    pinnedMemberId: settings.pinnedMemberId ? String(settings.pinnedMemberId) : "",
-    members: editableEntries
+    pinnedMemberId: settings.pinnedMemberId,
+    members: settings.members
       .filter((entry) => entry && (entry.id || entry.memberId))
       .map((entry) => ({
         id: String(entry.id || entry.memberId),

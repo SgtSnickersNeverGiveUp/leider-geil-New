@@ -2,8 +2,9 @@
 
 (function () {
 const ADMIN_CONFIG = window.LG_ADMIN_CONFIG || {};
-const ADMIN_PUBLIC_CONTENT_API_BASE = ADMIN_CONFIG.apiBase || '/api/admin';
-const PUBLIC_CONTENT_SETTINGS_API = ADMIN_CONFIG.publicContentSettingsApi || `${ADMIN_PUBLIC_CONTENT_API_BASE}/public-settings`;
+const ADMIN_HOMEPAGE_API_BASE = ADMIN_CONFIG.apiBase || '/api/admin';
+const HOMEPAGE_SETTINGS_API = ADMIN_CONFIG.homepageSettingsApi || `${ADMIN_HOMEPAGE_API_BASE}/public-settings`;
+const ROSTER_API = ADMIN_CONFIG.rosterApi || `${ADMIN_HOMEPAGE_API_BASE}/roster`;
 
 let currentRosterMembers = [];
 let currentRosterSlideshowSettings = getDefaultRosterSlideshowSettings();
@@ -27,14 +28,26 @@ function getDefaultRosterSlideshowSettings() {
   };
 }
 
+async function loadRosterMembers() {
+  try {
+    const res = await fetch(ROSTER_API);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const members = await res.json();
+    currentRosterMembers = Array.isArray(members) ? members : [];
+  } catch (err) {
+    console.warn('[Homepage Roster Slideshow Admin] Roster konnte nicht geladen werden:', err);
+    currentRosterMembers = [];
+  }
+}
+
 async function loadRosterSlideshowSettings() {
   try {
-    const res = await fetch(PUBLIC_CONTENT_SETTINGS_API);
+    const res = await fetch(HOMEPAGE_SETTINGS_API);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const settings = await res.json();
     currentRosterSlideshowSettings = normalizeRosterSlideshowSettings(settings.rosterSlideshow);
   } catch (err) {
-    console.warn('[Roster Slideshow Admin] Settings konnten nicht geladen werden:', err);
+    console.warn('[Homepage Roster Slideshow Admin] Settings konnten nicht geladen werden:', err);
     currentRosterSlideshowSettings = getDefaultRosterSlideshowSettings();
   }
 }
@@ -61,14 +74,11 @@ function normalizeRosterSlideshowSettings(settings) {
   };
 }
 
-async function render(members, reloadSettings = true) {
+function render() {
   const selectedBody = document.getElementById('roster-slideshow-selected');
   const addSelect = document.getElementById('roster-slideshow-add-member');
   const pinnedSelect = document.getElementById('roster-slideshow-pinned-member');
   if (!selectedBody || !addSelect || !pinnedSelect) return;
-
-  currentRosterMembers = Array.isArray(members) ? members : [];
-  if (reloadSettings) await loadRosterSlideshowSettings();
 
   const settings = currentRosterSlideshowSettings;
   const selectedIds = new Set(settings.members.map((entry) => entry.id));
@@ -132,7 +142,7 @@ function addRosterSlideshowMember() {
   if (currentRosterSlideshowSettings.members.some((entry) => entry.id === memberId)) return;
 
   currentRosterSlideshowSettings.members.push({ id: memberId, text: '' });
-  render(currentRosterMembers, false);
+  render();
 }
 
 function removeRosterSlideshowMember(memberId) {
@@ -142,7 +152,7 @@ function removeRosterSlideshowMember(memberId) {
   if (currentRosterSlideshowSettings.pinnedMemberId === memberId) {
     currentRosterSlideshowSettings.pinnedMemberId = '';
   }
-  render(currentRosterMembers, false);
+  render();
 }
 
 function collectRosterSlideshowSettingsFromForm() {
@@ -173,7 +183,7 @@ async function saveRosterSlideshowSettings() {
 
   try {
     const rosterSlideshow = collectRosterSlideshowSettingsFromForm();
-    const res = await fetch(PUBLIC_CONTENT_SETTINGS_API, {
+    const res = await fetch(HOMEPAGE_SETTINGS_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ rosterSlideshow }),
@@ -186,11 +196,7 @@ async function saveRosterSlideshowSettings() {
       status.style.color = 'var(--clr-accent-arc)';
     }
 
-    if (window.LGAdminRoster?.loadRoster) {
-      await window.LGAdminRoster.loadRoster();
-    } else {
-      await render(currentRosterMembers);
-    }
+    render();
   } catch (err) {
     if (status) {
       status.textContent = 'Fehler beim Speichern: ' + err.message;
@@ -204,21 +210,32 @@ async function saveRosterSlideshowSettings() {
   }
 }
 
+async function load() {
+  await Promise.all([
+    loadRosterMembers(),
+    loadRosterSlideshowSettings(),
+  ]);
+  render();
+}
+
 document.getElementById('roster-slideshow-add')?.addEventListener('click', addRosterSlideshowMember);
 document.getElementById('roster-slideshow-form')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   await saveRosterSlideshowSettings();
 });
-document.getElementById('btn-refresh-roster-slideshow')?.addEventListener('click', () => {
-  if (window.LGAdminRoster?.loadRoster) window.LGAdminRoster.loadRoster();
-});
+document.getElementById('btn-refresh-roster-slideshow')?.addEventListener('click', load);
 document.getElementById('roster-slideshow-selected')?.addEventListener('click', (e) => {
   const btn = e.target.closest('[data-slideshow-remove]');
   if (!btn) return;
   removeRosterSlideshowMember(btn.dataset.slideshowRemove);
 });
+document.addEventListener('lg-admin-roster:loaded', (e) => {
+  if (!Array.isArray(e.detail?.members)) return;
+  currentRosterMembers = e.detail.members;
+  render();
+});
 
-window.LGAdminPublicRosterSlideshow = {
-  render,
+window.LGAdminHomepageRosterSlideshow = {
+  load,
 };
 })();

@@ -5,7 +5,7 @@ const ADMIN_CONFIG = window.LG_ADMIN_CONFIG || {};
 const ADMIN_ROSTER_API_BASE = ADMIN_CONFIG.apiBase || '/api/admin';
 const ROSTER_API = ADMIN_CONFIG.rosterApi || `${ADMIN_ROSTER_API_BASE}/roster`;
 const ROSTER_AVATAR_API = ADMIN_CONFIG.rosterAvatarApi || `${ADMIN_ROSTER_API_BASE}/roster-avatar`;
-const PUBLIC_ROSTER_AVATAR_API = ADMIN_CONFIG.publicRosterAvatarApi || '/api/roster-avatar';
+const ROSTER_AVATAR_PREVIEW_API = ADMIN_CONFIG.rosterAvatarPreviewApi || '/api/roster-avatar';
 
 function escapeHtml(value) {
   return String(value || '')
@@ -80,16 +80,9 @@ async function loadRoster() {
     const members = await res.json();
     currentRosterMembers = members;
     renderRosterAdmin(members);
-    await syncRosterSlideshowAdmin(members);
+    document.dispatchEvent(new CustomEvent('lg-admin-roster:loaded', { detail: { members } }));
   } catch (err) {
     body.innerHTML = `<div class="empty-state"><div class="empty-state__icon">&#9888;</div><div class="empty-state__text">Fehler: ${err.message}</div></div>`;
-  }
-}
-
-async function syncRosterSlideshowAdmin(members) {
-  const slideshowAdmin = window.LGAdminPublicRosterSlideshow;
-  if (slideshowAdmin?.render) {
-    await slideshowAdmin.render(members);
   }
 }
 
@@ -102,7 +95,7 @@ function renderRosterAdmin(members) {
   }
 
   body.innerHTML = `<div class="admin-roster-grid">${members.map(m => {
-    const avatarSrc = m.avatar ? escapeHtml(m.avatar) + (m.avatar.startsWith(PUBLIC_ROSTER_AVATAR_API) ? '&t=' + Math.floor(Date.now() / 60000) : '') : '';
+    const avatarSrc = m.avatar ? escapeHtml(m.avatar) + (m.avatar.startsWith(ROSTER_AVATAR_PREVIEW_API) ? '&t=' + Math.floor(Date.now() / 60000) : '') : '';
 
     const gamesHtml = (m.games || []).map(g => {
       const cls = g === 'PUBG' ? 'pubg' : g === 'ARC Raiders' ? 'arc' : 'other';

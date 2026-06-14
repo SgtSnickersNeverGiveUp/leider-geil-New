@@ -11,7 +11,7 @@ const EVT_REGISTRATIONS_API = ADMIN_CONFIG.eventRegistrationsApi || `${ADMIN_DAS
 const COMMUNITY_SHOUTS_API = ADMIN_CONFIG.communityShoutsApi || `${ADMIN_DASHBOARD_API_BASE}/community-shouts`;
 const ADMIN_SESSION_API = ADMIN_CONFIG.sessionApi || `${ADMIN_DASHBOARD_API_BASE}/session`;
 const ADMIN_LOGOUT_API = ADMIN_CONFIG.logoutApi || `${ADMIN_DASHBOARD_API_BASE}/logout`;
-const PUBLIC_EVENT_IMAGE_API = ADMIN_CONFIG.publicEventImageApi || '/api/event-image';
+const EVENT_IMAGE_PREVIEW_API = ADMIN_CONFIG.eventImagePreviewApi || '/api/event-image';
 
 const EVENT_GAME_OPTIONS = [
   'PUBG',
@@ -79,17 +79,24 @@ function loadAdminRoster() {
   return Promise.resolve();
 }
 
-function loadPublicNewsTickerAdmin() {
-  const newsAdmin = window.LGAdminPublicNewsTicker;
-  if (newsAdmin?.load) return newsAdmin.load();
-  console.error('[Admin Dashboard] Public-News-Modul ist nicht geladen.');
+function loadHomepageRosterSlideshowAdmin() {
+  const slideshowAdmin = window.LGAdminHomepageRosterSlideshow;
+  if (slideshowAdmin?.load) return slideshowAdmin.load();
+  console.error('[Admin Dashboard] Homepage-Roster-Diashow-Modul ist nicht geladen.');
   return Promise.resolve();
 }
 
-function loadPublicBannerAdmin() {
-  const bannerAdmin = window.LGAdminPublicBanner;
+function loadHomepageNewsTickerAdmin() {
+  const newsAdmin = window.LGAdminHomepageNewsTicker;
+  if (newsAdmin?.load) return newsAdmin.load();
+  console.error('[Admin Dashboard] Homepage-News-Modul ist nicht geladen.');
+  return Promise.resolve();
+}
+
+function loadHomepageBannerAdmin() {
+  const bannerAdmin = window.LGAdminHomepageBanner;
   if (bannerAdmin?.load) return bannerAdmin.load();
-  console.error('[Admin Dashboard] Public-Banner-Modul ist nicht geladen.');
+  console.error('[Admin Dashboard] Homepage-Banner-Modul ist nicht geladen.');
   return Promise.resolve();
 }
 
@@ -110,13 +117,16 @@ function switchPage(pageId) {
 
   // Load data for the page
   if (pageId === 'page-bewerbungen') loadApplications();
-  if (pageId === 'page-roster') loadAdminRoster();
+  if (pageId === 'page-roster') {
+    loadAdminRoster();
+    loadHomepageRosterSlideshowAdmin();
+  }
   if (pageId === 'page-events') loadEvents();
   if (pageId === 'page-videos') loadVideos();
-  if (pageId === 'page-banner') loadPublicBannerAdmin();
+  if (pageId === 'page-banner') loadHomepageBannerAdmin();
   if (pageId === 'page-event-anmeldungen') loadEventRegistrations();
   if (pageId === 'page-community-shouts') loadCommunityShouts();
-  if (pageId === 'page-news') loadPublicNewsTickerAdmin();
+  if (pageId === 'page-news') loadHomepageNewsTickerAdmin();
 }
 
 navLinks.forEach(link => {
@@ -328,7 +338,7 @@ function renderEventsAdmin(events) {
   body.innerHTML = events.map(ev => {
     const dateStr = new Date(ev.date).toLocaleDateString('de-DE', { year: 'numeric', month: 'long', day: 'numeric' });
     const thumbHtml = ev.image
-      ? `<img class="admin-event-thumb" src="${escapeHtml(ev.image)}${ev.image.startsWith(PUBLIC_EVENT_IMAGE_API) ? (ev.image.includes('?') ? '&' : '?') + 't=' + Math.floor(Date.now() / 60000) : ''}" alt="" loading="lazy" onerror="this.style.display='none'">`
+      ? `<img class="admin-event-thumb" src="${escapeHtml(ev.image)}${ev.image.startsWith(EVENT_IMAGE_PREVIEW_API) ? (ev.image.includes('?') ? '&' : '?') + 't=' + Math.floor(Date.now() / 60000) : ''}" alt="" loading="lazy" onerror="this.style.display='none'">`
       : '';
     const game = ev.game || 'Mixed';
     const gameVariant = getEventGameVariant(game);
@@ -371,7 +381,7 @@ function openEditEvent(id) {
     if (!ev) { alert('Event nicht gefunden.'); return; }
 
     const imgSrc = ev.image
-      ? escapeHtml(ev.image) + (ev.image.startsWith(PUBLIC_EVENT_IMAGE_API) ? (ev.image.includes('?') ? '&' : '?') + 't=' + Math.floor(Date.now() / 60000) : '')
+      ? escapeHtml(ev.image) + (ev.image.startsWith(EVENT_IMAGE_PREVIEW_API) ? (ev.image.includes('?') ? '&' : '?') + 't=' + Math.floor(Date.now() / 60000) : '')
       : "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 50'%3E%3Crect fill='%231a1a2e' width='80' height='50'/%3E%3Ctext x='50%25' y='55%25' text-anchor='middle' fill='%237a7a8e' font-size='14'%3E%3F%3C/text%3E%3C/svg%3E";
 
     const overlay = document.createElement('div');

@@ -2,9 +2,9 @@
 
 (function () {
 const ADMIN_CONFIG = window.LG_ADMIN_CONFIG || {};
-const ADMIN_PUBLIC_CONTENT_API_BASE = ADMIN_CONFIG.apiBase || '/api/admin';
-const NEWS_API_URL = ADMIN_CONFIG.newsApi || `${ADMIN_PUBLIC_CONTENT_API_BASE}/news`;
-const PUBLIC_CONTENT_SETTINGS_API = ADMIN_CONFIG.publicContentSettingsApi || `${ADMIN_PUBLIC_CONTENT_API_BASE}/public-settings`;
+const ADMIN_HOMEPAGE_API_BASE = ADMIN_CONFIG.apiBase || '/api/admin';
+const NEWS_API_URL = ADMIN_CONFIG.newsApi || `${ADMIN_HOMEPAGE_API_BASE}/news`;
+const HOMEPAGE_SETTINGS_API = ADMIN_CONFIG.homepageSettingsApi || `${ADMIN_HOMEPAGE_API_BASE}/public-settings`;
 
 let currentNews = [];
 let initialized = false;
@@ -20,7 +20,7 @@ function escapeHtml(value) {
 
 async function loadTickerSettings() {
   try {
-    const res = await fetch(PUBLIC_CONTENT_SETTINGS_API);
+    const res = await fetch(HOMEPAGE_SETTINGS_API);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const settings = await res.json();
 
@@ -140,7 +140,7 @@ function initEventListeners() {
       });
       if (!resNews.ok) throw new Error('News HTTP ' + resNews.status);
 
-      const resSettings = await fetch(PUBLIC_CONTENT_SETTINGS_API, {
+      const resSettings = await fetch(HOMEPAGE_SETTINGS_API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -166,7 +166,7 @@ async function load() {
   await loadNewsIntoAdmin();
 }
 
-window.LGAdminPublicNewsTicker = {
+window.LGAdminHomepageNewsTicker = {
   load,
 };
 })();

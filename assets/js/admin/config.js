@@ -16,7 +16,7 @@
     videosApi: `${apiBase}/videos`,
     eventRegistrationsApi: `${apiBase}/event-registrations`,
     newsApi: `${apiBase}/news`,
-    publicContentSettingsApi: `${apiBase}/public-settings`,
+    homepageSettingsApi: `${apiBase}/public-settings`,
     bannerImageApi: `${apiBase}/banner-image`,
     communityShoutsApi: `${apiBase}/community-shouts`,
     sessionApi: `${apiBase}/session`,
@@ -25,9 +25,9 @@
     rosterApi: `${apiBase}/roster`,
     rosterAvatarApi: `${apiBase}/roster-avatar`,
 
-    /* Public read-only media URLs used for admin previews. */
-    publicEventImageApi: '/api/event-image',
-    publicBannerImageApi: '/api/banner-image',
-    publicRosterAvatarApi: '/api/roster-avatar',
+    /* Read-only media URLs used only for admin previews. */
+    eventImagePreviewApi: '/api/event-image',
+    bannerImagePreviewApi: '/api/banner-image',
+    rosterAvatarPreviewApi: '/api/roster-avatar',
   });
 })();
