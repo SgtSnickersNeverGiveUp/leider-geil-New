@@ -110,6 +110,11 @@ const adminHandlerProjectionImports = [
     projectionImport: "./_shared/admin-applications-data.mjs",
     projectionSymbol: "toAdminApplication",
   },
+  {
+    storeImport: "./_shared/event-registrations-data.mjs",
+    projectionImport: "./_shared/admin-event-registrations-data.mjs",
+    projectionSymbol: "toAdminEventRegistration",
+  },
 ];
 
 async function main() {
@@ -836,8 +841,16 @@ async function assertSharedContentDataBoundary() {
       forbidden: ["toPublicApplication", "toAdminApplication", "requireAdmin"],
     },
     {
+      file: "netlify/functions/_shared/event-registrations-data.mjs",
+      forbidden: ["toPublicEventRegistration", "toAdminEventRegistration", "requireAdmin"],
+    },
+    {
       file: "netlify/functions/_shared/admin-applications-data.mjs",
       forbidden: ["toPublicApplication"],
+    },
+    {
+      file: "netlify/functions/_shared/admin-event-registrations-data.mjs",
+      forbidden: ["toPublicEventRegistration"],
     },
     {
       file: "netlify/functions/_shared/public-news-data.mjs",
@@ -888,6 +901,17 @@ async function assertPublicWriteHandlerBoundary() {
   ]);
   assertNotContains(applicationsPath, applications, [
     'const STORE_NAME = "applications"',
+    "createdAt: new Date().toISOString()",
+  ]);
+
+  const eventRegistrationsPath = path.join(repoRoot, "netlify/functions/event-registrations.mjs");
+  const eventRegistrations = await readText(eventRegistrationsPath);
+  assertContains(eventRegistrationsPath, eventRegistrations, [
+    "createEventRegistration",
+    "hasRequiredEventRegistrationFields",
+  ]);
+  assertNotContains(eventRegistrationsPath, eventRegistrations, [
+    'const STORE_NAME = "event-registrations"',
     "createdAt: new Date().toISOString()",
   ]);
 }

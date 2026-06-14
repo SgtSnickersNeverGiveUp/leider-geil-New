@@ -1,7 +1,11 @@
 import { getStore } from "@netlify/blobs";
 import { requireAdmin } from "./admin-auth.mjs";
+import { toAdminEventRegistration } from "./_shared/admin-event-registrations-data.mjs";
+import {
+  EVENT_REGISTRATIONS_STORE_NAME,
+  listEventRegistrations,
+} from "./_shared/event-registrations-data.mjs";
 
-const STORE_NAME = "event-registrations";
 const JSON_HEADERS = { "Content-Type": "application/json" };
 
 function jsonResponse(body, status = 200) {
@@ -9,19 +13,6 @@ function jsonResponse(body, status = 200) {
     status,
     headers: JSON_HEADERS,
   });
-}
-
-async function listRegistrations(store) {
-  const { blobs } = await store.list();
-  const registrations = [];
-
-  for (const blob of blobs) {
-    const data = await store.get(blob.key, { type: "json" });
-    if (data) registrations.push(data);
-  }
-
-  registrations.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  return registrations;
 }
 
 export default async (req) => {
@@ -32,11 +23,12 @@ export default async (req) => {
   const adminGuard = requireAdmin(req);
   if (adminGuard) return adminGuard;
 
-  const store = getStore(STORE_NAME);
+  const store = getStore(EVENT_REGISTRATIONS_STORE_NAME);
 
   if (req.method === "GET") {
     try {
-      return jsonResponse(await listRegistrations(store));
+      const registrations = (await listEventRegistrations(store)).map(toAdminEventRegistration);
+      return jsonResponse(registrations);
     } catch {
       return jsonResponse({ error: "Fehler beim Laden." }, 500);
     }

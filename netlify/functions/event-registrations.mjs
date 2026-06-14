@@ -1,7 +1,10 @@
 import { getStore } from "@netlify/blobs";
+import {
+  EVENT_REGISTRATIONS_STORE_NAME,
+  createEventRegistration,
+  hasRequiredEventRegistrationFields,
+} from "./_shared/event-registrations-data.mjs";
 import { notifyEventRegistration } from "./_shared/discord-notifications.mjs";
-
-const STORE_NAME = "event-registrations";
 
 export default async (req, context) => {
   if (req.method !== "POST") {
@@ -11,36 +14,21 @@ export default async (req, context) => {
     });
   }
 
-  const store = getStore(STORE_NAME);
+  const store = getStore(EVENT_REGISTRATIONS_STORE_NAME);
 
-  // POST – Submit new event registration
   try {
-    const body = await req.json();
-    const { name, email, spiel, clan, spielerAnzahl, bemerkungen } = body;
-
-    if (!name || !email || !spiel) {
+    const registration = createEventRegistration(await req.json());
+    if (!hasRequiredEventRegistrationFields(registration)) {
       return new Response(JSON.stringify({ error: "Pflichtfelder fehlen (Name, E-Mail, Spiel)." }), {
         status: 400,
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    const id = `evt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-    const registration = {
-      id,
-      name,
-      email,
-      spiel,
-      clan: clan || "",
-      spielerAnzahl: spielerAnzahl || "",
-      bemerkungen: bemerkungen || "",
-      createdAt: new Date().toISOString(),
-    };
-
-    await store.setJSON(id, registration);
+    await store.setJSON(registration.id, registration);
     await notifyEventRegistration(registration);
 
-    return new Response(JSON.stringify({ success: true, id }), {
+    return new Response(JSON.stringify({ success: true, id: registration.id }), {
       status: 201,
       headers: { "Content-Type": "application/json" },
     });
