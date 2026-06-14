@@ -3,48 +3,6 @@
    Dark-Mode · Glassmorphism · HUD / Industrial E-Sports Look
    ========================================================== */
 
-/* ── CSS Custom Properties ─────────────────────────────── */
-:root {
-  /* Farben */
-  --clr-bg:           #0d0d12;
-  --clr-surface:      #14141c;
-  --clr-surface-alt:  #1a1a2e;
-  --clr-border:       #2a2a3c;
-  --clr-text:         #e0e0e6;
-  --clr-text-muted:   #7a7a8e;
-  --clr-accent-arc:   #0FF2A9;
-  --clr-accent-pubg:  #FF9C43;
-  --clr-accent-news:  #FFD640;
-  --clr-danger:       #ff3b5c;
-  --clr-glass:        rgba(20, 20, 28, .55);
-  --clr-glass-border: rgba(255, 255, 255, .06);
-  --clr-scanline:     rgba(15, 242, 169, .03);
-
-  /* Typografie */
-  --ff-heading: 'Rajdhani', 'Segoe UI', sans-serif;
-  --ff-body:    'Inter', 'Segoe UI', sans-serif;
-  --ff-mono:    'Fira Code', 'Consolas', monospace;
-
-  /* Abstände */
-  --sp-xs:  .25rem;
-  --sp-sm:  .5rem;
-  --sp-md:  1rem;
-  --sp-lg:  2rem;
-  --sp-xl:  3rem;
-  --sp-2xl: 5rem;
-
-  /* Radien & Schatten */
-  --radius:     8px;
-  --radius-lg:  16px;
-  --shadow-glow-arc:  0 0 20px rgba(15, 242, 169, .25);
-  --shadow-glow-pubg: 0 0 20px rgba(255, 156, 67,  .25);
-  --shadow-glow-news: 0 0 20px rgba(255, 214, 64,  .25);
-  --shadow-card:      0 8px 32px rgba(0, 0, 0, .4);
-
-  /* Transition */
-  --ease: cubic-bezier(.25, .8, .25, 1);
-}
-
 /* ── Reset & Base ──────────────────────────────────────── */
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 

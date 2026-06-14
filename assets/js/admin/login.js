@@ -5,8 +5,9 @@ const loginForm = document.getElementById('admin-login-form');
 const passwordInput = document.getElementById('admin-password');
 const submitButton = document.getElementById('admin-login-submit');
 const statusEl = document.getElementById('admin-login-status');
-const ADMIN_SESSION_API = '/api/admin/session';
-const ADMIN_LOGIN_API = '/api/admin/login';
+const ADMIN_CONFIG = window.LG_ADMIN_CONFIG || {};
+const ADMIN_SESSION_API = ADMIN_CONFIG.sessionApi || '/api/admin/session';
+const ADMIN_LOGIN_API = ADMIN_CONFIG.loginApi || '/api/admin/login';
 
 function getRedirectTarget() {
   const redirect = new URLSearchParams(window.location.search).get('redirect') || '/lg-dashboard.html';

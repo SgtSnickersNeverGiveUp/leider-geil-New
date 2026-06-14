@@ -1,25 +1,3 @@
-    /* ── CSS Custom Properties (same as main site) ─── */
-    :root {
-      --clr-bg:           #0d0d12;
-      --clr-surface:      #14141c;
-      --clr-surface-alt:  #1a1a2e;
-      --clr-border:       #2a2a3c;
-      --clr-text:         #e0e0e6;
-      --clr-text-muted:   #7a7a8e;
-      --clr-accent-arc:   #0FF2A9;
-      --clr-accent-pubg:  #FF9C43;
-      --clr-accent-news:  #FFD640;
-      --clr-danger:       #ff3b5c;
-      --clr-glass:        rgba(20, 20, 28, .55);
-      --clr-glass-border: rgba(255, 255, 255, .06);
-      --ff-heading: 'Rajdhani', 'Segoe UI', sans-serif;
-      --ff-body:    'Inter', 'Segoe UI', sans-serif;
-      --ff-mono:    'Fira Code', 'Consolas', monospace;
-      --radius:     8px;
-      --radius-lg:  16px;
-      --ease: cubic-bezier(.25, .8, .25, 1);
-    }
-
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
     html { font-size: 16px; -webkit-font-smoothing: antialiased; }
 

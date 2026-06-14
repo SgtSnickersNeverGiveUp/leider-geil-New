@@ -1,18 +1,21 @@
 'use strict';
 
 (function () {
-const ADMIN_DASHBOARD_API_BASE = '/api/admin';
-const API_URL = `${ADMIN_DASHBOARD_API_BASE}/applications`;
-const EVENTS_API = `${ADMIN_DASHBOARD_API_BASE}/events`;
-const EVENT_IMAGE_API = `${ADMIN_DASHBOARD_API_BASE}/event-image`;
-const VIDEOS_API = `${ADMIN_DASHBOARD_API_BASE}/videos`;
-const EVT_REGISTRATIONS_API = `${ADMIN_DASHBOARD_API_BASE}/event-registrations`;
-const NEWS_API_URL = `${ADMIN_DASHBOARD_API_BASE}/news`;
-const SETTINGS_API = `${ADMIN_DASHBOARD_API_BASE}/settings`;
-const BANNER_IMAGE_API = `${ADMIN_DASHBOARD_API_BASE}/banner-image`;
-const COMMUNITY_SHOUTS_API = `${ADMIN_DASHBOARD_API_BASE}/community-shouts`;
-const ADMIN_SESSION_API = `${ADMIN_DASHBOARD_API_BASE}/session`;
-const ADMIN_LOGOUT_API = `${ADMIN_DASHBOARD_API_BASE}/logout`;
+const ADMIN_CONFIG = window.LG_ADMIN_CONFIG || {};
+const ADMIN_DASHBOARD_API_BASE = ADMIN_CONFIG.apiBase || '/api/admin';
+const API_URL = ADMIN_CONFIG.applicationsApi || `${ADMIN_DASHBOARD_API_BASE}/applications`;
+const EVENTS_API = ADMIN_CONFIG.eventsApi || `${ADMIN_DASHBOARD_API_BASE}/events`;
+const EVENT_IMAGE_API = ADMIN_CONFIG.eventImageApi || `${ADMIN_DASHBOARD_API_BASE}/event-image`;
+const VIDEOS_API = ADMIN_CONFIG.videosApi || `${ADMIN_DASHBOARD_API_BASE}/videos`;
+const EVT_REGISTRATIONS_API = ADMIN_CONFIG.eventRegistrationsApi || `${ADMIN_DASHBOARD_API_BASE}/event-registrations`;
+const NEWS_API_URL = ADMIN_CONFIG.newsApi || `${ADMIN_DASHBOARD_API_BASE}/news`;
+const SETTINGS_API = ADMIN_CONFIG.settingsApi || `${ADMIN_DASHBOARD_API_BASE}/settings`;
+const BANNER_IMAGE_API = ADMIN_CONFIG.bannerImageApi || `${ADMIN_DASHBOARD_API_BASE}/banner-image`;
+const COMMUNITY_SHOUTS_API = ADMIN_CONFIG.communityShoutsApi || `${ADMIN_DASHBOARD_API_BASE}/community-shouts`;
+const ADMIN_SESSION_API = ADMIN_CONFIG.sessionApi || `${ADMIN_DASHBOARD_API_BASE}/session`;
+const ADMIN_LOGOUT_API = ADMIN_CONFIG.logoutApi || `${ADMIN_DASHBOARD_API_BASE}/logout`;
+const PUBLIC_EVENT_IMAGE_API = ADMIN_CONFIG.publicEventImageApi || '/api/event-image';
+const PUBLIC_BANNER_IMAGE_API = ADMIN_CONFIG.publicBannerImageApi || '/api/banner-image';
 
 const EVENT_GAME_OPTIONS = [
   'PUBG',
@@ -472,7 +475,7 @@ function renderEventsAdmin(events) {
   body.innerHTML = events.map(ev => {
     const dateStr = new Date(ev.date).toLocaleDateString('de-DE', { year: 'numeric', month: 'long', day: 'numeric' });
     const thumbHtml = ev.image
-      ? `<img class="admin-event-thumb" src="${escapeHtml(ev.image)}${ev.image.startsWith('/api/event-image') ? (ev.image.includes('?') ? '&' : '?') + 't=' + Math.floor(Date.now() / 60000) : ''}" alt="" loading="lazy" onerror="this.style.display='none'">`
+      ? `<img class="admin-event-thumb" src="${escapeHtml(ev.image)}${ev.image.startsWith(PUBLIC_EVENT_IMAGE_API) ? (ev.image.includes('?') ? '&' : '?') + 't=' + Math.floor(Date.now() / 60000) : ''}" alt="" loading="lazy" onerror="this.style.display='none'">`
       : '';
     const game = ev.game || 'Mixed';
     const gameVariant = getEventGameVariant(game);
@@ -515,7 +518,7 @@ function openEditEvent(id) {
     if (!ev) { alert('Event nicht gefunden.'); return; }
 
     const imgSrc = ev.image
-      ? escapeHtml(ev.image) + (ev.image.startsWith('/api/event-image') ? (ev.image.includes('?') ? '&' : '?') + 't=' + Math.floor(Date.now() / 60000) : '')
+      ? escapeHtml(ev.image) + (ev.image.startsWith(PUBLIC_EVENT_IMAGE_API) ? (ev.image.includes('?') ? '&' : '?') + 't=' + Math.floor(Date.now() / 60000) : '')
       : "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 50'%3E%3Crect fill='%231a1a2e' width='80' height='50'/%3E%3Ctext x='50%25' y='55%25' text-anchor='middle' fill='%237a7a8e' font-size='14'%3E%3F%3C/text%3E%3C/svg%3E";
 
     const overlay = document.createElement('div');
@@ -828,7 +831,7 @@ async function loadBannerSettings() {
 
     if (settings.bannerUrl) {
       // Add cache-buster for uploaded images
-      const imgUrl = settings.bannerUrl === '/api/banner-image'
+      const imgUrl = settings.bannerUrl === PUBLIC_BANNER_IMAGE_API
         ? settings.bannerUrl + '?t=' + Date.now()
         : settings.bannerUrl;
 
@@ -842,7 +845,7 @@ async function loadBannerSettings() {
         </p>`;
 
       // Pre-fill URL input if it's a URL type
-      if (settings.bannerUrl !== '/api/banner-image') {
+      if (settings.bannerUrl !== PUBLIC_BANNER_IMAGE_API) {
         document.getElementById('banner-url').value = settings.bannerUrl;
       }
     } else {

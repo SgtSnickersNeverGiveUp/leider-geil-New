@@ -1,10 +1,12 @@
 'use strict';
 
 (function () {
-const ADMIN_ROSTER_API_BASE = '/api/admin';
-const ROSTER_API = `${ADMIN_ROSTER_API_BASE}/roster`;
-const ROSTER_AVATAR_API = `${ADMIN_ROSTER_API_BASE}/roster-avatar`;
-const ROSTER_SETTINGS_API = `${ADMIN_ROSTER_API_BASE}/settings`;
+const ADMIN_CONFIG = window.LG_ADMIN_CONFIG || {};
+const ADMIN_ROSTER_API_BASE = ADMIN_CONFIG.apiBase || '/api/admin';
+const ROSTER_API = ADMIN_CONFIG.rosterApi || `${ADMIN_ROSTER_API_BASE}/roster`;
+const ROSTER_AVATAR_API = ADMIN_CONFIG.rosterAvatarApi || `${ADMIN_ROSTER_API_BASE}/roster-avatar`;
+const ROSTER_SETTINGS_API = ADMIN_CONFIG.settingsApi || `${ADMIN_ROSTER_API_BASE}/settings`;
+const PUBLIC_ROSTER_AVATAR_API = ADMIN_CONFIG.publicRosterAvatarApi || '/api/roster-avatar';
 
 function escapeHtml(value) {
   return String(value || '')
@@ -95,7 +97,7 @@ function renderRosterAdmin(members) {
   }
 
   body.innerHTML = `<div class="admin-roster-grid">${members.map(m => {
-    const avatarSrc = m.avatar ? escapeHtml(m.avatar) + (m.avatar.startsWith('/api/roster-avatar') ? '&t=' + Math.floor(Date.now() / 60000) : '') : '';
+    const avatarSrc = m.avatar ? escapeHtml(m.avatar) + (m.avatar.startsWith(PUBLIC_ROSTER_AVATAR_API) ? '&t=' + Math.floor(Date.now() / 60000) : '') : '';
 
     const gamesHtml = (m.games || []).map(g => {
       const cls = g === 'PUBG' ? 'pubg' : g === 'ARC Raiders' ? 'arc' : 'other';
