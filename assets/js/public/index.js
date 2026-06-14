@@ -1,6 +1,7 @@
 /* Public homepage data and widgets. */
 'use strict';
 
+(function () {
 const VISITOR_COUNTER_STORAGE_KEY = 'lg-homepage-visitor-counted';
 
 const select = (selector, context = document) => context.querySelector(selector);
@@ -267,3 +268,4 @@ document.addEventListener('DOMContentLoaded', () => {
   renderHeaderBanner();
   renderVisitorCounter();
 });
+})();

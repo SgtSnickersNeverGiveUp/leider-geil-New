@@ -1,6 +1,7 @@
 /* Public navigation and shared UI interactions. */
 'use strict';
 
+(function () {
 const $ = (sel, ctx = document) => ctx.querySelector(sel);
 const $$ = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
 
@@ -54,3 +55,4 @@ document.addEventListener('DOMContentLoaded', () => {
   initSmoothScroll();
   initRipple();
 });
+})();

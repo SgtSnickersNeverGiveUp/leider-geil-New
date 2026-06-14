@@ -1,6 +1,11 @@
 import { getStore } from "@netlify/blobs";
 import { jsonResponse, requireAdmin } from "./admin-auth.mjs";
-import { SETTINGS_KEY, SETTINGS_STORE_NAME } from "./_shared/settings-data.mjs";
+import {
+  mergePublicSettings,
+  sanitizePublicSettingsPatch,
+  SETTINGS_KEY,
+  SETTINGS_STORE_NAME,
+} from "./_shared/settings-data.mjs";
 
 export default async (req) => {
   if (req.method !== "GET" && req.method !== "POST") {
@@ -23,6 +28,11 @@ export default async (req) => {
 
   try {
     const body = await req.json();
+    const publicSettingsPatch = sanitizePublicSettingsPatch(body);
+
+    if (Object.keys(publicSettingsPatch).length === 0) {
+      return jsonResponse({ error: "Keine bekannten Public-Settings im Payload." }, 400);
+    }
 
     let existing = {};
     try {
@@ -31,7 +41,7 @@ export default async (req) => {
       existing = {};
     }
 
-    const updated = { ...existing, ...body, updatedAt: new Date().toISOString() };
+    const updated = mergePublicSettings(existing, publicSettingsPatch);
     await store.setJSON(SETTINGS_KEY, updated);
 
     return jsonResponse({ success: true, settings: updated });

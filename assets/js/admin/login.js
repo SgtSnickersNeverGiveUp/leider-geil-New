@@ -1,5 +1,6 @@
 'use strict';
 
+(function () {
 const loginForm = document.getElementById('admin-login-form');
 const passwordInput = document.getElementById('admin-password');
 const submitButton = document.getElementById('admin-login-submit');
@@ -73,3 +74,4 @@ loginForm.addEventListener('submit', async (event) => {
 });
 
 checkExistingSession();
+})();

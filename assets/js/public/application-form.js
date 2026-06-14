@@ -1,31 +1,30 @@
-/* Public event signup form submission. */
+/* Public application form submission. */
 'use strict';
 
+(function () {
 document.addEventListener('DOMContentLoaded', () => {
-  const form = document.getElementById('event-form');
+  const form = document.getElementById('recruit-form');
   if (!form) return;
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
 
     const formData = new FormData(form);
-    const submitButton = form.querySelector('button[type="submit"]');
-    const status = document.getElementById('event-form-success');
+    if (formData.get('website')) return;
 
-    if (status) status.style.display = 'none';
+    const submitButton = form.querySelector('button[type="submit"]');
     if (submitButton) submitButton.disabled = true;
 
     try {
-      const apiRes = await fetch(SITE_CONFIG.eventRegistrationsApi || '/api/event-registrations', {
+      const apiRes = await fetch(SITE_CONFIG.applyEndpoint || '/api/applications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: formData.get('name-gaming-id'),
-          email: formData.get('email'),
-          spiel: formData.get('spiel'),
-          clan: formData.get('clan-name'),
-          spielerAnzahl: formData.get('anzahl-spieler'),
-          bemerkungen: formData.get('bemerkungen'),
+          gamingId: formData.get('gaming-id'),
+          alter: formData.get('alter'),
+          hauptspiel: formData.get('spiel'),
+          rolle: formData.get('rolle'),
+          ueberMich: formData.get('ueber-mich'),
         }),
       });
 
@@ -42,10 +41,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
       submitNetlifyForm(formData);
       form.reset();
-      if (status) status.style.display = 'block';
+      alert('Bewerbung gesendet - vielen Dank!');
     } catch (err) {
-      console.error('Event-Anmeldung speichern fehlgeschlagen:', err);
-      alert('Anmeldung konnte nicht gespeichert werden. Bitte versuche es spaeter erneut.');
+      console.error('Bewerbung speichern fehlgeschlagen:', err);
+      alert('Bewerbung konnte nicht gespeichert werden. Bitte versuche es spaeter erneut.');
     } finally {
       if (submitButton) submitButton.disabled = false;
     }
@@ -58,6 +57,7 @@ function submitNetlifyForm(formData) {
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams(formData).toString(),
   }).catch((err) => {
-    console.error('Netlify Form (Event) Fehler:', err);
+    console.error('Netlify Form (Bewerbung) Fehler:', err);
   });
 }
+})();

@@ -1,3 +1,7 @@
+/* Public clan news ticker. */
+'use strict';
+
+(function () {
 document.addEventListener('DOMContentLoaded', () => {
   const tickerItemsEl = document.querySelector('#clan-news-ticker .clan-news-ticker__items');
   if (!tickerItemsEl) return;
@@ -28,3 +32,4 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('[Clan News Ticker] Fehler beim Laden von Settings/News:', err);
     });
 });
+})();

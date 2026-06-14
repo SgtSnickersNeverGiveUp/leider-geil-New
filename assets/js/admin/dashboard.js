@@ -1,5 +1,6 @@
 'use strict';
 
+(function () {
 const ADMIN_DASHBOARD_API_BASE = '/api/admin';
 const API_URL = `${ADMIN_DASHBOARD_API_BASE}/applications`;
 const EVENTS_API = `${ADMIN_DASHBOARD_API_BASE}/events`;
@@ -72,6 +73,13 @@ async function logoutAdmin() {
   }
 }
 
+function loadAdminRoster() {
+  const rosterAdmin = window.LGAdminRoster;
+  if (rosterAdmin?.loadRoster) return rosterAdmin.loadRoster();
+  console.error('[Admin Dashboard] Roster-Modul ist nicht geladen.');
+  return Promise.resolve();
+}
+
 async function loadTickerSettings() {
   try {
     const res = await fetch(SETTINGS_API);
@@ -107,7 +115,7 @@ function switchPage(pageId) {
 
   // Load data for the page
   if (pageId === 'page-bewerbungen') loadApplications();
-  if (pageId === 'page-roster') loadRoster();
+  if (pageId === 'page-roster') loadAdminRoster();
   if (pageId === 'page-events') loadEvents();
   if (pageId === 'page-videos') loadVideos();
   if (pageId === 'page-banner') loadBannerSettings();
@@ -189,8 +197,8 @@ function renderApplications() {
             <td class="app-about">${escapeHtml(about.substring(0, 80))}${about.length > 80 ? '...' : ''}</td>
             <td class="app-date">${formatDate(app.createdAt)}</td>
             <td>
-  <button class="btn-sm" onclick="openApplicationDetails('${id}')">Details</button>
-  <button class="btn-delete" onclick="deleteApplication('${id}')">Löschen</button>
+  <button class="btn-sm" onclick="LGAdminDashboard.openApplicationDetails('${id}')">Details</button>
+  <button class="btn-delete" onclick="LGAdminDashboard.deleteApplication('${id}')">Löschen</button>
 </td>
           </tr>
         `;
@@ -481,8 +489,8 @@ function renderEventsAdmin(events) {
           </div>
         </div>
         <div class="admin-event-actions">
-          <button class="btn-sm" onclick="openEditEvent('${ev.id}')">&#9998;</button>
-          <button class="btn-delete" onclick="deleteEvent('${ev.id}')">Löschen</button>
+          <button class="btn-sm" onclick="LGAdminDashboard.openEditEvent('${ev.id}')">&#9998;</button>
+          <button class="btn-delete" onclick="LGAdminDashboard.deleteEvent('${ev.id}')">Löschen</button>
         </div>
       </div>`;
   }).join('');
@@ -743,7 +751,7 @@ function renderVideosAdmin(videos) {
       <img class="admin-video-card__thumb" src="${escapeHtml(v.thumbnail)}" alt="${escapeHtml(v.title)}" loading="lazy">
       <div class="admin-video-card__body">
         <span class="admin-video-card__title">${escapeHtml(v.title)}</span>
-        <button class="btn-delete" onclick="deleteVideo('${v.id}')">&#10005;</button>
+        <button class="btn-delete" onclick="LGAdminDashboard.deleteVideo('${v.id}')">&#10005;</button>
       </div>
     </div>
   `).join('')}</div>`;
@@ -994,8 +1002,8 @@ function renderEventRegistrations() {
 <td class="app-about">${escapeHtml(truncate(reg.bemerkungen || '', 60))}</td>
 <td class="app-date">${formatDate(reg.createdAt)}</td>
 <td>
-  <button class="btn-sm" onclick="showEvtDetail('${reg.id}')">Details</button>
-  <button class="btn-delete" onclick="deleteEventRegistration('${reg.id}')">Löschen</button>
+  <button class="btn-sm" onclick="LGAdminDashboard.showEvtDetail('${reg.id}')">Details</button>
+  <button class="btn-delete" onclick="LGAdminDashboard.deleteEventRegistration('${reg.id}')">Löschen</button>
 </td>
 
           </tr>
@@ -1118,10 +1126,10 @@ function renderCommunityShoutsAdmin() {
             <td class="app-about">${escapeHtml(shout.message)}</td>
             <td class="app-date">${formatDate(shout.createdAt)}</td>
             <td>
-              <button class="btn-sm" onclick="setCommunityShoutApproval('${shout.id}', ${!shout.approved})">
+              <button class="btn-sm" onclick="LGAdminDashboard.setCommunityShoutApproval('${shout.id}', ${!shout.approved})">
                 ${shout.approved ? 'Ausblenden' : 'Freigeben'}
               </button>
-              <button class="btn-delete" onclick="deleteCommunityShout('${shout.id}')">Löschen</button>
+              <button class="btn-delete" onclick="LGAdminDashboard.deleteCommunityShout('${shout.id}')">Löschen</button>
             </td>
           </tr>
         `).join('')}
@@ -1180,7 +1188,7 @@ function formatDate(value) {
 // EVENT LISTENERS
 // ══════════════════════════════════════════════════════════
 document.getElementById('btn-refresh').addEventListener('click', loadApplications);
-document.getElementById('btn-refresh-roster').addEventListener('click', loadRoster);
+document.getElementById('btn-refresh-roster').addEventListener('click', loadAdminRoster);
 document.getElementById('btn-refresh-events').addEventListener('click', loadEvents);
 document.getElementById('btn-refresh-videos').addEventListener('click', loadVideos);
 document.getElementById('btn-refresh-banner').addEventListener('click', loadBannerSettings);
@@ -1225,4 +1233,17 @@ async function checkTwitchStatus() {
   loadApplications();
   checkTwitchStatus();
   setInterval(checkTwitchStatus, 60000);
+})();
+
+window.LGAdminDashboard = {
+  openApplicationDetails,
+  deleteApplication,
+  openEditEvent,
+  deleteEvent,
+  deleteVideo,
+  showEvtDetail,
+  deleteEventRegistration,
+  setCommunityShoutApproval,
+  deleteCommunityShout,
+};
 })();
