@@ -55,7 +55,7 @@ async function renderTimeline() {
             : '')
         : '';
       const imgHtml = imgSrc
-        ? `<img class="timeline__image" src="${imgSrc}" alt="${event.title || ''}" loading="lazy" onerror="this.style.display='none'">`
+        ? `<img class="timeline__image" src="${imgSrc}" alt="${event.title || ''}" loading="lazy">`
         : '';
 
       return `
@@ -73,6 +73,8 @@ async function renderTimeline() {
           </div>
         </div>`;
     }).join('');
+
+    bindTimelineImageFallbacks(wrap);
 
     const items = Array.from(wrap.querySelectorAll('.timeline__item'));
     const moreBtn = document.getElementById('events-more-btn');
@@ -125,6 +127,14 @@ function observeTimeline() {
     { threshold: 0.15 }
   );
   items.forEach((item) => observer.observe(item));
+}
+
+function bindTimelineImageFallbacks(wrap) {
+  wrap.querySelectorAll('.timeline__image').forEach((img) => {
+    img.addEventListener('error', () => {
+      img.style.display = 'none';
+    }, { once: true });
+  });
 }
 
 async function renderHeaderBanner() {

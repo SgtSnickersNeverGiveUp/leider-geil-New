@@ -85,6 +85,7 @@ async function main() {
   await assertAssetsJsLayout();
   await assertPublicJsBoundary();
   await assertPublicAssetBoundary();
+  await assertPublicBrowserMarkupBoundary();
   await assertHtmlBoundaries(htmlBoundaryFiles);
   await assertHtmlScriptReferences(htmlBoundaryFiles);
   await assertHtmlStylesheetReferences(htmlBoundaryFiles);
@@ -174,6 +175,23 @@ async function assertPublicAssetBoundary() {
   }
 }
 
+async function assertPublicBrowserMarkupBoundary() {
+  const publicJsFiles = await listFiles(path.join(repoRoot, "assets/js/public"));
+  for (const file of publicJsFiles.filter((item) => item.endsWith(".js"))) {
+    const content = await readText(file);
+    const relative = path.relative(repoRoot, file);
+
+    if (/<[^>]*\son[a-z]+\s*=/i.test(content)) {
+      failures.push(`${relative}: public browser markup must not generate inline event handlers`);
+    }
+
+    assertNotContains(file, content, [
+      "admin-homepage-",
+      "data-admin-",
+    ]);
+  }
+}
+
 async function assertHtmlBoundaries(htmlBoundaryFiles) {
   for (const { file, content, boundary } of htmlBoundaryFiles) {
     if (boundary !== "public") continue;
@@ -233,11 +251,58 @@ async function assertHtmlScriptReferences(htmlBoundaryFiles) {
     "/assets/js/admin/homepage-content/news-ticker.js",
     "/assets/js/admin/homepage-content/roster-slideshow.js",
   ]);
+  const publicPageScriptAllowLists = new Map([
+    ["bewerben.html", [
+      "/assets/js/public/config.js",
+      "/assets/js/public/nav.js",
+      "/assets/js/public/application-form.js",
+    ]],
+    ["event-anmeldung.html", [
+      "/assets/js/public/config.js",
+      "/assets/js/public/nav.js",
+      "/assets/js/public/event-signup-form.js",
+    ]],
+    ["impressum.html", [
+      "/assets/js/public/nav.js",
+    ]],
+    ["index.html", [
+      "/assets/js/public/config.js",
+      "/assets/js/public/nav.js",
+      "/assets/js/public/index.js",
+      "/assets/js/public/roster-slideshow.js",
+      "/assets/js/public/community-shouts.js",
+      "/assets/js/public/roster.js",
+      "/assets/js/public/clan-news-ticker.js",
+    ]],
+  ]);
+  const adminPageScriptAllowLists = new Map([
+    ["admin-login.html", [
+      "/assets/js/admin/config.js",
+      "/assets/js/admin/login.js",
+    ]],
+    ["lg-dashboard.html", [
+      "/assets/js/admin/config.js",
+      "/assets/js/admin/media-preview.js",
+      "/assets/js/admin/roster.js",
+      "/assets/js/admin/homepage-content/roster-slideshow.js",
+      "/assets/js/admin/homepage-content/news-ticker.js",
+      "/assets/js/admin/homepage-content/banner.js",
+      "/assets/js/admin/homepage-content/page.js",
+      "/assets/js/admin/dashboard.js",
+    ]],
+  ]);
 
   for (const { relative, boundary, content } of htmlBoundaryFiles) {
     if (boundary !== "public") continue;
 
     const scriptSources = extractScriptSources(content);
+    const exactScriptSources = publicPageScriptAllowLists.get(relative);
+    if (!exactScriptSources) {
+      failures.push(`${relative}: public page must declare an explicit script boundary in tools/check-boundaries.mjs`);
+      continue;
+    }
+    assertScriptSourcesExactly(relative, scriptSources, exactScriptSources, "public");
+
     for (const scriptSource of scriptSources) {
       if (!publicScriptAllowList.has(scriptSource)) {
         failures.push(`${relative}: public page must not load ${JSON.stringify(scriptSource)}`);
@@ -253,6 +318,13 @@ async function assertHtmlScriptReferences(htmlBoundaryFiles) {
     if (boundary !== "admin") continue;
 
     const scriptSources = extractScriptSources(content);
+    const exactScriptSources = adminPageScriptAllowLists.get(relative);
+    if (!exactScriptSources) {
+      failures.push(`${relative}: admin page must declare an explicit script boundary in tools/check-boundaries.mjs`);
+      continue;
+    }
+    assertScriptSourcesExactly(relative, scriptSources, exactScriptSources, "admin");
+
     for (const scriptSource of scriptSources) {
       if (!adminScriptAllowList.has(scriptSource)) {
         failures.push(`${relative}: admin page must not load ${JSON.stringify(scriptSource)}`);
@@ -461,6 +533,15 @@ async function assertAdminHomepageEditorBoundary() {
       'id="news-',
       "document.getElementById('banner-",
       'id="banner-',
+      "document.getElementById('header-banner",
+      'id="header-banner',
+      'class="header-banner',
+      "clan-news-ticker",
+      "roster-slideshow__",
+      "community-shouts__",
+      "timeline__",
+      "video-card__",
+      "visitor-counter",
       ".banner-tab-btn",
       "roster-slideshow-admin",
       "data-slideshow-",
@@ -585,6 +666,8 @@ async function assertPublicIndexProjectionBoundary() {
     "getTimelineGameVariant",
     "PUBG NEWS",
     "ARC Raiders NEWS",
+    "admin-homepage-",
+    "LGAdminHomepage",
   ]);
 }
 
@@ -872,6 +955,15 @@ function assertRequiredScriptBefore(file, scriptSources, requiredScript, depende
   }
   if (requiredIndex > dependentIndex) {
     failures.push(`${file}: ${JSON.stringify(requiredScript)} must be loaded before ${JSON.stringify(dependentScript)}`);
+  }
+}
+
+function assertScriptSourcesExactly(file, actualSources, expectedSources, boundary) {
+  if (
+    actualSources.length !== expectedSources.length
+    || actualSources.some((source, index) => source !== expectedSources[index])
+  ) {
+    failures.push(`${file}: ${boundary} page scripts must be exactly ${JSON.stringify(expectedSources)}, found ${JSON.stringify(actualSources)}`);
   }
 }
 
