@@ -22,7 +22,7 @@ const adminCoreJsFiles = [
   "assets/js/admin/dashboard.js",
   "assets/js/admin/login.js",
   "assets/js/admin/roster.js",
-  "assets/js/admin/homepage-content/index.js",
+  "assets/js/admin/homepage-content/page.js",
   "assets/js/admin/homepage-content/banner.js",
   "assets/js/admin/homepage-content/news-ticker.js",
   "assets/js/admin/homepage-content/roster-slideshow.js",
@@ -42,6 +42,7 @@ const removedFiles = [
   "assets/js/admin/public-content/banner.js",
   "assets/js/admin/public-content/news-ticker.js",
   "assets/js/admin/public-content/roster-slideshow.js",
+  "assets/js/admin/homepage-content/index.js",
   "assets/js/script.js",
   "config.js",
   "netlify/functions/admin-settings.mjs",
@@ -141,7 +142,7 @@ async function assertHtmlScriptReferences() {
     "/assets/js/admin/dashboard.js",
     "/assets/js/admin/login.js",
     "/assets/js/admin/roster.js",
-    "/assets/js/admin/homepage-content/index.js",
+    "/assets/js/admin/homepage-content/page.js",
     "/assets/js/admin/homepage-content/banner.js",
     "/assets/js/admin/homepage-content/news-ticker.js",
     "/assets/js/admin/homepage-content/roster-slideshow.js",
@@ -240,7 +241,7 @@ async function assertAdminHomepageEditorBoundary() {
   ]);
 
   const homepageEditorFiles = [
-    "assets/js/admin/homepage-content/index.js",
+    "assets/js/admin/homepage-content/page.js",
     "assets/js/admin/homepage-content/banner.js",
     "assets/js/admin/homepage-content/news-ticker.js",
     "assets/js/admin/homepage-content/roster-slideshow.js",
