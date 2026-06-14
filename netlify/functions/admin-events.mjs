@@ -50,7 +50,7 @@ export default async (req) => {
       };
 
       await store.setJSON(id, event);
-      return jsonResponse({ success: true, id, event }, 201);
+      return jsonResponse({ success: true, id, event: toAdminEvent(event) }, 201);
     } catch {
       return jsonResponse({ error: "Fehler beim Speichern." }, 500);
     }
@@ -76,7 +76,7 @@ export default async (req) => {
       };
 
       await store.setJSON(id, updated);
-      return jsonResponse({ success: true, event: updated });
+      return jsonResponse({ success: true, event: toAdminEvent(updated) });
     } catch {
       return jsonResponse({ error: "Fehler beim Aktualisieren." }, 500);
     }

@@ -1,6 +1,6 @@
 import { getStore } from "@netlify/blobs";
 import { requireAdmin } from "./admin-auth.mjs";
-import { writeNews } from "./_shared/admin-news-data.mjs";
+import { toAdminNewsItem, writeNews } from "./_shared/admin-news-data.mjs";
 import { NEWS_STORE_NAME, readNews } from "./_shared/news-data.mjs";
 
 function jsonResponse(body, status = 200) {
@@ -21,7 +21,8 @@ export default async (req) => {
   const store = getStore(NEWS_STORE_NAME);
 
   if (req.method === "GET") {
-    return jsonResponse(await readNews(store, "Admin News"));
+    const news = (await readNews(store, "Admin News")).map(toAdminNewsItem);
+    return jsonResponse(news);
   }
 
   try {

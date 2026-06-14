@@ -53,7 +53,7 @@ export default async (req) => {
       };
 
       await store.setJSON(id, member);
-      return jsonResponse({ success: true, id, member }, 201);
+      return jsonResponse({ success: true, id, member: toAdminRosterMember(member) }, 201);
     } catch {
       return jsonResponse({ error: "Fehler beim Speichern." }, 500);
     }
@@ -83,7 +83,7 @@ export default async (req) => {
       };
 
       await store.setJSON(id, updated);
-      return jsonResponse({ success: true, member: updated });
+      return jsonResponse({ success: true, member: toAdminRosterMember(updated) });
     } catch {
       return jsonResponse({ error: "Fehler beim Aktualisieren." }, 500);
     }

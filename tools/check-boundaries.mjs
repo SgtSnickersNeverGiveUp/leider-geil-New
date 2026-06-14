@@ -247,6 +247,11 @@ async function assertHtmlScriptReferences(htmlBoundaryFiles) {
     "/assets/js/admin/dashboard.js",
     "/assets/js/admin/login.js",
     "/assets/js/admin/roster.js",
+    "/assets/js/admin/sections/applications.js",
+    "/assets/js/admin/sections/events.js",
+    "/assets/js/admin/sections/videos.js",
+    "/assets/js/admin/sections/event-registrations.js",
+    "/assets/js/admin/sections/community-shouts.js",
     "/assets/js/admin/homepage-content/page.js",
     "/assets/js/admin/homepage-content/banner.js",
     "/assets/js/admin/homepage-content/news-ticker.js",
@@ -285,6 +290,11 @@ async function assertHtmlScriptReferences(htmlBoundaryFiles) {
       "/assets/js/admin/config.js",
       "/assets/js/admin/media-preview.js",
       "/assets/js/admin/roster.js",
+      "/assets/js/admin/sections/applications.js",
+      "/assets/js/admin/sections/events.js",
+      "/assets/js/admin/sections/videos.js",
+      "/assets/js/admin/sections/event-registrations.js",
+      "/assets/js/admin/sections/community-shouts.js",
       "/assets/js/admin/homepage-content/roster-slideshow.js",
       "/assets/js/admin/homepage-content/news-ticker.js",
       "/assets/js/admin/homepage-content/banner.js",
@@ -335,6 +345,12 @@ async function assertHtmlScriptReferences(htmlBoundaryFiles) {
     if (relative === "lg-dashboard.html") {
       assertScriptBefore(relative, scriptSources, "/assets/js/admin/config.js", "/assets/js/admin/media-preview.js");
       assertScriptBefore(relative, scriptSources, "/assets/js/admin/media-preview.js", "/assets/js/admin/roster.js");
+      assertScriptBefore(relative, scriptSources, "/assets/js/admin/roster.js", "/assets/js/admin/sections/applications.js");
+      assertScriptBefore(relative, scriptSources, "/assets/js/admin/sections/applications.js", "/assets/js/admin/sections/events.js");
+      assertScriptBefore(relative, scriptSources, "/assets/js/admin/sections/events.js", "/assets/js/admin/sections/videos.js");
+      assertScriptBefore(relative, scriptSources, "/assets/js/admin/sections/videos.js", "/assets/js/admin/sections/event-registrations.js");
+      assertScriptBefore(relative, scriptSources, "/assets/js/admin/sections/event-registrations.js", "/assets/js/admin/sections/community-shouts.js");
+      assertScriptBefore(relative, scriptSources, "/assets/js/admin/sections/community-shouts.js", "/assets/js/admin/homepage-content/roster-slideshow.js");
       assertScriptBefore(relative, scriptSources, "/assets/js/admin/homepage-content/roster-slideshow.js", "/assets/js/admin/homepage-content/page.js");
       assertScriptBefore(relative, scriptSources, "/assets/js/admin/homepage-content/news-ticker.js", "/assets/js/admin/homepage-content/page.js");
       assertScriptBefore(relative, scriptSources, "/assets/js/admin/homepage-content/banner.js", "/assets/js/admin/homepage-content/page.js");
@@ -499,6 +515,12 @@ async function assertAdminDashboardShellBoundary() {
     "page-homepage-content",
     "page-news",
     "page-banner",
+    "applications-body",
+    "events-list-body",
+    "videos-list-body",
+    "evt-registrations-body",
+    "community-shouts-admin-body",
+    "twitch-admin-banner",
   ]);
 }
 
