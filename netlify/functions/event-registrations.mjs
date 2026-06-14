@@ -1,4 +1,5 @@
 import { getStore } from "@netlify/blobs";
+import { notifyEventRegistration } from "./_shared/discord-notifications.mjs";
 
 const STORE_NAME = "event-registrations";
 
@@ -37,6 +38,7 @@ export default async (req, context) => {
     };
 
     await store.setJSON(id, registration);
+    await notifyEventRegistration(registration);
 
     return new Response(JSON.stringify({ success: true, id }), {
       status: 201,

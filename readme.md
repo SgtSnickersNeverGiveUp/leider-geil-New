@@ -17,6 +17,13 @@ Willkommen bei **Clan Leider‑Geil** – deine zentrale Anlaufstelle für Gamin
 
 > **Hinweis** – Inhalte werden über die getrennten Pflegeoberflächen und API-Endpunkte verwaltet.
 
+## Code-Grenzen
+
+- Public-/Index-Code liegt unter `assets/js/public/` und spricht nur die oeffentlichen `/api/*`-Endpunkte an.
+- Admin-Code liegt unter `assets/js/admin/` und verwendet ausschliesslich `/api/admin/*` fuer schreibende und vollstaendige Datensaetze.
+- Gemeinsame Server-Datenlogik liegt in `netlify/functions/_shared/`; Public-Handler geben daraus nur explizit sanitizte Public-Objekte aus.
+- Oeffentliche Formulare speichern direkt ueber die Public-API-Endpunkte. Die alte Netlify-Forms/Discord-Hook-Doppelstrecke wird nicht mehr verwendet.
+
 ## Admin-Zugang
 
 Der Adminbereich unter `/lg-dashboard.html` ist per Login geschützt. Setze in Netlify mindestens diese Umgebungsvariable:

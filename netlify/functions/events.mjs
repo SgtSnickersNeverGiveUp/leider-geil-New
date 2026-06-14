@@ -1,5 +1,5 @@
 import { getStore } from "@netlify/blobs";
-import { EVENTS_STORE_NAME, listEvents } from "./_shared/events-data.mjs";
+import { EVENTS_STORE_NAME, listEvents, toPublicEvent } from "./_shared/events-data.mjs";
 
 export default async (req) => {
   if (req.method !== "GET") {
@@ -13,7 +13,9 @@ export default async (req) => {
 
   // GET – List all events
   try {
-    return new Response(JSON.stringify(await listEvents(store)), {
+    const events = (await listEvents(store)).map(toPublicEvent);
+
+    return new Response(JSON.stringify(events), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });

@@ -1,65 +1,12 @@
 import { getStore } from "@netlify/blobs";
 import { requireAdmin } from "./admin-auth.mjs";
-
-const STORE_NAME = "videos";
+import { VIDEOS_STORE_NAME, buildVideoData, listVideos } from "./_shared/videos-data.mjs";
 
 function jsonResponse(body, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
     headers: { "Content-Type": "application/json" },
   });
-}
-
-async function listVideos(store) {
-  const { blobs } = await store.list();
-  const videos = [];
-
-  for (const blob of blobs) {
-    const data = await store.get(blob.key, { type: "json" });
-    if (data) videos.push(data);
-  }
-
-  videos.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  return videos;
-}
-
-function buildVideoData({ url, title, platform: rawPlatform }) {
-  if (!url || !title) {
-    return { error: "URL und Titel sind Pflichtfelder." };
-  }
-
-  const platform = (rawPlatform || "youtube").toLowerCase();
-  let videoId = null;
-  let thumbnail = "";
-
-  if (platform === "youtube") {
-    try {
-      const parsed = new URL(url);
-      if (parsed.hostname.includes("youtu.be")) {
-        videoId = parsed.pathname.slice(1);
-      } else if (parsed.hostname.includes("youtube.com")) {
-        videoId = parsed.searchParams.get("v") || parsed.pathname.split("/").pop();
-      }
-    } catch {
-      // Invalid URLs are handled by the missing videoId branch below.
-    }
-
-    if (!videoId) return { error: "Ungültiger YouTube-Link." };
-    thumbnail = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
-  } else if (platform === "twitch") {
-    try {
-      const parsed = new URL(url);
-      if (!parsed.hostname.includes("twitch.tv")) {
-        return { error: "Ungültiger Twitch-Link." };
-      }
-    } catch {
-      return { error: "Ungültiger Twitch-Link." };
-    }
-  } else {
-    return { error: "Unbekannte Plattform." };
-  }
-
-  return { title, url, platform, videoId, thumbnail };
 }
 
 export default async (req) => {
@@ -70,7 +17,7 @@ export default async (req) => {
   const adminGuard = requireAdmin(req);
   if (adminGuard) return adminGuard;
 
-  const store = getStore(STORE_NAME);
+  const store = getStore(VIDEOS_STORE_NAME);
 
   if (req.method === "GET") {
     try {

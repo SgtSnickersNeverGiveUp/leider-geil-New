@@ -19,16 +19,9 @@ async function renderTimeline() {
   if (!wrap) return;
 
   try {
-    let events;
-    try {
-      const res = await fetch(SITE_CONFIG.eventsApi || '/api/events');
-      if (!res.ok) throw new Error('API unavailable');
-      events = await res.json();
-    } catch {
-      const res = await fetch(SITE_CONFIG.eventsPath);
-      if (!res.ok) throw new Error(`Events fetch ${res.status}`);
-      events = await res.json();
-    }
+    const res = await fetch(SITE_CONFIG.eventsApi || '/api/events');
+    if (!res.ok) throw new Error(`Events fetch ${res.status}`);
+    const events = await res.json();
 
     if (!Array.isArray(events) || events.length === 0) {
       wrap.innerHTML = '<p style="color:var(--clr-text-muted);">Noch keine Events vorhanden.</p>';

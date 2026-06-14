@@ -1,7 +1,5 @@
 import { getStore } from "@netlify/blobs";
-
-const STORE_NAME = "clan-news";
-const NEWS_KEY = "news.json";
+import { NEWS_STORE_NAME, readNews, toPublicNewsItem } from "./_shared/news-data.mjs";
 
 function jsonResponse(body, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -10,23 +8,13 @@ function jsonResponse(body, status = 200) {
   });
 }
 
-async function readNews(store) {
-  try {
-    const news = await store.get(NEWS_KEY, { type: "json" });
-    return Array.isArray(news) ? news : [];
-  } catch (err) {
-    console.error("[News] read failed", err);
-    return [];
-  }
-}
-
 export default async (req) => {
   if (req.method !== "GET") {
     return jsonResponse({ error: "Method not allowed" }, 405);
   }
 
-  const store = getStore(STORE_NAME);
-  const news = await readNews(store);
+  const store = getStore(NEWS_STORE_NAME);
+  const news = (await readNews(store)).map(toPublicNewsItem);
   return jsonResponse(news);
 };
 

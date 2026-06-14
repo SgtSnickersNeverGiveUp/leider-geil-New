@@ -1,6 +1,5 @@
 import { getStore } from "@netlify/blobs";
-
-const STORE_NAME = "videos";
+import { VIDEOS_STORE_NAME, listVideos, toPublicVideo } from "./_shared/videos-data.mjs";
 
 export default async (req) => {
   if (req.method !== "GET") {
@@ -10,20 +9,11 @@ export default async (req) => {
     });
   }
 
-  const store = getStore(STORE_NAME);
+  const store = getStore(VIDEOS_STORE_NAME);
 
   // GET – List all videos
   try {
-    const { blobs } = await store.list();
-    const videos = [];
-
-    for (const blob of blobs) {
-      const data = await store.get(blob.key, { type: "json" });
-      if (data) videos.push(data);
-    }
-
-    // Sort newest first
-    videos.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    const videos = (await listVideos(store)).map(toPublicVideo);
 
     return new Response(JSON.stringify(videos), {
       status: 200,

@@ -22,8 +22,5 @@
     communityShoutsApi: '/api/community-shouts',
     eventRegistrationsApi: '/api/event-registrations',
     visitorCounterApi: '/api/visitor-count',
-
-    /* Public Datenpfade (Fallback) */
-    eventsPath: '/assets/data/events.json',
   });
 })();

@@ -41,7 +41,6 @@ document.addEventListener('DOMContentLoaded', () => {
         throw new Error(message);
       }
 
-      submitNetlifyForm(formData);
       form.reset();
       if (status) status.style.display = 'block';
     } catch (err) {
@@ -52,14 +51,4 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
-
-function submitNetlifyForm(formData) {
-  fetch('/', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams(formData).toString(),
-  }).catch((err) => {
-    console.error('Netlify Form (Event) Fehler:', err);
-  });
-}
 })();

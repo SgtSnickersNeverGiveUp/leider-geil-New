@@ -39,7 +39,6 @@ document.addEventListener('DOMContentLoaded', () => {
         throw new Error(message);
       }
 
-      submitNetlifyForm(formData);
       form.reset();
       alert('Bewerbung gesendet - vielen Dank!');
     } catch (err) {
@@ -50,14 +49,4 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
-
-function submitNetlifyForm(formData) {
-  fetch('/', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams(formData).toString(),
-  }).catch((err) => {
-    console.error('Netlify Form (Bewerbung) Fehler:', err);
-  });
-}
 })();

@@ -1,4 +1,5 @@
 import { getStore } from "@netlify/blobs";
+import { notifyApplicationSubmission } from "./_shared/discord-notifications.mjs";
 
 const STORE_NAME = "applications";
 
@@ -36,6 +37,7 @@ export default async (req, context) => {
     };
 
     await store.setJSON(id, application);
+    await notifyApplicationSubmission(application);
 
     return new Response(JSON.stringify({ success: true, id }), {
       status: 201,
