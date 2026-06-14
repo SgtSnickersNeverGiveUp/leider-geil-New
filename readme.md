@@ -22,9 +22,10 @@ Willkommen bei **Clan Leider‑Geil** – deine zentrale Anlaufstelle für Gamin
 - Public-/Index-Code liegt unter `assets/js/public/` und spricht nur die oeffentlichen `/api/*`-Endpunkte an.
 - Admin-Code liegt unter `assets/js/admin/` und verwendet ausschliesslich `/api/admin/*` fuer schreibende, vollstaendige Datensaetze und geschuetzte Media-Vorschauen.
 - Admin-Editoren fuer Startseiten-Inhalte liegen gebuendelt unter `assets/js/admin/homepage-content/` und werden im Dashboard nur ueber einen registrierten Admin-Page-Loader (`page.js`, nicht `index.js`) geladen.
-- `npm test` klassifiziert alle HTML-Dateien automatisch als Public- oder Admin-Einstieg und prueft Script-/CSS-Allowlists, Admin-Script-Reihenfolge sowie rekursiv alle Public-/Admin-Browser-Skripte gegen Boundary-Leaks.
+- `npm test` ordnet bekannte Admin-HTML-Einstiege explizit zu und prueft Script-/Stylesheet-Allowlists, Inline-Script-Grenzen, Admin-Script-Reihenfolge sowie rekursiv alle Public-/Admin-Browser-Skripte gegen Boundary-Leaks.
 - Gemeinsame Server-Datenlogik liegt in `netlify/functions/_shared/`; Public-Handler geben daraus nur explizit sanitizte Public-Objekte aus.
 - Public- und Admin-Netlify-Handler duerfen nicht gegenseitig die jeweiligen Projection-/Mutation-Helper importieren; neutrale Store-/Schema-Helfer bleiben in `_shared/` erlaubt.
+- Netlify-Functions und Edge-Routen werden gegen Public-/Admin-API-Pfade, Projection-Imports und die Admin-Auth-Routen in `netlify.toml` geprueft.
 - Public- und Admin-Views fuer Public-Content-Settings sind getrennt: `public-settings-data.mjs` enthaelt nur Public-Ausgabe, `admin-public-settings-data.mjs` nur Admin-Sanitizing und Admin-Ausgabe.
 - Oeffentliche Formulare speichern direkt ueber die Public-API-Endpunkte. Die alte Netlify-Forms/Discord-Hook-Doppelstrecke wird nicht mehr verwendet.
 
