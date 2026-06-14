@@ -14,7 +14,7 @@ import {
   normalizeStoredRosterSlideshow,
   pickStoredPublicContentSettings,
 } from "./homepage-content-settings-schema.mjs";
-import { MEDIA_URLS, toAdminMediaPreviewUrl } from "./media-url-contract.mjs";
+import { ADMIN_MEDIA_URLS, toAdminMediaPreviewUrl } from "./admin-media-url-contract.mjs";
 
 export {
   PUBLIC_CONTENT_SETTINGS_KEY,
@@ -28,7 +28,7 @@ export function pickAdminPublicContentSettings(settings = {}) {
   if (bannerUrl) {
     const adminBannerPreviewUrl = toAdminMediaPreviewUrl(
       bannerUrl,
-      MEDIA_URLS.bannerImage,
+      ADMIN_MEDIA_URLS.bannerImage,
     );
 
     if (adminBannerPreviewUrl !== bannerUrl) {

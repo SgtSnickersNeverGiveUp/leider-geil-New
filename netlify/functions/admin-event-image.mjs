@@ -1,6 +1,6 @@
 import { getStore } from "@netlify/blobs";
 import { requireAdmin } from "./admin-auth.mjs";
-import { MEDIA_URLS, buildMediaUrlPair } from "./_shared/media-url-contract.mjs";
+import { ADMIN_MEDIA_URLS, buildAdminMediaUrlPair } from "./_shared/admin-media-url-contract.mjs";
 import { serveStoredImage } from "./_shared/media-response.mjs";
 
 const STORE_NAME = "event-images";
@@ -64,7 +64,7 @@ export default async (req) => {
         uploadedAt: new Date().toISOString(),
       });
 
-      const mediaUrls = buildMediaUrlPair(MEDIA_URLS.eventImage, { id: eventId });
+      const mediaUrls = buildAdminMediaUrlPair(ADMIN_MEDIA_URLS.eventImage, { id: eventId });
 
       return jsonResponse({
         success: true,

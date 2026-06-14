@@ -26,6 +26,7 @@ const removedFiles = [
   "netlify/functions/settings.mjs",
   "netlify/functions/_shared/settings-data.mjs",
   "netlify/functions/_shared/public-content-settings-schema.mjs",
+  "netlify/functions/_shared/media-url-contract.mjs",
 ];
 
 const ignoredDirectories = new Set([
@@ -89,6 +90,7 @@ async function main() {
   await assertCssBoundaries();
   await assertAdminCoreBoundary();
   await assertAdminMediaPreviewBoundary();
+  await assertServerMediaContractBoundary();
   await assertAdminHomepageEditorBoundary();
   await assertAdminDashboardShellBoundary();
   await assertNetlifyFunctionBoundary();
@@ -389,6 +391,25 @@ async function assertAdminMediaPreviewBoundary() {
     "toAdminMediaPreviewUrl",
     "isManagedPublicMediaUrl",
     "publicApi",
+  ]);
+}
+
+async function assertServerMediaContractBoundary() {
+  const mediaUrlBuilderPath = path.join(repoRoot, "netlify/functions/_shared/media-url-builder.mjs");
+  const mediaUrlBuilder = await readText(mediaUrlBuilderPath);
+  assertNotContains(mediaUrlBuilderPath, mediaUrlBuilder, [
+    "/api/",
+    "adminPreviewPath",
+    "publicPath",
+    "ADMIN_MEDIA_URLS",
+    "MEDIA_URLS",
+  ]);
+
+  const adminMediaContractPath = path.join(repoRoot, "netlify/functions/_shared/admin-media-url-contract.mjs");
+  const adminMediaContract = await readText(adminMediaContractPath);
+  assertNotContains(adminMediaContractPath, adminMediaContract, [
+    "export const MEDIA_URLS",
+    "export function buildMediaUrlPair(",
   ]);
 }
 

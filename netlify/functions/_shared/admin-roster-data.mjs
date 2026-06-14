@@ -1,4 +1,4 @@
-import { MEDIA_URLS, toAdminMediaPreviewUrl } from "./media-url-contract.mjs";
+import { ADMIN_MEDIA_URLS, toAdminMediaPreviewUrl } from "./admin-media-url-contract.mjs";
 
 export function toAdminRosterMember(member = {}) {
   const avatar = member.avatar || "";
@@ -7,7 +7,7 @@ export function toAdminRosterMember(member = {}) {
     ...member,
     adminAvatarPreviewUrl: toAdminMediaPreviewUrl(
       avatar,
-      MEDIA_URLS.rosterAvatar,
+      ADMIN_MEDIA_URLS.rosterAvatar,
       { id: member.id },
     ),
   };
