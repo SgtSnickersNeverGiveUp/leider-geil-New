@@ -1,14 +1,9 @@
 import { getStore } from "@netlify/blobs";
-
-const STORE_NAME = "settings";
-const SETTINGS_KEY = "site-settings";
-
-const PUBLIC_SETTING_KEYS = [
-  "bannerUrl",
-  "tickerSpeedSeconds",
-  "tickerSeparator",
-  "rosterSlideshow",
-];
+import {
+  SETTINGS_KEY,
+  SETTINGS_STORE_NAME,
+  pickPublicSettings,
+} from "./_shared/settings-data.mjs";
 
 export default async (req) => {
   if (req.method !== "GET") {
@@ -19,14 +14,9 @@ export default async (req) => {
   }
 
   try {
-    const store = getStore(STORE_NAME);
+    const store = getStore(SETTINGS_STORE_NAME);
     const settings = (await store.get(SETTINGS_KEY, { type: "json" })) || {};
-    const publicSettings = PUBLIC_SETTING_KEYS.reduce((acc, key) => {
-      if (Object.prototype.hasOwnProperty.call(settings, key)) {
-        acc[key] = settings[key];
-      }
-      return acc;
-    }, {});
+    const publicSettings = pickPublicSettings(settings);
 
     return new Response(JSON.stringify(publicSettings), {
       status: 200,

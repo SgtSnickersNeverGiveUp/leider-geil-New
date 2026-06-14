@@ -3,6 +3,9 @@
 
 const VISITOR_COUNTER_STORAGE_KEY = 'lg-homepage-visitor-counted';
 
+const select = (selector, context = document) => context.querySelector(selector);
+const selectAll = (selector, context = document) => [...context.querySelectorAll(selector)];
+
 function getTimelineGameVariant(game) {
   if (game === 'PUBG' || game === 'PUBG NEWS') return 'pubg';
   if (game === 'ARC Raiders' || game === 'ARC Raiders NEWS') return 'arc';
@@ -10,63 +13,8 @@ function getTimelineGameVariant(game) {
   return '';
 }
 
-function initVideos() {
-  const pubgFrame = $('#video-pubg');
-  const arcFrame = $('#video-arc');
-  if (pubgFrame) pubgFrame.src = SITE_CONFIG.videoPUBG;
-  if (arcFrame) arcFrame.src = SITE_CONFIG.videoARC;
-}
-
-async function fetchDiscordStatus() {
-  const el = $('#discord-count');
-  if (!el) return;
-
-  try {
-    const res = await fetch(SITE_CONFIG.discordWidgetApi);
-    if (!res.ok) throw new Error(`Discord API ${res.status}`);
-    const data = await res.json();
-    const online = data.presence_count ?? '-';
-    el.textContent = `${online} Online`;
-    const dot = $('#discord-dot');
-    if (dot && online > 0) dot.classList.add('live-status__dot--online');
-  } catch (err) {
-    console.warn('[Discord]', err.message);
-    el.textContent = 'Keine Verbindung';
-  }
-}
-
-async function fetchTwitchStatus() {
-  const el = $('#twitch-status');
-  if (!el) return;
-
-  try {
-    const res = await fetch(SITE_CONFIG.twitchStatusApi || '/api/twitch-status');
-    if (!res.ok) throw new Error(`Twitch API ${res.status}`);
-    const data = await res.json();
-    const dot = $('#twitch-dot');
-
-    if (data.live) {
-      el.innerHTML = '<span class="twitch-live-label">● LIVE</span>&nbsp; ' + data.viewer_count + ' Zuschauer';
-      if (dot) {
-        dot.classList.add('live-status__dot--live');
-        dot.classList.remove('live-status__dot--online');
-      }
-    } else {
-      el.textContent = 'OFFLINE';
-      if (dot) {
-        dot.classList.remove('live-status__dot--live');
-        dot.classList.remove('live-status__dot--online');
-      }
-      if (data.error) console.warn('[Twitch] API returned error:', data.errorType, data.error);
-    }
-  } catch (err) {
-    console.warn('[Twitch]', err.message);
-    el.textContent = 'OFFLINE';
-  }
-}
-
 async function renderTimeline() {
-  const wrap = $('#timeline');
+  const wrap = select('#timeline');
   if (!wrap) return;
 
   try {
@@ -177,7 +125,7 @@ async function renderTimeline() {
 }
 
 function observeTimeline() {
-  const items = $$('.timeline__item');
+  const items = selectAll('.timeline__item');
   const observer = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
@@ -193,8 +141,8 @@ function observeTimeline() {
 }
 
 async function renderHeaderBanner() {
-  const section = $('#header-banner');
-  const img = $('#header-banner-img');
+  const section = select('#header-banner');
+  const img = select('#header-banner-img');
   if (!section || !img) return;
 
   try {
@@ -219,7 +167,7 @@ async function renderHeaderBanner() {
 }
 
 async function renderVideoGallery() {
-  const grid = $('#video-gallery-grid');
+  const grid = select('#video-gallery-grid');
   if (!grid) return;
 
   try {
@@ -261,11 +209,6 @@ async function renderVideoGallery() {
   }
 }
 
-function startLiveUpdates() {
-  setInterval(fetchDiscordStatus, SITE_CONFIG.discordRefreshInterval);
-  setInterval(fetchTwitchStatus, SITE_CONFIG.twitchRefreshInterval);
-}
-
 function hasCountedHomepageVisitor() {
   try {
     return localStorage.getItem(VISITOR_COUNTER_STORAGE_KEY) === '1';
@@ -289,8 +232,8 @@ function formatVisitorCount(value) {
 }
 
 async function renderVisitorCounter() {
-  const counter = $('#visitor-counter');
-  const countEl = $('#visitor-counter-count');
+  const counter = select('#visitor-counter');
+  const countEl = select('#visitor-counter-count');
   if (!counter || !countEl) return;
 
   const alreadyCounted = hasCountedHomepageVisitor();
@@ -319,12 +262,8 @@ async function renderVisitorCounter() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  initVideos();
   renderTimeline();
   renderVideoGallery();
   renderHeaderBanner();
   renderVisitorCounter();
-  fetchDiscordStatus();
-  fetchTwitchStatus();
-  startLiveUpdates();
 });

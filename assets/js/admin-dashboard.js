@@ -177,26 +177,63 @@ function renderApplications() {
         </tr>
       </thead>
       <tbody>
-        ${currentApplications.map(app => `
+        ${currentApplications.map((app) => {
+          const id = escapeHtml(app.id);
+          const about = app.ueberMich || '';
+          return `
           <tr>
-            <td><strong>${app.gamingId}</strong></td>
-            <td>${app.alter}</td>
+            <td><strong>${escapeHtml(app.gamingId)}</strong></td>
+            <td>${escapeHtml(app.alter)}</td>
+            <td>${renderApplicationGameBadge(app.hauptspiel)}</td>
+            <td>${escapeHtml(app.rolle)}</td>
+            <td class="app-about">${escapeHtml(about.substring(0, 80))}${about.length > 80 ? '...' : ''}</td>
+            <td class="app-date">${formatDate(app.createdAt)}</td>
             <td>
-              ${app.hauptspiel === 'PUBG' ? '<span class="tag tag--pubg">PUBG</span>' : 
-                app.hauptspiel === 'ARC Raiders' ? '<span class="tag tag--arc">ARC</span>' : 
-                '<span class="tag tag--both">PUBG + ARC</span>'}
-            </td>
-            <td>${app.rolle}</td>
-            <td class="app-about">${app.ueberMich.substring(0,80)}${app.ueberMich.length > 80 ? '...' : ''}</td>
-            <td class="app-date">${new Date(app.createdAt).toLocaleString('de-DE')}</td>
-            <td>
-  <button class="btn-sm" onclick="alert('Details: ${app.gamingId} | ${app.ueberMich}')">Details</button>
-  <button class="btn-delete" onclick="deleteApplication('${app.id}')">Löschen</button>
+  <button class="btn-sm" onclick="openApplicationDetails('${id}')">Details</button>
+  <button class="btn-delete" onclick="deleteApplication('${id}')">Löschen</button>
 </td>
           </tr>
-        `).join('')}
+        `;
+        }).join('')}
       </tbody>
     </table>`;
+}
+
+function renderApplicationGameBadge(game) {
+  if (game === 'PUBG') return '<span class="tag tag--pubg">PUBG</span>';
+  if (game === 'ARC Raiders') return '<span class="tag tag--arc">ARC</span>';
+  return `<span class="tag tag--both">${escapeHtml(game || 'PUBG + ARC')}</span>`;
+}
+
+function openApplicationDetails(id) {
+  const app = currentApplications.find((item) => item.id === id);
+  if (!app) return;
+
+  currentModalId = id;
+  currentEvtModalId = null;
+  document.getElementById('modal-title').textContent = `Bewerbung: ${app.gamingId || 'Details'}`;
+  document.getElementById('modal-body').innerHTML = `
+    <p><strong>Gaming-ID:</strong> ${escapeHtml(app.gamingId)}</p>
+    <p><strong>Alter:</strong> ${escapeHtml(app.alter)}</p>
+    <p><strong>Hauptspiel:</strong> ${escapeHtml(app.hauptspiel)}</p>
+    <p><strong>Rolle:</strong> ${escapeHtml(app.rolle)}</p>
+    <p><strong>Eingegangen:</strong> ${formatDate(app.createdAt)}</p>
+    <p><strong>Über mich:</strong><br>${escapeHtml(app.ueberMich)}</p>
+  `;
+  document.getElementById('modal-overlay')?.classList.add('active');
+}
+
+async function deleteApplication(id) {
+  if (!confirm('Bewerbung wirklich löschen?')) return;
+
+  try {
+    const res = await fetch(`${API_URL}?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    closeModal();
+    await loadApplications();
+  } catch (err) {
+    alert('Fehler beim Löschen: ' + err.message);
+  }
 }
 
 function updateStats() {
@@ -1149,6 +1186,7 @@ document.getElementById('btn-refresh-videos').addEventListener('click', loadVide
 document.getElementById('btn-refresh-banner').addEventListener('click', loadBannerSettings);
 document.getElementById('btn-refresh-evt-registrations').addEventListener('click', loadEventRegistrations);
 document.getElementById('btn-refresh-community-shouts')?.addEventListener('click', loadCommunityShouts);
+document.getElementById('btn-refresh-news')?.addEventListener('click', loadNewsIntoAdmin);
 document.getElementById('admin-logout')?.addEventListener('click', logoutAdmin);
 
 document.getElementById('modal-close').addEventListener('click', closeModal);

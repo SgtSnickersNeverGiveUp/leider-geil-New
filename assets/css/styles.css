@@ -779,13 +779,18 @@ img { max-width: 100%; display: block; }
   letter-spacing: .08em;
 }
 
-.roster-filter-status .btn-sm {
-  padding: .35rem .7rem;
-  border: 1px solid rgba(15, 242, 169, .4);
+.roster-btn {
+  font-family: var(--ff-mono);
   border-radius: var(--radius);
   background: transparent;
-  color: var(--clr-accent-arc);
   cursor: pointer;
+  transition: all .2s var(--ease);
+}
+
+.roster-filter-status .roster-btn {
+  padding: .35rem .7rem;
+  border: 1px solid rgba(15, 242, 169, .4);
+  color: var(--clr-accent-arc);
 }
 
 /* ── Roster Card – Base (Glass‑style) ───────────────────────────────────────────────── */
@@ -919,15 +924,10 @@ img { max-width: 100%; display: block; }
 .roster-toggle-btn {
   align-self: center;          /* statt align-self: flex-start */
   margin-top: var(--sp-sm);
-  font-family: var(--ff-mono);
   font-size: .75rem;
   padding: .25rem .8rem;
-  border-radius: var(--radius);
   border: 1px solid var(--clr-border);
-  background: transparent;
   color: var(--clr-text-muted);
-  cursor: pointer;
-  transition: all .2s var(--ease);
 }
 
 .roster-toggle-btn:hover {

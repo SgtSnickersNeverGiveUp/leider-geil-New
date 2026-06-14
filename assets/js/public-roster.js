@@ -59,7 +59,7 @@
     return `
       <div class="roster-filter-status">
         <span>${escapeRosterHtml(label)}: ${count} Member</span>
-        <button type="button" class="btn-sm" data-roster-filter-clear>Alle anzeigen</button>
+        <button type="button" class="roster-btn" data-roster-filter-clear>Alle anzeigen</button>
       </div>`;
   }
 
@@ -103,7 +103,7 @@
           </div>
         </header>
 
-        <button type="button" class="btn-sm roster-toggle-btn" data-toggle="more">
+        <button type="button" class="roster-btn roster-toggle-btn" data-toggle="more">
           Mehr Infos
         </button>
 
