@@ -37,6 +37,7 @@ const SITE_CONFIG = {
   settingsApi: "/api/settings",
   communityShoutsApi: "/api/community-shouts",
   eventRegistrationsApi: "/api/event-registrations",
+  visitorCounterApi: "/api/visitor-count",
 
   /* ── Datenpfade (Fallback) ─────────────────────────── */
   rosterPath: "assets/data/roster.json",

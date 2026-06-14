@@ -5,6 +5,8 @@
 const $  = (sel, ctx = document) => ctx.querySelector(sel);
 const $$ = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
 
+const VISITOR_COUNTER_STORAGE_KEY = 'lg-homepage-visitor-counted';
+
 function getTimelineGameVariant(game) {
   if (game === 'PUBG' || game === 'PUBG NEWS') return 'pubg';
   if (game === 'ARC Raiders' || game === 'ARC Raiders NEWS') return 'arc';
@@ -328,14 +330,67 @@ function initSmoothScroll() {
   });
 }
 
-/* ── 11. Event‑Anmeldung Formular ───────────────────────────────────── */
+/* ── 11. Homepage Besucherzaehler ───────────────────────────────────── */
+function hasCountedHomepageVisitor() {
+  try {
+    return localStorage.getItem(VISITOR_COUNTER_STORAGE_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function markHomepageVisitorCounted() {
+  try {
+    localStorage.setItem(VISITOR_COUNTER_STORAGE_KEY, '1');
+  } catch {
+    // Counting still works if browser storage is unavailable.
+  }
+}
+
+function formatVisitorCount(value) {
+  const count = Number(value);
+  if (!Number.isFinite(count)) return '0';
+  return new Intl.NumberFormat('de-DE').format(Math.max(0, Math.floor(count)));
+}
+
+async function renderVisitorCounter() {
+  const counter = $('#visitor-counter');
+  const countEl = $('#visitor-counter-count');
+  if (!counter || !countEl) return;
+
+  const alreadyCounted = hasCountedHomepageVisitor();
+
+  try {
+    const res = await fetch(SITE_CONFIG.visitorCounterApi || '/api/visitor-count', {
+      method: alreadyCounted ? 'GET' : 'POST',
+      cache: 'no-store',
+    });
+
+    if (!res.ok) throw new Error(`Visitor counter ${res.status}`);
+
+    const data = await res.json();
+    countEl.textContent = formatVisitorCount(data.count);
+    counter.classList.add('visitor-counter--ready');
+    counter.classList.remove('visitor-counter--error');
+
+    if (!alreadyCounted) {
+      markHomepageVisitorCounted();
+    }
+  } catch (err) {
+    console.warn('[VisitorCounter]', err.message);
+    countEl.textContent = '--';
+    counter.classList.add('visitor-counter--error');
+  }
+}
+
+/* ── 12. Event‑Anmeldung Formular ───────────────────────────────────── */
 function initEventForm() {
   const form = $('#event-form');
   if (!form) return;
   // … (originaler Code von initEventForm)
 }
 
-/* ── 12. Initialisierung – Alles starten wenn DOM bereit ──────────────── */
+/* ── 13. Initialisierung – Alles starten wenn DOM bereit ──────────────── */
 document.addEventListener('DOMContentLoaded', () => {
   initVideos();
   initNavbar();
@@ -351,6 +406,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderTimeline();
   renderVideoGallery();
   renderHeaderBanner();
+  renderVisitorCounter();
 
   /* Live‑Status: sofort + Intervall */
   fetchDiscordStatus();
@@ -358,7 +414,7 @@ document.addEventListener('DOMContentLoaded', () => {
   startLiveUpdates();
 });
 
-/* ── 13. Bewerbungen über Discord (Netlify Form + Webhook) ────────────── */
+/* ── 14. Bewerbungen über Discord (Netlify Form + Webhook) ────────────── */
 function initRecruitFormDiscord() {
   const recruitForm = document.getElementById("recruit-form");
   if (!recruitForm) return;
@@ -409,7 +465,7 @@ function initRecruitFormDiscord() {
   });
 }
 
-/* ── 14. Event‑Anmeldungen speichern + Discord/Netlify Nebenwege ──────── */
+/* ── 15. Event‑Anmeldungen speichern + Discord/Netlify Nebenwege ──────── */
 function initEventSignupDiscord() {
   const eventForm = document.getElementById("event-form");
   if (!eventForm) return;
