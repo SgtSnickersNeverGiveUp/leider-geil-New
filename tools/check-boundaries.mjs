@@ -25,6 +25,7 @@ const removedFiles = [
   "netlify/functions/admin-settings.mjs",
   "netlify/functions/settings.mjs",
   "netlify/functions/_shared/settings-data.mjs",
+  "netlify/functions/_shared/public-content-settings-schema.mjs",
 ];
 
 const ignoredDirectories = new Set([
@@ -428,8 +429,7 @@ async function assertNetlifyFunctionBoundary() {
     if (isAdminHandler) {
       assertApiPathsMatchBoundary(file, content, "admin");
       for (const importPath of imports) {
-        if (importPath.startsWith("./_shared/public-")
-          && importPath !== "./_shared/public-content-settings-schema.mjs") {
+        if (importPath.startsWith("./_shared/public-")) {
           failures.push(`${relative}: admin handler must not import public projection helper ${JSON.stringify(importPath)}`);
         }
       }
@@ -541,7 +541,7 @@ async function assertPublicSettingsHelperBoundary() {
     "toPublicRosterSlideshow",
   ]);
 
-  const settingsSchemaPath = path.join(repoRoot, "netlify/functions/_shared/public-content-settings-schema.mjs");
+  const settingsSchemaPath = path.join(repoRoot, "netlify/functions/_shared/homepage-content-settings-schema.mjs");
   const settingsSchema = await readText(settingsSchemaPath);
   assertNotContains(settingsSchemaPath, settingsSchema, [
     "pickPublicSettings",
@@ -549,6 +549,8 @@ async function assertPublicSettingsHelperBoundary() {
     "sanitizePublicContentSettingsPatch",
     "mergePublicContentSettings",
     "toPublicRosterSlideshow",
+    "settings.entries",
+    "entry.memberId",
   ]);
 }
 

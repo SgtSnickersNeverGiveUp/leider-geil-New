@@ -13,13 +13,13 @@ import {
   clampNumber,
   normalizeStoredRosterSlideshow,
   pickStoredPublicContentSettings,
-} from "./public-content-settings-schema.mjs";
+} from "./homepage-content-settings-schema.mjs";
 import { MEDIA_URLS, toAdminMediaPreviewUrl } from "./media-url-contract.mjs";
 
 export {
   PUBLIC_CONTENT_SETTINGS_KEY,
   PUBLIC_CONTENT_SETTINGS_STORE_NAME,
-} from "./public-content-settings-schema.mjs";
+} from "./homepage-content-settings-schema.mjs";
 
 export function pickAdminPublicContentSettings(settings = {}) {
   const picked = pickStoredPublicContentSettings(settings);
@@ -89,9 +89,9 @@ function sanitizeAdminRosterSlideshow(value = {}) {
     ),
     pinnedMemberId: settings.pinnedMemberId,
     members: settings.members
-      .filter((entry) => entry && (entry.id || entry.memberId))
+      .filter((entry) => entry && entry.id)
       .map((entry) => ({
-        id: String(entry.id || entry.memberId),
+        id: String(entry.id),
         text: String(entry.text || "").slice(0, MAX_SLIDESHOW_TEXT_LENGTH),
       })),
   };

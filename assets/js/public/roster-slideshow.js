@@ -42,7 +42,7 @@
       speedSeconds: Math.max(3, Number(settings.speedSeconds) || DEFAULT_SPEED_SECONDS),
       pinnedMemberId: settings.pinnedMemberId || '',
       entries: entries.map((entry) => ({
-        memberId: entry.memberId || entry.id,
+        memberId: String(entry.memberId || ''),
         text: entry.text || '',
       })),
     };

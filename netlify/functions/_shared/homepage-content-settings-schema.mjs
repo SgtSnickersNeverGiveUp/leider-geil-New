@@ -30,11 +30,7 @@ export function pickStoredPublicContentSettings(settings = {}) {
 
 export function normalizeStoredRosterSlideshow(value = {}) {
   const settings = value && typeof value === "object" && !Array.isArray(value) ? value : {};
-  const storedEntries = Array.isArray(settings.members)
-    ? settings.members
-    : Array.isArray(settings.entries)
-      ? settings.entries
-      : [];
+  const storedMembers = Array.isArray(settings.members) ? settings.members : [];
 
   return {
     enabled: Boolean(settings.enabled),
@@ -46,10 +42,10 @@ export function normalizeStoredRosterSlideshow(value = {}) {
       DEFAULT_SLIDESHOW_SPEED_SECONDS,
     ),
     pinnedMemberId: settings.pinnedMemberId ? String(settings.pinnedMemberId) : "",
-    members: storedEntries
-      .filter((entry) => entry && (entry.id || entry.memberId))
+    members: storedMembers
+      .filter((entry) => entry && entry.id)
       .map((entry) => ({
-        id: String(entry.id || entry.memberId),
+        id: String(entry.id),
         text: String(entry.text || "").slice(0, MAX_SLIDESHOW_TEXT_LENGTH),
       })),
   };
