@@ -1,9 +1,13 @@
 import { getStore } from "@netlify/blobs";
-
-const STORE_NAME = "community-shouts";
-const MAX_NAME_LENGTH = 32;
-const MAX_MESSAGE_LENGTH = 220;
-const ALLOWED_TAGS = new Set(["GG", "PUBG", "ARC", "Event", "Community"]);
+import {
+  COMMUNITY_SHOUT_MAX_MESSAGE_LENGTH,
+  COMMUNITY_SHOUT_MAX_NAME_LENGTH,
+  COMMUNITY_SHOUTS_STORE_NAME,
+  listApprovedCommunityShouts,
+  sanitizeCommunityShoutTag,
+  sanitizeCommunityShoutText,
+} from "./_shared/community-shouts-data.mjs";
+import { toPublicCommunityShout } from "./_shared/public-community-shouts-data.mjs";
 
 function jsonResponse(body, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -12,44 +16,17 @@ function jsonResponse(body, status = 200) {
   });
 }
 
-function sanitizeText(value, maxLength) {
-  return String(value || "")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, maxLength);
-}
-
-function toPublicShout(shout) {
-  return {
-    name: shout.name || "",
-    message: shout.message || "",
-    tag: shout.tag || "Community",
-  };
-}
-
-async function listApprovedShouts(store) {
-  const { blobs } = await store.list();
-  const shouts = [];
-
-  for (const blob of blobs) {
-    const data = await store.get(blob.key, { type: "json" });
-    if (data?.approved) shouts.push(data);
-  }
-
-  shouts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  return shouts.map(toPublicShout);
-}
-
 export default async (req) => {
   if (req.method !== "GET" && req.method !== "POST") {
     return jsonResponse({ error: "Method not allowed" }, 405);
   }
 
-  const store = getStore(STORE_NAME);
+  const store = getStore(COMMUNITY_SHOUTS_STORE_NAME);
 
   if (req.method === "GET") {
     try {
-      return jsonResponse(await listApprovedShouts(store));
+      const shouts = (await listApprovedCommunityShouts(store)).map(toPublicCommunityShout);
+      return jsonResponse(shouts);
     } catch (err) {
       return jsonResponse({ error: "Shouts konnten nicht geladen werden." }, 500);
     }
@@ -63,9 +40,9 @@ export default async (req) => {
         return jsonResponse({ success: true, pending: true }, 201);
       }
 
-      const name = sanitizeText(body.name, MAX_NAME_LENGTH);
-      const message = sanitizeText(body.message, MAX_MESSAGE_LENGTH);
-      const tag = ALLOWED_TAGS.has(body.tag) ? body.tag : "Community";
+      const name = sanitizeCommunityShoutText(body.name, COMMUNITY_SHOUT_MAX_NAME_LENGTH);
+      const message = sanitizeCommunityShoutText(body.message, COMMUNITY_SHOUT_MAX_MESSAGE_LENGTH);
+      const tag = sanitizeCommunityShoutTag(body.tag);
 
       if (!name || !message) {
         return jsonResponse({ error: "Name und Nachricht sind Pflichtfelder." }, 400);

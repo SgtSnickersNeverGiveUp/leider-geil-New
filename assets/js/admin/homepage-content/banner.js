@@ -6,7 +6,6 @@ const ADMIN_HOMEPAGE_API_BASE = ADMIN_CONFIG.apiBase || '/api/admin';
 const HOMEPAGE_SETTINGS_API = ADMIN_CONFIG.homepageSettingsApi || `${ADMIN_HOMEPAGE_API_BASE}/public-settings`;
 const BANNER_IMAGE_API = ADMIN_CONFIG.bannerImageApi || `${ADMIN_HOMEPAGE_API_BASE}/banner-image`;
 const BANNER_IMAGE_PREVIEW_API = ADMIN_CONFIG.bannerImagePreviewApi || `${ADMIN_HOMEPAGE_API_BASE}/banner-image`;
-const PUBLIC_BANNER_IMAGE_API = BANNER_IMAGE_API.replace('/api/admin/', '/api/');
 
 let currentBannerTab = 'url';
 let initialized = false;
@@ -21,17 +20,10 @@ function escapeHtml(value) {
 }
 
 function toAdminBannerPreviewUrl(bannerUrl) {
-  const value = String(bannerUrl || '');
-  const publicBannerPath = PUBLIC_BANNER_IMAGE_API;
-  const sameOriginPublicBannerUrl = `${window.location.origin}${publicBannerPath}`;
-
-  if (value === publicBannerPath || value.startsWith(`${publicBannerPath}?`)) {
-    return `${BANNER_IMAGE_PREVIEW_API}${value.slice(publicBannerPath.length)}`;
+  if (typeof ADMIN_CONFIG.toAdminMediaPreviewUrl === 'function') {
+    return ADMIN_CONFIG.toAdminMediaPreviewUrl(bannerUrl, 'bannerImage');
   }
-  if (value === sameOriginPublicBannerUrl || value.startsWith(`${sameOriginPublicBannerUrl}?`)) {
-    return `${BANNER_IMAGE_PREVIEW_API}${value.slice(sameOriginPublicBannerUrl.length)}`;
-  }
-  return value;
+  return String(bannerUrl || '');
 }
 
 function cacheBustAdminBannerPreview(bannerUrl) {
@@ -71,7 +63,9 @@ async function loadBannerSettings() {
           Quelle: ${escapeHtml(settings.bannerUrl)}
         </p>`;
 
-      if (settings.bannerUrl !== PUBLIC_BANNER_IMAGE_API) {
+      const isManagedUpload = typeof ADMIN_CONFIG.isManagedPublicMediaUrl === 'function'
+        && ADMIN_CONFIG.isManagedPublicMediaUrl(settings.bannerUrl, 'bannerImage');
+      if (!isManagedUpload) {
         document.getElementById('admin-homepage-banner-url').value = settings.bannerUrl;
       }
     } else {

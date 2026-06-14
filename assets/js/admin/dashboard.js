@@ -36,17 +36,10 @@ function getEventGameVariant(game) {
 }
 
 function toAdminEventImagePreviewUrl(imageUrl) {
-  const value = String(imageUrl || '');
-  const publicEventImagePath = EVENT_IMAGE_API.replace('/api/admin/', '/api/');
-  const sameOriginPublicEventImageUrl = `${window.location.origin}${publicEventImagePath}`;
-
-  if (value.startsWith(publicEventImagePath)) {
-    return `${EVENT_IMAGE_PREVIEW_API}${value.slice(publicEventImagePath.length)}`;
+  if (typeof ADMIN_CONFIG.toAdminMediaPreviewUrl === 'function') {
+    return ADMIN_CONFIG.toAdminMediaPreviewUrl(imageUrl, 'eventImage');
   }
-  if (value.startsWith(sameOriginPublicEventImageUrl)) {
-    return `${EVENT_IMAGE_PREVIEW_API}${value.slice(sameOriginPublicEventImageUrl.length)}`;
-  }
-  return value;
+  return String(imageUrl || '');
 }
 
 function cacheBustAdminPreview(imageUrl, previewApi) {

@@ -1,5 +1,6 @@
 import { getStore } from "@netlify/blobs";
-import { EVENTS_STORE_NAME, listEvents, toPublicEvent } from "./_shared/events-data.mjs";
+import { EVENTS_STORE_NAME, listEvents } from "./_shared/events-data.mjs";
+import { toPublicEvent } from "./_shared/public-events-data.mjs";
 
 export default async (req) => {
   if (req.method !== "GET") {

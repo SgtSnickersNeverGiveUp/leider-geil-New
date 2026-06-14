@@ -65,15 +65,3 @@ export async function listEvents(store) {
   events.sort((a, b) => new Date(b.date) - new Date(a.date));
   return events;
 }
-
-export function toPublicEvent(event = {}) {
-  return {
-    id: event.id || "",
-    title: event.title || "",
-    date: event.date || "",
-    game: event.game || "Mixed",
-    description: event.description || "",
-    type: event.type || "event",
-    image: event.image || "",
-  };
-}

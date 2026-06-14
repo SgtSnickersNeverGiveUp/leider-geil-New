@@ -207,6 +207,8 @@ async function assertAdminCoreBoundary() {
       "publicEventImageApi",
       "publicBannerImageApi",
       "publicRosterAvatarApi",
+      ".replace('/api/admin/', '/api/')",
+      '.replace("/api/admin/", "/api/")',
     ]);
   }
 }
@@ -335,6 +337,18 @@ async function assertSharedContentDataBoundary() {
       forbidden: ["buildVideoData", "toPublicVideo"],
     },
     {
+      file: "netlify/functions/_shared/events-data.mjs",
+      forbidden: ["toPublicEvent"],
+    },
+    {
+      file: "netlify/functions/_shared/roster-data.mjs",
+      forbidden: ["toPublicRosterMember"],
+    },
+    {
+      file: "netlify/functions/_shared/community-shouts-data.mjs",
+      forbidden: ["toPublicCommunityShout", "requireAdmin"],
+    },
+    {
       file: "netlify/functions/_shared/admin-news-data.mjs",
       forbidden: ["toPublicNewsItem"],
     },
@@ -349,6 +363,18 @@ async function assertSharedContentDataBoundary() {
     {
       file: "netlify/functions/_shared/public-videos-data.mjs",
       forbidden: ["buildVideoData", "requireAdmin"],
+    },
+    {
+      file: "netlify/functions/_shared/public-events-data.mjs",
+      forbidden: ["requireAdmin"],
+    },
+    {
+      file: "netlify/functions/_shared/public-roster-data.mjs",
+      forbidden: ["requireAdmin", "stats"],
+    },
+    {
+      file: "netlify/functions/_shared/public-community-shouts-data.mjs",
+      forbidden: ["requireAdmin", "approved", "createdAt", "moderatedAt"],
     },
   ];
 

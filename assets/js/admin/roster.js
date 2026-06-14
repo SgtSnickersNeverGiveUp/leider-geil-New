@@ -17,17 +17,10 @@ function escapeHtml(value) {
 }
 
 function toAdminRosterAvatarPreviewUrl(avatarUrl) {
-  const value = String(avatarUrl || '');
-  const publicRosterAvatarPath = ROSTER_AVATAR_API.replace('/api/admin/', '/api/');
-  const sameOriginPublicRosterAvatarUrl = `${window.location.origin}${publicRosterAvatarPath}`;
-
-  if (value.startsWith(publicRosterAvatarPath)) {
-    return `${ROSTER_AVATAR_PREVIEW_API}${value.slice(publicRosterAvatarPath.length)}`;
+  if (typeof ADMIN_CONFIG.toAdminMediaPreviewUrl === 'function') {
+    return ADMIN_CONFIG.toAdminMediaPreviewUrl(avatarUrl, 'rosterAvatar');
   }
-  if (value.startsWith(sameOriginPublicRosterAvatarUrl)) {
-    return `${ROSTER_AVATAR_PREVIEW_API}${value.slice(sameOriginPublicRosterAvatarUrl.length)}`;
-  }
-  return value;
+  return String(avatarUrl || '');
 }
 
 function cacheBustAdminAvatarPreview(avatarUrl) {

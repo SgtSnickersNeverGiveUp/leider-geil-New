@@ -1,5 +1,6 @@
 import { getStore } from "@netlify/blobs";
-import { ROSTER_STORE_NAME, listRosterMembers, toPublicRosterMember } from "./_shared/roster-data.mjs";
+import { ROSTER_STORE_NAME, listRosterMembers } from "./_shared/roster-data.mjs";
+import { toPublicRosterMember } from "./_shared/public-roster-data.mjs";
 
 export default async (req) => {
   if (req.method !== "GET") {
