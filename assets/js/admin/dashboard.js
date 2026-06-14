@@ -8,14 +8,10 @@ const EVENTS_API = ADMIN_CONFIG.eventsApi || `${ADMIN_DASHBOARD_API_BASE}/events
 const EVENT_IMAGE_API = ADMIN_CONFIG.eventImageApi || `${ADMIN_DASHBOARD_API_BASE}/event-image`;
 const VIDEOS_API = ADMIN_CONFIG.videosApi || `${ADMIN_DASHBOARD_API_BASE}/videos`;
 const EVT_REGISTRATIONS_API = ADMIN_CONFIG.eventRegistrationsApi || `${ADMIN_DASHBOARD_API_BASE}/event-registrations`;
-const NEWS_API_URL = ADMIN_CONFIG.newsApi || `${ADMIN_DASHBOARD_API_BASE}/news`;
-const SETTINGS_API = ADMIN_CONFIG.settingsApi || `${ADMIN_DASHBOARD_API_BASE}/settings`;
-const BANNER_IMAGE_API = ADMIN_CONFIG.bannerImageApi || `${ADMIN_DASHBOARD_API_BASE}/banner-image`;
 const COMMUNITY_SHOUTS_API = ADMIN_CONFIG.communityShoutsApi || `${ADMIN_DASHBOARD_API_BASE}/community-shouts`;
 const ADMIN_SESSION_API = ADMIN_CONFIG.sessionApi || `${ADMIN_DASHBOARD_API_BASE}/session`;
 const ADMIN_LOGOUT_API = ADMIN_CONFIG.logoutApi || `${ADMIN_DASHBOARD_API_BASE}/logout`;
 const PUBLIC_EVENT_IMAGE_API = ADMIN_CONFIG.publicEventImageApi || '/api/event-image';
-const PUBLIC_BANNER_IMAGE_API = ADMIN_CONFIG.publicBannerImageApi || '/api/banner-image';
 
 const EVENT_GAME_OPTIONS = [
   'PUBG',
@@ -83,23 +79,19 @@ function loadAdminRoster() {
   return Promise.resolve();
 }
 
-async function loadTickerSettings() {
-  try {
-    const res = await fetch(SETTINGS_API);
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const settings = await res.json();
-
-    const speedInput = document.getElementById('ticker-speed');
-    const sepInput = document.getElementById('ticker-separator');
-
-    if (speedInput) speedInput.value = settings.tickerSpeedSeconds ?? 40;
-    if (sepInput) sepInput.value = settings.tickerSeparator ?? '   ●   ';
-  } catch (err) {
-    console.error('Ticker Settings laden fehlgeschlagen:', err);
-  }
+function loadPublicNewsTickerAdmin() {
+  const newsAdmin = window.LGAdminPublicNewsTicker;
+  if (newsAdmin?.load) return newsAdmin.load();
+  console.error('[Admin Dashboard] Public-News-Modul ist nicht geladen.');
+  return Promise.resolve();
 }
 
-
+function loadPublicBannerAdmin() {
+  const bannerAdmin = window.LGAdminPublicBanner;
+  if (bannerAdmin?.load) return bannerAdmin.load();
+  console.error('[Admin Dashboard] Public-Banner-Modul ist nicht geladen.');
+  return Promise.resolve();
+}
 
 // ══════════════════════════════════════════════════════════
 // PAGE NAVIGATION
@@ -121,13 +113,10 @@ function switchPage(pageId) {
   if (pageId === 'page-roster') loadAdminRoster();
   if (pageId === 'page-events') loadEvents();
   if (pageId === 'page-videos') loadVideos();
-  if (pageId === 'page-banner') loadBannerSettings();
+  if (pageId === 'page-banner') loadPublicBannerAdmin();
   if (pageId === 'page-event-anmeldungen') loadEventRegistrations();
   if (pageId === 'page-community-shouts') loadCommunityShouts();
-  if (pageId === 'page-news') {
-    loadTickerSettings();
-    initNewsAdmin();
-  }
+  if (pageId === 'page-news') loadPublicNewsTickerAdmin();
 }
 
 navLinks.forEach(link => {
@@ -257,142 +246,6 @@ function closeModal() {
   document.getElementById('modal-overlay')?.classList.remove('active');
   currentModalId = null;
   currentEvtModalId = null;
-}
-// ══════════════════════════════════════════════════════════
-// CLAN NEWS Ticker
-// ══════════════════════════════════════════════════════════
-async function loadNewsIntoAdmin() {
-  const listEl = document.getElementById('news-list');
-  const statusEl = document.getElementById('news-status');
-  if (!listEl) return;
-
-  statusEl.textContent = 'Lade News...';
-  try {
-    const res = await fetch(NEWS_API_URL);
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const data = await res.json();
-    window._lgNews = Array.isArray(data) ? data : [];
-    renderNewsAdmin();
-    statusEl.textContent = '';
-  } catch (err) {
-    console.error('[News Admin] load', err);
-    statusEl.textContent = 'Fehler beim Laden der News.';
-  }
-}
-
-function renderNewsAdmin() {
-  const listEl = document.getElementById('news-list');
-  if (!listEl) return;
-  const news = window._lgNews || [];
-
-  listEl.innerHTML = news.map((n, i) => {
-    const type = n.type || 'info';
-    return `
-      <div class="admin-form__group news-item">
-        <label class="admin-form__label">Eintrag ${i + 1}</label>
-        <div style="display:flex;flex-direction:column;gap:.25rem;">
-          <textarea class="admin-form__textarea"
-                    data-index="${i}"
-                    rows="2"
-                    placeholder="Ticker-Text...">${n.text || ''}</textarea>
-          <div style="display:flex;align-items:center;gap:.5rem;">
-            <select class="admin-form__select" data-type-index="${i}">
-              <option value="birthday" ${type === 'birthday' ? 'selected' : ''}>Birthday</option>
-              <option value="member"   ${type === 'member'   ? 'selected' : ''}>Member</option>
-              <option value="event"    ${type === 'event'    ? 'selected' : ''}>Event</option>
-              <option value="info"     ${type === 'info'     ? 'selected' : ''}>Info</option>
-              <option value="ranked"   ${type === 'ranked'   ? 'selected' : ''}>Ranked</option>
-            </select>
-            <button type="button"
-                    class="btn-sm btn-sm--danger"
-                    data-news-remove="${i}">Löschen</button>
-          </div>
-        </div>
-      </div>
-    `;
-  }).join('');
-}
-
-function initNewsAdmin() {
-  const addBtn = document.getElementById('news-add');
-  const saveBtn = document.getElementById('news-save');
-  const listEl = document.getElementById('news-list');
-  const statusEl = document.getElementById('news-status');
-  if (!addBtn || !saveBtn || !listEl) return;
-
-  // Initial laden
-  loadNewsIntoAdmin();
-
-  // Eintrag hinzufügen
-  addBtn.addEventListener('click', () => {
-    window._lgNews = window._lgNews || [];
-    window._lgNews.push({ text: '', type: 'info' });
-    renderNewsAdmin();
-  });
-
-  // Textänderungen
-  listEl.addEventListener('input', (e) => {
-    const idx = e.target.getAttribute('data-index');
-    if (idx !== null) {
-      window._lgNews[Number(idx)].text = e.target.value;
-    }
-  });
-
-  // Typänderungen
-  listEl.addEventListener('change', (e) => {
-    const idx = e.target.getAttribute('data-type-index');
-    if (idx !== null) {
-      window._lgNews[Number(idx)].type = e.target.value;
-    }
-  });
-
-  // Löschen
-  listEl.addEventListener('click', (e) => {
-    const idx = e.target.getAttribute('data-news-remove');
-    if (idx !== null) {
-      window._lgNews.splice(Number(idx), 1);
-      renderNewsAdmin();
-    }
-  });
-
-  // Speichern: News + Ticker Settings
-saveBtn.addEventListener('click', async () => {
-  statusEl.textContent = 'Speichern...';
-
-  const speedInput = document.getElementById('ticker-speed');
-  const sepInput = document.getElementById('ticker-separator');
-
-  const tickerSpeedSeconds = speedInput ? Number(speedInput.value) || 40 : 40;
-  const tickerSeparator = sepInput ? (sepInput.value || '   ●   ') : '   ●   ';
-
-  try {
-    const newsToSave = Array.isArray(window._lgNews) ? window._lgNews : [];
-
-    // 1) News speichern
-    const resNews = await fetch(NEWS_API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newsToSave),
-    });
-    if (!resNews.ok) throw new Error('News HTTP ' + resNews.status);
-
-    // 2) Ticker Settings speichern
-    const resSettings = await fetch(SETTINGS_API, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        tickerSpeedSeconds,
-        tickerSeparator,
-      }),
-    });
-    if (!resSettings.ok) throw new Error('Settings HTTP ' + resSettings.status);
-
-    statusEl.textContent = 'Gespeichert';
-  } catch (err) {
-    console.error('News/Ticker save', err);
-    statusEl.textContent = 'Fehler beim Speichern';
-  }
-});
 }
 // ══════════════════════════════════════════════════════════
 // EVENT IMAGE UPLOAD (mirrors roster avatar upload)
@@ -805,145 +658,6 @@ document.getElementById('videos-form').addEventListener('submit', async (e) => {
 });
 
 // ══════════════════════════════════════════════════════════
-// BANNER MANAGEMENT
-// ══════════════════════════════════════════════════════════
-let currentBannerTab = 'url';
-
-// Tab switching
-document.querySelectorAll('.banner-tab-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    currentBannerTab = btn.dataset.tab;
-    document.querySelectorAll('.banner-tab-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('banner-tab-url').style.display = currentBannerTab === 'url' ? '' : 'none';
-    document.getElementById('banner-tab-upload').style.display = currentBannerTab === 'upload' ? '' : 'none';
-  });
-});
-
-async function loadBannerSettings() {
-  const body = document.getElementById('banner-preview-body');
-  body.innerHTML = '<div class="loading">Lade Banner</div>';
-
-  try {
-    const res = await fetch(SETTINGS_API);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const settings = await res.json();
-
-    if (settings.bannerUrl) {
-      // Add cache-buster for uploaded images
-      const imgUrl = settings.bannerUrl === PUBLIC_BANNER_IMAGE_API
-        ? settings.bannerUrl + '?t=' + Date.now()
-        : settings.bannerUrl;
-
-      body.innerHTML = `
-        <div class="banner-preview-container">
-          <span class="banner-preview-label">1920 &times; 600</span>
-          <img src="${escapeHtml(imgUrl)}" alt="Header Banner" onerror="this.parentElement.innerHTML='<div class=\\'empty-state\\'><div class=\\'empty-state__icon\\'>&#9888;</div><div class=\\'empty-state__text\\'>Bild konnte nicht geladen werden.</div></div>'">
-        </div>
-        <p style="font-family:var(--ff-mono);font-size:.75rem;color:var(--clr-text-muted);margin-top:.75rem;">
-          Quelle: ${escapeHtml(settings.bannerUrl)}
-        </p>`;
-
-      // Pre-fill URL input if it's a URL type
-      if (settings.bannerUrl !== PUBLIC_BANNER_IMAGE_API) {
-        document.getElementById('banner-url').value = settings.bannerUrl;
-      }
-    } else {
-      body.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-state__icon">&#128444;</div>
-          <div class="empty-state__text">Kein Banner konfiguriert. Verwende das Formular oben, um ein Banner hinzuzuf&uuml;gen.</div>
-        </div>`;
-    }
-  } catch (err) {
-    body.innerHTML = `<div class="empty-state"><div class="empty-state__icon">&#9888;</div><div class="empty-state__text">Fehler: ${err.message}</div></div>`;
-  }
-}
-
-document.getElementById('banner-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const btn = document.getElementById('banner-submit');
-  btn.disabled = true;
-
-  try {
-    let bannerUrl = '';
-
-    if (currentBannerTab === 'url') {
-      bannerUrl = document.getElementById('banner-url').value.trim();
-      if (!bannerUrl) {
-        alert('Bitte eine Bild-URL eingeben.');
-        btn.disabled = false;
-        return;
-      }
-    } else {
-      // File upload
-      const fileInput = document.getElementById('banner-file');
-      const file = fileInput.files[0];
-      if (!file) {
-        alert('Bitte eine Datei ausw\u00e4hlen.');
-        btn.disabled = false;
-        return;
-      }
-
-      const statusEl = document.getElementById('banner-upload-status');
-      statusEl.textContent = 'Lade hoch...';
-      statusEl.style.color = 'var(--clr-accent-arc)';
-
-      const uploadRes = await fetch(BANNER_IMAGE_API, {
-        method: 'POST',
-        headers: { 'Content-Type': file.type },
-        body: file,
-      });
-
-      if (!uploadRes.ok) {
-        const data = await uploadRes.json();
-        throw new Error(data.error || `Upload fehlgeschlagen (HTTP ${uploadRes.status})`);
-      }
-
-      const uploadData = await uploadRes.json();
-      bannerUrl = uploadData.url;
-      statusEl.textContent = 'Upload erfolgreich!';
-    }
-
-    // Save to settings
-    const res = await fetch(SETTINGS_API, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ bannerUrl }),
-    });
-
-    if (!res.ok) throw new Error('Speichern fehlgeschlagen');
-
-    await loadBannerSettings();
-    alert('Banner erfolgreich gespeichert! Die \u00c4nderung ist sofort auf der Startseite sichtbar.');
-  } catch (err) {
-    alert('Fehler: ' + err.message);
-  } finally {
-    btn.disabled = false;
-  }
-});
-
-document.getElementById('banner-remove').addEventListener('click', async () => {
-  if (!confirm('Banner wirklich entfernen?')) return;
-
-  try {
-    const res = await fetch(SETTINGS_API, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ bannerUrl: '' }),
-    });
-
-    if (!res.ok) throw new Error('Fehler beim Entfernen');
-    document.getElementById('banner-url').value = '';
-    document.getElementById('banner-file').value = '';
-    await loadBannerSettings();
-    alert('Banner wurde entfernt.');
-  } catch (err) {
-    alert('Fehler: ' + err.message);
-  }
-});
-
-// ══════════════════════════════════════════════════════════
 // EVENT-ANMELDUNGEN (Event Registrations)
 // ══════════════════════════════════════════════════════════
 let currentEventRegistrations = [];
@@ -1194,10 +908,8 @@ document.getElementById('btn-refresh').addEventListener('click', loadApplication
 document.getElementById('btn-refresh-roster').addEventListener('click', loadAdminRoster);
 document.getElementById('btn-refresh-events').addEventListener('click', loadEvents);
 document.getElementById('btn-refresh-videos').addEventListener('click', loadVideos);
-document.getElementById('btn-refresh-banner').addEventListener('click', loadBannerSettings);
 document.getElementById('btn-refresh-evt-registrations').addEventListener('click', loadEventRegistrations);
 document.getElementById('btn-refresh-community-shouts')?.addEventListener('click', loadCommunityShouts);
-document.getElementById('btn-refresh-news')?.addEventListener('click', loadNewsIntoAdmin);
 document.getElementById('admin-logout')?.addEventListener('click', logoutAdmin);
 
 document.getElementById('modal-close').addEventListener('click', closeModal);

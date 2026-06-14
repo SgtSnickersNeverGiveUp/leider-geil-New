@@ -16,7 +16,7 @@
     videosApi: `${apiBase}/videos`,
     eventRegistrationsApi: `${apiBase}/event-registrations`,
     newsApi: `${apiBase}/news`,
-    settingsApi: `${apiBase}/settings`,
+    publicContentSettingsApi: `${apiBase}/public-settings`,
     bannerImageApi: `${apiBase}/banner-image`,
     communityShoutsApi: `${apiBase}/community-shouts`,
     sessionApi: `${apiBase}/session`,

@@ -1,7 +1,7 @@
-export const SETTINGS_STORE_NAME = "settings";
-export const SETTINGS_KEY = "site-settings";
+export const PUBLIC_CONTENT_SETTINGS_STORE_NAME = "settings";
+export const PUBLIC_CONTENT_SETTINGS_KEY = "site-settings";
 
-export const PUBLIC_SETTING_KEYS = [
+export const PUBLIC_CONTENT_SETTING_KEYS = [
   "bannerUrl",
   "tickerSpeedSeconds",
   "tickerSeparator",
@@ -15,8 +15,8 @@ const MAX_SLIDESHOW_SPEED_SECONDS = 60;
 const MAX_TICKER_SEPARATOR_LENGTH = 40;
 const MAX_SLIDESHOW_TEXT_LENGTH = 180;
 
-export function pickPublicSettings(settings = {}) {
-  return PUBLIC_SETTING_KEYS.reduce((acc, key) => {
+export function pickAdminPublicContentSettings(settings = {}) {
+  return PUBLIC_CONTENT_SETTING_KEYS.reduce((acc, key) => {
     if (Object.prototype.hasOwnProperty.call(settings, key)) {
       acc[key] = settings[key];
     }
@@ -24,7 +24,15 @@ export function pickPublicSettings(settings = {}) {
   }, {});
 }
 
-export function sanitizePublicSettingsPatch(value = {}) {
+export function pickPublicSettings(settings = {}) {
+  const publicSettings = pickAdminPublicContentSettings(settings);
+  if (Object.prototype.hasOwnProperty.call(publicSettings, "rosterSlideshow")) {
+    publicSettings.rosterSlideshow = toPublicRosterSlideshow(publicSettings.rosterSlideshow);
+  }
+  return publicSettings;
+}
+
+export function sanitizePublicContentSettingsPatch(value = {}) {
   const patch = value && typeof value === "object" && !Array.isArray(value) ? value : {};
   const sanitized = {};
 
@@ -47,23 +55,27 @@ export function sanitizePublicSettingsPatch(value = {}) {
   }
 
   if (Object.prototype.hasOwnProperty.call(patch, "rosterSlideshow")) {
-    sanitized.rosterSlideshow = sanitizeRosterSlideshow(patch.rosterSlideshow);
+    sanitized.rosterSlideshow = sanitizeAdminRosterSlideshow(patch.rosterSlideshow);
   }
 
   return sanitized;
 }
 
-export function mergePublicSettings(existing = {}, patch = {}) {
+export function mergePublicContentSettings(existing = {}, patch = {}) {
   return {
     ...existing,
-    ...sanitizePublicSettingsPatch(patch),
+    ...sanitizePublicContentSettingsPatch(patch),
     updatedAt: new Date().toISOString(),
   };
 }
 
-function sanitizeRosterSlideshow(value = {}) {
+function sanitizeAdminRosterSlideshow(value = {}) {
   const settings = value && typeof value === "object" && !Array.isArray(value) ? value : {};
-  const members = Array.isArray(settings.members) ? settings.members : [];
+  const editableEntries = Array.isArray(settings.members)
+    ? settings.members
+    : Array.isArray(settings.entries)
+      ? settings.entries
+      : [];
 
   return {
     enabled: Boolean(settings.enabled),
@@ -75,12 +87,26 @@ function sanitizeRosterSlideshow(value = {}) {
       8,
     ),
     pinnedMemberId: settings.pinnedMemberId ? String(settings.pinnedMemberId) : "",
-    members: members
-      .filter((entry) => entry && entry.id)
+    members: editableEntries
+      .filter((entry) => entry && (entry.id || entry.memberId))
       .map((entry) => ({
-        id: String(entry.id),
+        id: String(entry.id || entry.memberId),
         text: String(entry.text || "").slice(0, MAX_SLIDESHOW_TEXT_LENGTH),
       })),
+  };
+}
+
+function toPublicRosterSlideshow(value = {}) {
+  const settings = sanitizeAdminRosterSlideshow(value);
+  return {
+    enabled: settings.enabled,
+    autoplay: settings.autoplay,
+    speedSeconds: settings.speedSeconds,
+    pinnedMemberId: settings.pinnedMemberId,
+    entries: settings.members.map((entry) => ({
+      memberId: entry.id,
+      text: entry.text,
+    })),
   };
 }
 

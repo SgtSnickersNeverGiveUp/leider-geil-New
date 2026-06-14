@@ -35,9 +35,7 @@
 
   function normalizeSlideshowSettings(value) {
     const settings = value && typeof value === 'object' ? value : {};
-    const entries = Array.isArray(settings.entries) ? settings.entries
-      : Array.isArray(settings.members) ? settings.members
-        : [];
+    const entries = Array.isArray(settings.entries) ? settings.entries : [];
     return {
       enabled: Boolean(settings.enabled),
       autoplay: settings.autoplay !== false,

@@ -1,19 +1,5 @@
 import { getStore } from "@netlify/blobs";
-import { ROSTER_STORE_NAME, listRosterMembers } from "./_shared/roster-data.mjs";
-
-function toPublicMember(member) {
-  return {
-    id: member.id,
-    name: member.name,
-    role: member.role,
-    avatar: member.avatar,
-    games: Array.isArray(member.games) ? member.games : [],
-    clanRole: member.clanRole || "Member",
-    bio: member.bio || "",
-    funTags: Array.isArray(member.funTags) ? member.funTags : [],
-    gender: member.gender || "",
-  };
-}
+import { ROSTER_STORE_NAME, listRosterMembers, toPublicRosterMember } from "./_shared/roster-data.mjs";
 
 export default async (req) => {
   if (req.method !== "GET") {
@@ -27,7 +13,7 @@ export default async (req) => {
 
   // GET – List all members
   try {
-    const members = (await listRosterMembers(store)).map(toPublicMember);
+    const members = (await listRosterMembers(store)).map(toPublicRosterMember);
 
     return new Response(JSON.stringify(members), {
       status: 200,

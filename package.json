@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Willkommen bei **Clan‑Leider‑Geil** – deine zentrale Anlaufstelle für Gaming‑Streams, Events und Community‑Chat!",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node tools/check-boundaries.mjs"
   },
   "keywords": [],
   "author": "",
