@@ -22,6 +22,7 @@ const adminCoreJsFiles = [
   "assets/js/admin/dashboard.js",
   "assets/js/admin/login.js",
   "assets/js/admin/roster.js",
+  "assets/js/admin/homepage-content/index.js",
   "assets/js/admin/homepage-content/banner.js",
   "assets/js/admin/homepage-content/news-ticker.js",
   "assets/js/admin/homepage-content/roster-slideshow.js",
@@ -55,6 +56,7 @@ async function main() {
   await assertHtmlScriptReferences();
   await assertCssBoundaries();
   await assertAdminCoreBoundary();
+  await assertAdminDashboardShellBoundary();
   await assertNetlifyFunctionBoundary();
   await assertPublicSettingsHelperBoundary();
   await assertRemovedFilesStayRemoved();
@@ -114,6 +116,8 @@ async function assertHtmlBoundaries() {
       "/assets/css/styles.css",
       "/assets/js/admin/public-content/",
       "SITE_CONFIG",
+      'data-page="page-news"',
+      'data-page="page-banner"',
     ]);
   }
 }
@@ -135,6 +139,7 @@ async function assertHtmlScriptReferences() {
     "/assets/js/admin/dashboard.js",
     "/assets/js/admin/login.js",
     "/assets/js/admin/roster.js",
+    "/assets/js/admin/homepage-content/index.js",
     "/assets/js/admin/homepage-content/banner.js",
     "/assets/js/admin/homepage-content/news-ticker.js",
     "/assets/js/admin/homepage-content/roster-slideshow.js",
@@ -194,6 +199,19 @@ async function assertAdminCoreBoundary() {
       "publicRosterAvatarApi",
     ]);
   }
+}
+
+async function assertAdminDashboardShellBoundary() {
+  const dashboardPath = path.join(repoRoot, "assets/js/admin/dashboard.js");
+  const dashboard = await readText(dashboardPath);
+  assertNotContains(dashboardPath, dashboard, [
+    "LGAdminHomepage",
+    "loadHomepage",
+    "homepage-content",
+    "page-homepage-content",
+    "page-news",
+    "page-banner",
+  ]);
 }
 
 async function assertNetlifyFunctionBoundary() {

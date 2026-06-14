@@ -79,25 +79,47 @@ function loadAdminRoster() {
   return Promise.resolve();
 }
 
-function loadHomepageRosterSlideshowAdmin() {
-  const slideshowAdmin = window.LGAdminHomepageRosterSlideshow;
-  if (slideshowAdmin?.load) return slideshowAdmin.load();
-  console.error('[Admin Dashboard] Homepage-Roster-Diashow-Modul ist nicht geladen.');
-  return Promise.resolve();
+const pageLoaders = new Map();
+
+function registerPageLoader(registrationOrPageId, maybeLoader) {
+  const pageId = typeof registrationOrPageId === 'string'
+    ? registrationOrPageId
+    : registrationOrPageId?.pageId;
+  const loader = typeof registrationOrPageId === 'string'
+    ? maybeLoader
+    : registrationOrPageId?.load;
+
+  if (!pageId || typeof loader !== 'function') {
+    console.error('[Admin Dashboard] Ungueltige Page-Loader-Registrierung.', registrationOrPageId);
+    return;
+  }
+
+  pageLoaders.set(pageId, loader);
 }
 
-function loadHomepageNewsTickerAdmin() {
-  const newsAdmin = window.LGAdminHomepageNewsTicker;
-  if (newsAdmin?.load) return newsAdmin.load();
-  console.error('[Admin Dashboard] Homepage-News-Modul ist nicht geladen.');
-  return Promise.resolve();
+function consumeExternalPageLoaders() {
+  const externalLoaders = Array.isArray(window.LG_ADMIN_PAGE_LOADERS)
+    ? window.LG_ADMIN_PAGE_LOADERS
+    : [];
+
+  externalLoaders.forEach(registerPageLoader);
+  window.LG_ADMIN_PAGE_LOADERS = Object.freeze({
+    register: registerPageLoader,
+  });
 }
 
-function loadHomepageBannerAdmin() {
-  const bannerAdmin = window.LGAdminHomepageBanner;
-  if (bannerAdmin?.load) return bannerAdmin.load();
-  console.error('[Admin Dashboard] Homepage-Banner-Modul ist nicht geladen.');
-  return Promise.resolve();
+function loadPageData(pageId) {
+  const loader = pageLoaders.get(pageId);
+  if (!loader) return;
+
+  try {
+    const result = loader();
+    if (result?.catch) {
+      result.catch((err) => console.error(`[Admin Dashboard] ${pageId} konnte nicht geladen werden.`, err));
+    }
+  } catch (err) {
+    console.error(`[Admin Dashboard] ${pageId} konnte nicht geladen werden.`, err);
+  }
 }
 
 // ══════════════════════════════════════════════════════════
@@ -105,6 +127,14 @@ function loadHomepageBannerAdmin() {
 // ══════════════════════════════════════════════════════════
 const navLinks = document.querySelectorAll('.sidebar__link[data-page]');
 const pages = document.querySelectorAll('.admin-page');
+
+registerPageLoader('page-bewerbungen', loadApplications);
+registerPageLoader('page-roster', loadAdminRoster);
+registerPageLoader('page-events', loadEvents);
+registerPageLoader('page-videos', loadVideos);
+registerPageLoader('page-event-anmeldungen', loadEventRegistrations);
+registerPageLoader('page-community-shouts', loadCommunityShouts);
+consumeExternalPageLoaders();
 
 function switchPage(pageId) {
   pages.forEach(p => p.classList.remove('active'));
@@ -115,18 +145,7 @@ function switchPage(pageId) {
   if (page) page.classList.add('active');
   if (link) link.classList.add('sidebar__link--active');
 
-  // Load data for the page
-  if (pageId === 'page-bewerbungen') loadApplications();
-  if (pageId === 'page-roster') {
-    loadAdminRoster();
-    loadHomepageRosterSlideshowAdmin();
-  }
-  if (pageId === 'page-events') loadEvents();
-  if (pageId === 'page-videos') loadVideos();
-  if (pageId === 'page-banner') loadHomepageBannerAdmin();
-  if (pageId === 'page-event-anmeldungen') loadEventRegistrations();
-  if (pageId === 'page-community-shouts') loadCommunityShouts();
-  if (pageId === 'page-news') loadHomepageNewsTickerAdmin();
+  loadPageData(pageId);
 }
 
 navLinks.forEach(link => {
@@ -955,12 +974,13 @@ async function checkTwitchStatus() {
 (async function initAdminDashboard() {
   if (!(await ensureAdminSession())) return;
 
-  loadApplications();
+  loadPageData('page-bewerbungen');
   checkTwitchStatus();
   setInterval(checkTwitchStatus, 60000);
 })();
 
 window.LGAdminDashboard = {
+  registerPageLoader,
   openApplicationDetails,
   deleteApplication,
   openEditEvent,
