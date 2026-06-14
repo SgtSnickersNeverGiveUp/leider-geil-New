@@ -18,9 +18,8 @@ export default async (req) => {
     });
   }
 
-  const store = getStore(STORE_NAME);
-
   try {
+    const store = getStore(STORE_NAME);
     const settings = (await store.get(SETTINGS_KEY, { type: "json" })) || {};
     const publicSettings = PUBLIC_SETTING_KEYS.reduce((acc, key) => {
       if (Object.prototype.hasOwnProperty.call(settings, key)) {
