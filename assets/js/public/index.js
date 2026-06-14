@@ -175,7 +175,7 @@ async function renderVideoGallery() {
       const thumb = video.thumbnail && video.thumbnail.trim()
         ? video.thumbnail
         : (platform === 'twitch'
-            ? '/assets/img/twitch-placeholder.jpg'
+            ? '/assets/img/twitch-placeholder.svg'
             : '/assets/img/youtube-placeholder.jpg');
       const platformLabel = platform === 'twitch' ? 'Twitch' : 'YouTube';
 

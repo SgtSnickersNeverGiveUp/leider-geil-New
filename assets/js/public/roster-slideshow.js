@@ -2,7 +2,7 @@
   'use strict';
 
   const DEFAULT_SPEED_SECONDS = 8;
-  const DEFAULT_AVATAR = 'assets/img/default-avatar.png';
+  const DEFAULT_AVATAR = '/assets/img/default-avatar.svg';
 
   document.addEventListener('DOMContentLoaded', initRosterSlideshow);
 

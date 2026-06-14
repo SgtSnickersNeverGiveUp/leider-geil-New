@@ -1,4 +1,4 @@
-import { readdir, readFile } from "node:fs/promises";
+import { access, readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 
 const repoRoot = path.resolve(new URL("..", import.meta.url).pathname);
@@ -38,6 +38,7 @@ async function main() {
 
   await assertAssetsJsLayout();
   await assertPublicJsBoundary();
+  await assertPublicAssetBoundary();
   await assertHtmlBoundaries(htmlBoundaryFiles);
   await assertHtmlScriptReferences(htmlBoundaryFiles);
   await assertCssBoundaries();
@@ -102,6 +103,24 @@ async function assertPublicJsBoundary() {
       "LGAdmin",
       "assets/js/admin",
     ]);
+  }
+}
+
+async function assertPublicAssetBoundary() {
+  const publicJsFiles = await listFiles(path.join(repoRoot, "assets/js/public"));
+  for (const file of publicJsFiles.filter((item) => item.endsWith(".js"))) {
+    const content = await readText(file);
+    if (/(^|["'`])assets\//.test(content)) {
+      failures.push(`${path.relative(repoRoot, file)}: public assets must use root-relative /assets/... paths`);
+    }
+  }
+
+  const files = await listFiles(repoRoot);
+  for (const file of files.filter((item) => /\.(?:css|html|js|mjs)$/.test(item))) {
+    const content = await readText(file);
+    for (const assetPath of extractAssetImageReferences(content)) {
+      await assertFileExists(file, assetPath);
+    }
   }
 }
 
@@ -520,6 +539,27 @@ function assertNotContains(file, content, forbiddenValues) {
 function extractScriptSources(content) {
   return [...content.matchAll(/<script\s+[^>]*src=["']([^"']+)["'][^>]*>/gi)]
     .map((match) => match[1]);
+}
+
+function extractAssetImageReferences(content) {
+  const references = new Set();
+  const matches = content.matchAll(/(?:^|[^A-Za-z0-9_-])(\/?assets\/img\/[A-Za-z0-9._~!$&()+,;=:@/%-]+)/g);
+  for (const match of matches) {
+    const normalizedPath = match[1].startsWith("/")
+      ? match[1].slice(1)
+      : match[1];
+    references.add(normalizedPath.split(/[?#]/)[0]);
+  }
+  return references;
+}
+
+async function assertFileExists(referencingFile, relativeAssetPath) {
+  try {
+    await access(path.join(repoRoot, relativeAssetPath));
+  } catch (err) {
+    if (err.code !== "ENOENT") throw err;
+    failures.push(`${path.relative(repoRoot, referencingFile)}: referenced asset ${JSON.stringify(`/${relativeAssetPath}`)} does not exist`);
+  }
 }
 
 function assertScriptBefore(file, scriptSources, firstScript, secondScript) {

@@ -74,7 +74,7 @@
   }
 
   function renderPublicRosterCard(member) {
-    const avatarSrc = member.avatar ? escapeRosterHtml(member.avatar) : 'assets/img/default-avatar.png';
+    const avatarSrc = member.avatar ? escapeRosterHtml(member.avatar) : '/assets/img/default-avatar.svg';
     const clanRole = member.clanRole || 'Member';
     const genderLabel = getGenderLabel(member.gender);
     const genderBadge = genderLabel
