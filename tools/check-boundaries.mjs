@@ -187,6 +187,7 @@ async function assertPublicBrowserMarkupBoundary() {
     }
 
     assertNotContains(file, content, [
+      "admin-",
       "admin-homepage-",
       "data-admin-",
     ]);
