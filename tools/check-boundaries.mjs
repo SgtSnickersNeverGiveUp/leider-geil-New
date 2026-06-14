@@ -5,18 +5,6 @@ const repoRoot = path.resolve(new URL("..", import.meta.url).pathname);
 
 const failures = [];
 
-const publicHtmlFiles = [
-  "index.html",
-  "bewerben.html",
-  "event-anmeldung.html",
-  "impressum.html",
-];
-
-const adminHtmlFiles = [
-  "lg-dashboard.html",
-  "admin-login.html",
-];
-
 const removedFiles = [
   "assets/data/events.json",
   "assets/data/news.json",
@@ -39,11 +27,19 @@ const removedFiles = [
   "netlify/functions/_shared/settings-data.mjs",
 ];
 
+const ignoredDirectories = new Set([
+  ".git",
+  ".netlify",
+  "node_modules",
+]);
+
 async function main() {
+  const htmlBoundaryFiles = await discoverHtmlBoundaryFiles();
+
   await assertAssetsJsLayout();
   await assertPublicJsBoundary();
-  await assertHtmlBoundaries();
-  await assertHtmlScriptReferences();
+  await assertHtmlBoundaries(htmlBoundaryFiles);
+  await assertHtmlScriptReferences(htmlBoundaryFiles);
   await assertCssBoundaries();
   await assertAdminCoreBoundary();
   await assertAdminMediaPreviewBoundary();
@@ -64,6 +60,26 @@ async function main() {
   }
 
   console.log("Boundary checks passed.");
+}
+
+async function discoverHtmlBoundaryFiles() {
+  const htmlFiles = (await listFiles(repoRoot))
+    .filter((file) => file.endsWith(".html"))
+    .sort();
+
+  return Promise.all(htmlFiles.map(async (file) => {
+    const content = await readText(file);
+    const relative = path.relative(repoRoot, file);
+    const boundary = isAdminHtml(relative, content) ? "admin" : "public";
+    return { file, relative, boundary, content };
+  }));
+}
+
+function isAdminHtml(relative, content) {
+  return relative === "lg-dashboard.html"
+    || relative === "admin-login.html"
+    || content.includes("/assets/js/admin/")
+    || content.includes("/assets/css/admin-dashboard.css");
 }
 
 async function assertAssetsJsLayout() {
@@ -89,11 +105,11 @@ async function assertPublicJsBoundary() {
   }
 }
 
-async function assertHtmlBoundaries() {
-  for (const file of publicHtmlFiles) {
-    const absolutePath = path.join(repoRoot, file);
-    const content = await readText(absolutePath);
-    assertNotContains(absolutePath, content, [
+async function assertHtmlBoundaries(htmlBoundaryFiles) {
+  for (const { file, content, boundary } of htmlBoundaryFiles) {
+    if (boundary !== "public") continue;
+
+    assertNotContains(file, content, [
       "/assets/js/admin/",
       "/assets/css/admin-dashboard.css",
       "/api/admin",
@@ -102,10 +118,10 @@ async function assertHtmlBoundaries() {
     ]);
   }
 
-  for (const file of adminHtmlFiles) {
-    const absolutePath = path.join(repoRoot, file);
-    const content = await readText(absolutePath);
-    assertNotContains(absolutePath, content, [
+  for (const { file, content, boundary } of htmlBoundaryFiles) {
+    if (boundary !== "admin") continue;
+
+    assertNotContains(file, content, [
       "/assets/js/public/",
       "/assets/css/styles.css",
       "/assets/js/admin/public-content/",
@@ -116,7 +132,7 @@ async function assertHtmlBoundaries() {
   }
 }
 
-async function assertHtmlScriptReferences() {
+async function assertHtmlScriptReferences(htmlBoundaryFiles) {
   const publicScriptAllowList = new Set([
     "/assets/js/public/application-form.js",
     "/assets/js/public/clan-news-ticker.js",
@@ -140,21 +156,34 @@ async function assertHtmlScriptReferences() {
     "/assets/js/admin/homepage-content/roster-slideshow.js",
   ]);
 
-  for (const file of publicHtmlFiles) {
-    const scriptSources = extractScriptSources(await readText(path.join(repoRoot, file)));
+  for (const { relative, boundary, content } of htmlBoundaryFiles) {
+    if (boundary !== "public") continue;
+
+    const scriptSources = extractScriptSources(content);
     for (const scriptSource of scriptSources) {
       if (!publicScriptAllowList.has(scriptSource)) {
-        failures.push(`${file}: public page must not load ${JSON.stringify(scriptSource)}`);
+        failures.push(`${relative}: public page must not load ${JSON.stringify(scriptSource)}`);
       }
     }
   }
 
-  for (const file of adminHtmlFiles) {
-    const scriptSources = extractScriptSources(await readText(path.join(repoRoot, file)));
+  for (const { relative, boundary, content } of htmlBoundaryFiles) {
+    if (boundary !== "admin") continue;
+
+    const scriptSources = extractScriptSources(content);
     for (const scriptSource of scriptSources) {
       if (!adminScriptAllowList.has(scriptSource)) {
-        failures.push(`${file}: admin page must not load ${JSON.stringify(scriptSource)}`);
+        failures.push(`${relative}: admin page must not load ${JSON.stringify(scriptSource)}`);
       }
+    }
+
+    if (relative === "lg-dashboard.html") {
+      assertScriptBefore(relative, scriptSources, "/assets/js/admin/config.js", "/assets/js/admin/media-preview.js");
+      assertScriptBefore(relative, scriptSources, "/assets/js/admin/media-preview.js", "/assets/js/admin/roster.js");
+      assertScriptBefore(relative, scriptSources, "/assets/js/admin/homepage-content/roster-slideshow.js", "/assets/js/admin/homepage-content/page.js");
+      assertScriptBefore(relative, scriptSources, "/assets/js/admin/homepage-content/news-ticker.js", "/assets/js/admin/homepage-content/page.js");
+      assertScriptBefore(relative, scriptSources, "/assets/js/admin/homepage-content/banner.js", "/assets/js/admin/homepage-content/page.js");
+      assertScriptBefore(relative, scriptSources, "/assets/js/admin/homepage-content/page.js", "/assets/js/admin/dashboard.js");
     }
   }
 }
@@ -285,18 +314,36 @@ async function assertAdminHomepageEditorBoundary() {
 async function assertNetlifyFunctionBoundary() {
   const functionsDir = path.join(repoRoot, "netlify/functions");
   const files = await listFiles(functionsDir);
+  const publicHandlerForbidden = [
+    "requireAdmin",
+    "./admin-auth.mjs",
+    "/api/admin/",
+    "./_shared/admin-public-settings-data.mjs",
+    "./_shared/admin-news-data.mjs",
+    "./_shared/admin-videos-data.mjs",
+  ];
+  const adminHandlerForbidden = [
+    "./_shared/public-settings-data.mjs",
+    "./_shared/public-events-data.mjs",
+    "./_shared/public-roster-data.mjs",
+    "./_shared/public-news-data.mjs",
+    "./_shared/public-videos-data.mjs",
+    "./_shared/public-community-shouts-data.mjs",
+  ];
 
   for (const file of files.filter((item) => item.endsWith(".mjs"))) {
     const relative = path.relative(repoRoot, file);
     const content = await readText(file);
 
     if (relative.includes("_shared/")) continue;
-    if (relative.startsWith("netlify/functions/admin-")) continue;
+    if (relative.startsWith("netlify/functions/admin-")) {
+      if (relative !== "netlify/functions/admin-auth.mjs") {
+        assertNotContains(file, content, adminHandlerForbidden);
+      }
+      continue;
+    }
 
-    assertNotContains(file, content, [
-      "requireAdmin",
-      "./admin-auth.mjs",
-    ]);
+    assertNotContains(file, content, publicHandlerForbidden);
   }
 
   const publicSettings = await readText(path.join(repoRoot, "netlify/functions/public-settings.mjs"));
@@ -428,7 +475,10 @@ async function listFiles(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
   const files = await Promise.all(entries.map(async (entry) => {
     const entryPath = path.join(directory, entry.name);
-    if (entry.isDirectory()) return listFiles(entryPath);
+    if (entry.isDirectory()) {
+      if (ignoredDirectories.has(entry.name)) return [];
+      return listFiles(entryPath);
+    }
     if (entry.isFile()) return entryPath;
     return [];
   }));
@@ -451,6 +501,16 @@ function assertNotContains(file, content, forbiddenValues) {
 function extractScriptSources(content) {
   return [...content.matchAll(/<script\s+[^>]*src=["']([^"']+)["'][^>]*>/gi)]
     .map((match) => match[1]);
+}
+
+function assertScriptBefore(file, scriptSources, firstScript, secondScript) {
+  const firstIndex = scriptSources.indexOf(firstScript);
+  const secondIndex = scriptSources.indexOf(secondScript);
+
+  if (firstIndex === -1 || secondIndex === -1) return;
+  if (firstIndex > secondIndex) {
+    failures.push(`${file}: ${JSON.stringify(firstScript)} must be loaded before ${JSON.stringify(secondScript)}`);
+  }
 }
 
 main().catch((err) => {
