@@ -36,21 +36,17 @@ function getEventGameVariant(game) {
   return '';
 }
 
-function toAdminEventImagePreviewUrl(imageUrl) {
-  if (typeof ADMIN_MEDIA_PREVIEW.toAdminMediaPreviewUrl === 'function') {
-    return ADMIN_MEDIA_PREVIEW.toAdminMediaPreviewUrl(imageUrl, 'eventImage');
-  }
-  return String(imageUrl || '');
-}
-
 function cacheBustAdminPreview(imageUrl, previewApi) {
   const value = String(imageUrl || '');
   if (!value.startsWith(previewApi)) return value;
   return `${value}${value.includes('?') ? '&' : '?'}t=${Math.floor(Date.now() / 60000)}`;
 }
 
-function getEventImagePreviewSrc(imageUrl) {
-  return cacheBustAdminPreview(toAdminEventImagePreviewUrl(imageUrl), EVENT_IMAGE_PREVIEW_API);
+function getEventImagePreviewSrc(event) {
+  const imageUrl = typeof ADMIN_MEDIA_PREVIEW.getPreviewUrl === 'function'
+    ? ADMIN_MEDIA_PREVIEW.getPreviewUrl(event, 'adminImagePreviewUrl', 'image')
+    : String(event?.adminImagePreviewUrl || event?.image || '');
+  return cacheBustAdminPreview(imageUrl, EVENT_IMAGE_PREVIEW_API);
 }
 
 function redirectToAdminLogin() {
@@ -375,7 +371,7 @@ function renderEventsAdmin(events) {
   body.innerHTML = events.map(ev => {
     const dateStr = new Date(ev.date).toLocaleDateString('de-DE', { year: 'numeric', month: 'long', day: 'numeric' });
     const thumbHtml = ev.image
-      ? `<img class="admin-event-thumb" src="${escapeHtml(getEventImagePreviewSrc(ev.image))}" alt="" loading="lazy" onerror="this.style.display='none'">`
+      ? `<img class="admin-event-thumb" src="${escapeHtml(getEventImagePreviewSrc(ev))}" alt="" loading="lazy" onerror="this.style.display='none'">`
       : '';
     const game = ev.game || 'Mixed';
     const gameVariant = getEventGameVariant(game);
@@ -418,7 +414,7 @@ function openEditEvent(id) {
     if (!ev) { alert('Event nicht gefunden.'); return; }
 
     const imgSrc = ev.image
-      ? escapeHtml(getEventImagePreviewSrc(ev.image))
+      ? escapeHtml(getEventImagePreviewSrc(ev))
       : "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 50'%3E%3Crect fill='%231a1a2e' width='80' height='50'/%3E%3Ctext x='50%25' y='55%25' text-anchor='middle' fill='%237a7a8e' font-size='14'%3E%3F%3C/text%3E%3C/svg%3E";
 
     const overlay = document.createElement('div');

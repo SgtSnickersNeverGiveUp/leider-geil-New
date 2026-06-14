@@ -1,5 +1,6 @@
 import { getStore } from "@netlify/blobs";
 import { requireAdmin } from "./admin-auth.mjs";
+import { MEDIA_URLS, buildMediaUrlPair } from "./_shared/media-url-contract.mjs";
 import { serveStoredImage } from "./_shared/media-response.mjs";
 
 const STORE_NAME = "roster-avatars";
@@ -63,10 +64,12 @@ export default async (req) => {
         uploadedAt: new Date().toISOString(),
       });
 
+      const mediaUrls = buildMediaUrlPair(MEDIA_URLS.rosterAvatar, { id: memberId });
+
       return jsonResponse({
         success: true,
-        url: `/api/roster-avatar?id=${encodeURIComponent(memberId)}`,
-        previewUrl: `/api/admin/roster-avatar?id=${encodeURIComponent(memberId)}`,
+        url: mediaUrls.publicUrl,
+        previewUrl: mediaUrls.adminPreviewUrl,
         size: buffer.byteLength,
       });
     } catch {

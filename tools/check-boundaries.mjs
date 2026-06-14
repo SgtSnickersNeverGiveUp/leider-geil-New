@@ -255,6 +255,12 @@ async function assertAdminMediaPreviewBoundary() {
     "/api/roster-avatar",
     ".replace('/api/admin/', '/api/')",
     '.replace("/api/admin/", "/api/")',
+    "toPublicApiPath",
+    "createMediaPreviewEndpoint",
+    "getPublicMediaSuffix",
+    "toAdminMediaPreviewUrl",
+    "isManagedPublicMediaUrl",
+    "publicApi",
   ]);
 }
 
@@ -329,6 +335,11 @@ async function assertNetlifyFunctionBoundary() {
     "./_shared/public-news-data.mjs",
     "./_shared/public-videos-data.mjs",
     "./_shared/public-community-shouts-data.mjs",
+    '"/api/event-image',
+    '"/api/banner-image',
+    '"/api/roster-avatar',
+    "`/api/event-image",
+    "`/api/roster-avatar",
   ];
 
   for (const file of files.filter((item) => item.endsWith(".mjs"))) {
@@ -430,16 +441,24 @@ async function assertSharedContentDataBoundary() {
       forbidden: ["toPublicVideo"],
     },
     {
+      file: "netlify/functions/_shared/admin-events-data.mjs",
+      forbidden: ["toPublicEvent"],
+    },
+    {
+      file: "netlify/functions/_shared/admin-roster-data.mjs",
+      forbidden: ["toPublicRosterMember"],
+    },
+    {
       file: "netlify/functions/_shared/public-news-data.mjs",
       forbidden: ["writeNews", "requireAdmin"],
     },
     {
       file: "netlify/functions/_shared/public-videos-data.mjs",
-      forbidden: ["buildVideoData", "requireAdmin"],
+      forbidden: ["buildVideoData", "requireAdmin", "createdAt"],
     },
     {
       file: "netlify/functions/_shared/public-events-data.mjs",
-      forbidden: ["requireAdmin"],
+      forbidden: ["requireAdmin", "PUBG NEWS", "ARC Raiders NEWS"],
     },
     {
       file: "netlify/functions/_shared/public-roster-data.mjs",

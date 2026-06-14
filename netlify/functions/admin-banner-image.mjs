@@ -1,5 +1,6 @@
 import { getStore } from "@netlify/blobs";
 import { requireAdmin } from "./admin-auth.mjs";
+import { MEDIA_URLS, buildMediaUrlPair } from "./_shared/media-url-contract.mjs";
 import { serveStoredImage } from "./_shared/media-response.mjs";
 
 const STORE_NAME = "banner";
@@ -51,10 +52,12 @@ export default async (req) => {
       uploadedAt: new Date().toISOString(),
     });
 
+    const mediaUrls = buildMediaUrlPair(MEDIA_URLS.bannerImage);
+
     return jsonResponse({
       success: true,
-      url: "/api/banner-image",
-      previewUrl: "/api/admin/banner-image",
+      url: mediaUrls.publicUrl,
+      previewUrl: mediaUrls.adminPreviewUrl,
       size: buffer.byteLength,
     });
   } catch {

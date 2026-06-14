@@ -20,15 +20,15 @@ function escapeHtml(value) {
     .replace(/'/g, '&#039;');
 }
 
-function toAdminBannerPreviewUrl(bannerUrl) {
-  if (typeof ADMIN_MEDIA_PREVIEW.toAdminMediaPreviewUrl === 'function') {
-    return ADMIN_MEDIA_PREVIEW.toAdminMediaPreviewUrl(bannerUrl, 'bannerImage');
+function getAdminBannerPreviewUrl(settings) {
+  if (typeof ADMIN_MEDIA_PREVIEW.getPreviewUrl === 'function') {
+    return ADMIN_MEDIA_PREVIEW.getPreviewUrl(settings, 'adminBannerPreviewUrl', 'bannerUrl');
   }
-  return String(bannerUrl || '');
+  return String(settings?.adminBannerPreviewUrl || settings?.bannerUrl || '');
 }
 
-function cacheBustAdminBannerPreview(bannerUrl) {
-  const value = toAdminBannerPreviewUrl(bannerUrl);
+function cacheBustAdminBannerPreview(settings) {
+  const value = getAdminBannerPreviewUrl(settings);
   if (!value.startsWith(BANNER_IMAGE_PREVIEW_API)) return value;
   return `${value}${value.includes('?') ? '&' : '?'}t=${Date.now()}`;
 }
@@ -53,7 +53,7 @@ async function loadBannerSettings() {
     const settings = await res.json();
 
     if (settings.bannerUrl) {
-      const imgUrl = cacheBustAdminBannerPreview(settings.bannerUrl);
+      const imgUrl = cacheBustAdminBannerPreview(settings);
 
       body.innerHTML = `
         <div class="admin-homepage-banner-preview">
@@ -64,10 +64,9 @@ async function loadBannerSettings() {
           Quelle: ${escapeHtml(settings.bannerUrl)}
         </p>`;
 
-      const isManagedUpload = typeof ADMIN_MEDIA_PREVIEW.isManagedPublicMediaUrl === 'function'
-        && ADMIN_MEDIA_PREVIEW.isManagedPublicMediaUrl(settings.bannerUrl, 'bannerImage');
-      if (!isManagedUpload) {
-        document.getElementById('admin-homepage-banner-url').value = settings.bannerUrl;
+      const bannerUrlInput = document.getElementById('admin-homepage-banner-url');
+      if (bannerUrlInput) {
+        bannerUrlInput.value = settings.adminBannerPreviewUrl ? '' : settings.bannerUrl;
       }
     } else {
       body.innerHTML = `

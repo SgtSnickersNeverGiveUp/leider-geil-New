@@ -1,5 +1,6 @@
 import { getStore } from "@netlify/blobs";
 import { requireAdmin } from "./admin-auth.mjs";
+import { toAdminRosterMember } from "./_shared/admin-roster-data.mjs";
 import { ROSTER_STORE_NAME, listRosterMembers } from "./_shared/roster-data.mjs";
 
 function jsonResponse(body, status = 200) {
@@ -21,7 +22,8 @@ export default async (req) => {
 
   if (req.method === "GET") {
     try {
-      return jsonResponse(await listRosterMembers(store));
+      const members = (await listRosterMembers(store)).map(toAdminRosterMember);
+      return jsonResponse(members);
     } catch {
       return jsonResponse({ error: "Fehler beim Laden." }, 500);
     }

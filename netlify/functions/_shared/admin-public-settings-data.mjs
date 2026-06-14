@@ -14,6 +14,7 @@ import {
   normalizeStoredRosterSlideshow,
   pickStoredPublicContentSettings,
 } from "./public-content-settings-schema.mjs";
+import { MEDIA_URLS, toAdminMediaPreviewUrl } from "./media-url-contract.mjs";
 
 export {
   PUBLIC_CONTENT_SETTINGS_KEY,
@@ -21,7 +22,21 @@ export {
 } from "./public-content-settings-schema.mjs";
 
 export function pickAdminPublicContentSettings(settings = {}) {
-  return pickStoredPublicContentSettings(settings);
+  const picked = pickStoredPublicContentSettings(settings);
+  const bannerUrl = picked.bannerUrl || "";
+
+  if (bannerUrl) {
+    const adminBannerPreviewUrl = toAdminMediaPreviewUrl(
+      bannerUrl,
+      MEDIA_URLS.bannerImage,
+    );
+
+    if (adminBannerPreviewUrl !== bannerUrl) {
+      picked.adminBannerPreviewUrl = adminBannerPreviewUrl;
+    }
+  }
+
+  return picked;
 }
 
 export function sanitizePublicContentSettingsPatch(value = {}) {

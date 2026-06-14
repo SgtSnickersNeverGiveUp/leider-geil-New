@@ -114,7 +114,9 @@ function render() {
   selectedBody.innerHTML = settings.members.map((entry) => {
     const member = currentRosterMembers.find((item) => item.id === entry.id);
     if (!member) return '';
-    const avatarSrc = member.avatar ? escapeHtml(member.avatar) : '';
+    const avatarSrc = member.avatar
+      ? escapeHtml(member.adminAvatarPreviewUrl || member.avatar)
+      : '';
     return `
       <div class="admin-homepage-roster-slideshow__item" data-admin-homepage-slideshow-member-id="${escapeHtml(entry.id)}">
         <img class="admin-homepage-roster-slideshow__avatar" src="${avatarSrc}" alt="${escapeHtml(member.name)}" loading="lazy"

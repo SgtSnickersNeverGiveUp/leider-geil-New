@@ -2,11 +2,11 @@
 
 (function () {
 const ADMIN_CONFIG = window.LG_ADMIN_CONFIG || {};
-const ADMIN_MEDIA_PREVIEW = window.LG_ADMIN_MEDIA_PREVIEW || {};
 const ADMIN_ROSTER_API_BASE = ADMIN_CONFIG.apiBase || '/api/admin';
 const ROSTER_API = ADMIN_CONFIG.rosterApi || `${ADMIN_ROSTER_API_BASE}/roster`;
 const ROSTER_AVATAR_API = ADMIN_CONFIG.rosterAvatarApi || `${ADMIN_ROSTER_API_BASE}/roster-avatar`;
 const ROSTER_AVATAR_PREVIEW_API = ADMIN_CONFIG.rosterAvatarPreviewApi || `${ADMIN_ROSTER_API_BASE}/roster-avatar`;
+const ADMIN_MEDIA_PREVIEW = window.LG_ADMIN_MEDIA_PREVIEW || {};
 
 function escapeHtml(value) {
   return String(value || '')
@@ -17,15 +17,15 @@ function escapeHtml(value) {
     .replace(/'/g, '&#039;');
 }
 
-function toAdminRosterAvatarPreviewUrl(avatarUrl) {
-  if (typeof ADMIN_MEDIA_PREVIEW.toAdminMediaPreviewUrl === 'function') {
-    return ADMIN_MEDIA_PREVIEW.toAdminMediaPreviewUrl(avatarUrl, 'rosterAvatar');
+function getAdminRosterAvatarPreviewUrl(member) {
+  if (typeof ADMIN_MEDIA_PREVIEW.getPreviewUrl === 'function') {
+    return ADMIN_MEDIA_PREVIEW.getPreviewUrl(member, 'adminAvatarPreviewUrl', 'avatar');
   }
-  return String(avatarUrl || '');
+  return String(member?.adminAvatarPreviewUrl || member?.avatar || '');
 }
 
-function cacheBustAdminAvatarPreview(avatarUrl) {
-  const value = toAdminRosterAvatarPreviewUrl(avatarUrl);
+function cacheBustAdminAvatarPreview(member) {
+  const value = getAdminRosterAvatarPreviewUrl(member);
   if (!value.startsWith(ROSTER_AVATAR_PREVIEW_API)) return value;
   return `${value}${value.includes('?') ? '&' : '?'}t=${Math.floor(Date.now() / 60000)}`;
 }
@@ -109,7 +109,7 @@ function renderRosterAdmin(members) {
   }
 
   body.innerHTML = `<div class="admin-roster-grid">${members.map(m => {
-    const avatarSrc = m.avatar ? escapeHtml(cacheBustAdminAvatarPreview(m.avatar)) : '';
+    const avatarSrc = m.avatar ? escapeHtml(cacheBustAdminAvatarPreview(m)) : '';
 
     const gamesHtml = (m.games || []).map(g => {
       const cls = g === 'PUBG' ? 'pubg' : g === 'ARC Raiders' ? 'arc' : 'other';
@@ -163,7 +163,7 @@ function openEditMember(id) {
     if (!m) { alert('Mitglied nicht gefunden.'); return; }
 
     const avatarSrc = m.avatar
-      ? cacheBustAdminAvatarPreview(m.avatar)
+      ? cacheBustAdminAvatarPreview(m)
       : "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect fill='%231a1a2e' width='64' height='64'/%3E%3Ctext x='50%25' y='55%25' text-anchor='middle' fill='%237a7a8e' font-size='22'%3E%3F%3C/text%3E%3C/svg%3E";
     const games = m.games || [];
     const clanRole = m.clanRole || 'Member';

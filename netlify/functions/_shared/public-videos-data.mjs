@@ -6,6 +6,5 @@ export function toPublicVideo(video = {}) {
     platform: video.platform || "youtube",
     videoId: video.videoId || null,
     thumbnail: video.thumbnail || "",
-    createdAt: video.createdAt || "",
   };
 }

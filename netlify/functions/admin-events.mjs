@@ -1,5 +1,6 @@
 import { getStore } from "@netlify/blobs";
 import { requireAdmin } from "./admin-auth.mjs";
+import { toAdminEvent } from "./_shared/admin-events-data.mjs";
 import { EVENTS_STORE_NAME, listEvents } from "./_shared/events-data.mjs";
 
 function jsonResponse(body, status = 200) {
@@ -21,7 +22,8 @@ export default async (req) => {
 
   if (req.method === "GET") {
     try {
-      return jsonResponse(await listEvents(store));
+      const events = (await listEvents(store)).map(toAdminEvent);
+      return jsonResponse(events);
     } catch {
       return jsonResponse({ error: "Fehler beim Laden." }, 500);
     }
