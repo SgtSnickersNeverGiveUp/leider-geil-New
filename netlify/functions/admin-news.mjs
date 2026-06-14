@@ -1,6 +1,7 @@
 import { getStore } from "@netlify/blobs";
 import { requireAdmin } from "./admin-auth.mjs";
-import { NEWS_STORE_NAME, readNews, writeNews } from "./_shared/news-data.mjs";
+import { writeNews } from "./_shared/admin-news-data.mjs";
+import { NEWS_STORE_NAME, readNews } from "./_shared/news-data.mjs";
 
 function jsonResponse(body, status = 200) {
   return new Response(JSON.stringify(body), {

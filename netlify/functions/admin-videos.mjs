@@ -1,6 +1,7 @@
 import { getStore } from "@netlify/blobs";
 import { requireAdmin } from "./admin-auth.mjs";
-import { VIDEOS_STORE_NAME, buildVideoData, listVideos } from "./_shared/videos-data.mjs";
+import { buildVideoData } from "./_shared/admin-videos-data.mjs";
+import { VIDEOS_STORE_NAME, listVideos } from "./_shared/videos-data.mjs";
 
 function jsonResponse(body, status = 200) {
   return new Response(JSON.stringify(body), {

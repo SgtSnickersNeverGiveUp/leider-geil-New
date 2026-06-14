@@ -1,5 +1,6 @@
 import { getStore } from "@netlify/blobs";
-import { VIDEOS_STORE_NAME, listVideos, toPublicVideo } from "./_shared/videos-data.mjs";
+import { VIDEOS_STORE_NAME, listVideos } from "./_shared/videos-data.mjs";
+import { toPublicVideo } from "./_shared/public-videos-data.mjs";
 
 export default async (req) => {
   if (req.method !== "GET") {

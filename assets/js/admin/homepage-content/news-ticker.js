@@ -24,8 +24,8 @@ async function loadTickerSettings() {
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const settings = await res.json();
 
-    const speedInput = document.getElementById('ticker-speed');
-    const sepInput = document.getElementById('ticker-separator');
+    const speedInput = document.getElementById('admin-homepage-news-ticker-speed');
+    const sepInput = document.getElementById('admin-homepage-news-ticker-separator');
 
     if (speedInput) speedInput.value = settings.tickerSpeedSeconds ?? 40;
     if (sepInput) sepInput.value = settings.tickerSeparator ?? '   \u25cf   ';
@@ -35,8 +35,8 @@ async function loadTickerSettings() {
 }
 
 async function loadNewsIntoAdmin() {
-  const listEl = document.getElementById('news-list');
-  const statusEl = document.getElementById('news-status');
+  const listEl = document.getElementById('admin-homepage-news-list');
+  const statusEl = document.getElementById('admin-homepage-news-status');
   if (!listEl) return;
 
   if (statusEl) statusEl.textContent = 'Lade News...';
@@ -54,13 +54,13 @@ async function loadNewsIntoAdmin() {
 }
 
 function renderNewsAdmin() {
-  const listEl = document.getElementById('news-list');
+  const listEl = document.getElementById('admin-homepage-news-list');
   if (!listEl) return;
 
   listEl.innerHTML = currentNews.map((item, i) => {
     const type = item.type || 'info';
     return `
-      <div class="admin-form__group news-item">
+      <div class="admin-form__group admin-homepage-news-item">
         <label class="admin-form__label">Eintrag ${i + 1}</label>
         <div style="display:flex;flex-direction:column;gap:.25rem;">
           <textarea class="admin-form__textarea"
@@ -77,7 +77,7 @@ function renderNewsAdmin() {
             </select>
             <button type="button"
                     class="btn-sm btn-sm--danger"
-                    data-news-remove="${i}">L&ouml;schen</button>
+                    data-admin-homepage-news-remove="${i}">L&ouml;schen</button>
           </div>
         </div>
       </div>
@@ -88,11 +88,11 @@ function renderNewsAdmin() {
 function initEventListeners() {
   if (initialized) return;
 
-  const addBtn = document.getElementById('news-add');
-  const saveBtn = document.getElementById('news-save');
-  const listEl = document.getElementById('news-list');
-  const refreshBtn = document.getElementById('btn-refresh-news');
-  const statusEl = document.getElementById('news-status');
+  const addBtn = document.getElementById('admin-homepage-news-add');
+  const saveBtn = document.getElementById('admin-homepage-news-save');
+  const listEl = document.getElementById('admin-homepage-news-list');
+  const refreshBtn = document.getElementById('admin-homepage-news-refresh');
+  const statusEl = document.getElementById('admin-homepage-news-status');
   if (!addBtn || !saveBtn || !listEl) return;
 
   initialized = true;
@@ -117,7 +117,7 @@ function initEventListeners() {
   });
 
   listEl.addEventListener('click', (e) => {
-    const idx = e.target.getAttribute('data-news-remove');
+    const idx = e.target.getAttribute('data-admin-homepage-news-remove');
     if (idx !== null) {
       currentNews.splice(Number(idx), 1);
       renderNewsAdmin();
@@ -127,8 +127,8 @@ function initEventListeners() {
   saveBtn.addEventListener('click', async () => {
     if (statusEl) statusEl.textContent = 'Speichern...';
 
-    const speedInput = document.getElementById('ticker-speed');
-    const sepInput = document.getElementById('ticker-separator');
+    const speedInput = document.getElementById('admin-homepage-news-ticker-speed');
+    const sepInput = document.getElementById('admin-homepage-news-ticker-separator');
     const tickerSpeedSeconds = speedInput ? Number(speedInput.value) || 40 : 40;
     const tickerSeparator = sepInput ? (sepInput.value || '   \u25cf   ') : '   \u25cf   ';
 

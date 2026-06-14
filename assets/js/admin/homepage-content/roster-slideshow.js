@@ -8,6 +8,7 @@ const ROSTER_API = ADMIN_CONFIG.rosterApi || `${ADMIN_HOMEPAGE_API_BASE}/roster`
 
 let currentRosterMembers = [];
 let currentRosterSlideshowSettings = getDefaultRosterSlideshowSettings();
+let initialized = false;
 
 function escapeHtml(value) {
   return String(value || '')
@@ -75,17 +76,17 @@ function normalizeRosterSlideshowSettings(settings) {
 }
 
 function render() {
-  const selectedBody = document.getElementById('roster-slideshow-selected');
-  const addSelect = document.getElementById('roster-slideshow-add-member');
-  const pinnedSelect = document.getElementById('roster-slideshow-pinned-member');
+  const selectedBody = document.getElementById('admin-homepage-roster-slideshow-selected');
+  const addSelect = document.getElementById('admin-homepage-roster-slideshow-add-member');
+  const pinnedSelect = document.getElementById('admin-homepage-roster-slideshow-pinned-member');
   if (!selectedBody || !addSelect || !pinnedSelect) return;
 
   const settings = currentRosterSlideshowSettings;
   const selectedIds = new Set(settings.members.map((entry) => entry.id));
 
-  document.getElementById('roster-slideshow-enabled').checked = settings.enabled;
-  document.getElementById('roster-slideshow-autoplay').checked = settings.autoplay;
-  document.getElementById('roster-slideshow-speed').value = settings.speedSeconds;
+  document.getElementById('admin-homepage-roster-slideshow-enabled').checked = settings.enabled;
+  document.getElementById('admin-homepage-roster-slideshow-autoplay').checked = settings.autoplay;
+  document.getElementById('admin-homepage-roster-slideshow-speed').value = settings.speedSeconds;
 
   addSelect.innerHTML = '<option value="">Member ausw&auml;hlen...</option>' + currentRosterMembers
     .filter((member) => !selectedIds.has(member.id))
@@ -115,26 +116,26 @@ function render() {
     if (!member) return '';
     const avatarSrc = member.avatar ? escapeHtml(member.avatar) : '';
     return `
-      <div class="roster-slideshow-admin__item" data-slideshow-member-id="${escapeHtml(entry.id)}">
-        <img class="roster-slideshow-admin__avatar" src="${avatarSrc}" alt="${escapeHtml(member.name)}" loading="lazy"
+      <div class="admin-homepage-roster-slideshow__item" data-admin-homepage-slideshow-member-id="${escapeHtml(entry.id)}">
+        <img class="admin-homepage-roster-slideshow__avatar" src="${avatarSrc}" alt="${escapeHtml(member.name)}" loading="lazy"
              onerror="this.style.display='none'">
         <div>
-          <div class="roster-slideshow-admin__name">${escapeHtml(member.name)}</div>
-          <div class="roster-slideshow-admin__meta">${escapeHtml(member.clanRole || member.role || 'Member')}</div>
-          <label class="admin-form__label" for="slideshow-text-${escapeHtml(entry.id)}">Diashow-Text</label>
-          <textarea class="admin-form__textarea roster-slideshow-text"
-                    id="slideshow-text-${escapeHtml(entry.id)}"
-                    data-slideshow-text="${escapeHtml(entry.id)}"
+          <div class="admin-homepage-roster-slideshow__name">${escapeHtml(member.name)}</div>
+          <div class="admin-homepage-roster-slideshow__meta">${escapeHtml(member.clanRole || member.role || 'Member')}</div>
+          <label class="admin-form__label" for="admin-homepage-slideshow-text-${escapeHtml(entry.id)}">Diashow-Text</label>
+          <textarea class="admin-form__textarea admin-homepage-roster-slideshow__text"
+                    id="admin-homepage-slideshow-text-${escapeHtml(entry.id)}"
+                    data-admin-homepage-slideshow-text="${escapeHtml(entry.id)}"
                     maxlength="180"
                     placeholder="z.B. Alles Gute zum Geburtstag oder Willkommen im Clan!">${escapeHtml(entry.text)}</textarea>
         </div>
-        <button type="button" class="btn-delete" data-slideshow-remove="${escapeHtml(entry.id)}">Entfernen</button>
+        <button type="button" class="btn-delete" data-admin-homepage-slideshow-remove="${escapeHtml(entry.id)}">Entfernen</button>
       </div>`;
   }).join('');
 }
 
 function addRosterSlideshowMember() {
-  const select = document.getElementById('roster-slideshow-add-member');
+  const select = document.getElementById('admin-homepage-roster-slideshow-add-member');
   const memberId = select?.value;
   if (!memberId) return;
 
@@ -156,15 +157,15 @@ function removeRosterSlideshowMember(memberId) {
 }
 
 function collectRosterSlideshowSettingsFromForm() {
-  const textFields = document.querySelectorAll('[data-slideshow-text]');
-  const textById = new Map([...textFields].map((field) => [field.dataset.slideshowText, field.value.trim()]));
-  const speed = Number(document.getElementById('roster-slideshow-speed')?.value) || 8;
+  const textFields = document.querySelectorAll('[data-admin-homepage-slideshow-text]');
+  const textById = new Map([...textFields].map((field) => [field.dataset.adminHomepageSlideshowText, field.value.trim()]));
+  const speed = Number(document.getElementById('admin-homepage-roster-slideshow-speed')?.value) || 8;
 
   return {
-    enabled: Boolean(document.getElementById('roster-slideshow-enabled')?.checked),
-    autoplay: Boolean(document.getElementById('roster-slideshow-autoplay')?.checked),
+    enabled: Boolean(document.getElementById('admin-homepage-roster-slideshow-enabled')?.checked),
+    autoplay: Boolean(document.getElementById('admin-homepage-roster-slideshow-autoplay')?.checked),
     speedSeconds: Math.max(3, speed),
-    pinnedMemberId: document.getElementById('roster-slideshow-pinned-member')?.value || '',
+    pinnedMemberId: document.getElementById('admin-homepage-roster-slideshow-pinned-member')?.value || '',
     members: currentRosterSlideshowSettings.members.map((entry) => ({
       id: entry.id,
       text: textById.get(entry.id) || '',
@@ -173,8 +174,8 @@ function collectRosterSlideshowSettingsFromForm() {
 }
 
 async function saveRosterSlideshowSettings() {
-  const btn = document.getElementById('roster-slideshow-save');
-  const status = document.getElementById('roster-slideshow-status');
+  const btn = document.getElementById('admin-homepage-roster-slideshow-save');
+  const status = document.getElementById('admin-homepage-roster-slideshow-status');
   if (!btn) return;
 
   btn.disabled = true;
@@ -210,7 +211,31 @@ async function saveRosterSlideshowSettings() {
   }
 }
 
+function initEventListeners() {
+  if (initialized) return;
+
+  const addButton = document.getElementById('admin-homepage-roster-slideshow-add');
+  const form = document.getElementById('admin-homepage-roster-slideshow-form');
+  const refreshButton = document.getElementById('admin-homepage-refresh-roster-slideshow');
+  const selectedList = document.getElementById('admin-homepage-roster-slideshow-selected');
+  if (!addButton || !form || !selectedList) return;
+
+  initialized = true;
+  addButton.addEventListener('click', addRosterSlideshowMember);
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    await saveRosterSlideshowSettings();
+  });
+  refreshButton?.addEventListener('click', load);
+  selectedList.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-admin-homepage-slideshow-remove]');
+    if (!btn) return;
+    removeRosterSlideshowMember(btn.dataset.adminHomepageSlideshowRemove);
+  });
+}
+
 async function load() {
+  initEventListeners();
   await Promise.all([
     loadRosterMembers(),
     loadRosterSlideshowSettings(),
@@ -218,17 +243,6 @@ async function load() {
   render();
 }
 
-document.getElementById('roster-slideshow-add')?.addEventListener('click', addRosterSlideshowMember);
-document.getElementById('roster-slideshow-form')?.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  await saveRosterSlideshowSettings();
-});
-document.getElementById('btn-refresh-roster-slideshow')?.addEventListener('click', load);
-document.getElementById('roster-slideshow-selected')?.addEventListener('click', (e) => {
-  const btn = e.target.closest('[data-slideshow-remove]');
-  if (!btn) return;
-  removeRosterSlideshowMember(btn.dataset.slideshowRemove);
-});
 document.addEventListener('lg-admin-roster:loaded', (e) => {
   if (!Array.isArray(e.detail?.members)) return;
   currentRosterMembers = e.detail.members;

@@ -1,5 +1,6 @@
 import { getStore } from "@netlify/blobs";
-import { NEWS_STORE_NAME, readNews, toPublicNewsItem } from "./_shared/news-data.mjs";
+import { NEWS_STORE_NAME, readNews } from "./_shared/news-data.mjs";
+import { toPublicNewsItem } from "./_shared/public-news-data.mjs";
 
 function jsonResponse(body, status = 200) {
   return new Response(JSON.stringify(body), {

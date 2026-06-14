@@ -56,9 +56,11 @@ async function main() {
   await assertHtmlScriptReferences();
   await assertCssBoundaries();
   await assertAdminCoreBoundary();
+  await assertAdminHomepageEditorBoundary();
   await assertAdminDashboardShellBoundary();
   await assertNetlifyFunctionBoundary();
   await assertPublicSettingsHelperBoundary();
+  await assertSharedContentDataBoundary();
   await assertRemovedFilesStayRemoved();
 
   if (failures.length > 0) {
@@ -180,6 +182,11 @@ async function assertCssBoundaries() {
     ".site-header",
     ".site-footer",
     ".top-community",
+    'data-page="page-news"',
+    'data-page="page-banner"',
+    ".roster-slideshow-admin",
+    ".banner-preview-container",
+    ".banner-tab-btn",
   ]);
 }
 
@@ -212,6 +219,46 @@ async function assertAdminDashboardShellBoundary() {
     "page-news",
     "page-banner",
   ]);
+}
+
+async function assertAdminHomepageEditorBoundary() {
+  const dashboardHtmlPath = path.join(repoRoot, "lg-dashboard.html");
+  const dashboardHtml = await readText(dashboardHtmlPath);
+  assertNotContains(dashboardHtmlPath, dashboardHtml, [
+    'id="roster-slideshow-',
+    'id="ticker-',
+    'id="news-',
+    'id="banner-',
+    'class="roster-slideshow-admin',
+    'class="banner-tab',
+    'class="banner-preview',
+  ]);
+
+  const homepageEditorFiles = [
+    "assets/js/admin/homepage-content/index.js",
+    "assets/js/admin/homepage-content/banner.js",
+    "assets/js/admin/homepage-content/news-ticker.js",
+    "assets/js/admin/homepage-content/roster-slideshow.js",
+  ];
+
+  for (const file of homepageEditorFiles) {
+    const absolutePath = path.join(repoRoot, file);
+    const content = await readText(absolutePath);
+    assertNotContains(absolutePath, content, [
+      "document.getElementById('roster-slideshow",
+      'id="roster-slideshow-',
+      "document.getElementById('ticker-",
+      'id="ticker-',
+      "document.getElementById('news-",
+      'id="news-',
+      "document.getElementById('banner-",
+      'id="banner-',
+      ".banner-tab-btn",
+      "roster-slideshow-admin",
+      "data-slideshow-",
+      "data-news-remove",
+    ]);
+  }
 }
 
 async function assertNetlifyFunctionBoundary() {
@@ -272,6 +319,41 @@ async function assertPublicSettingsHelperBoundary() {
     "mergePublicContentSettings",
     "toPublicRosterSlideshow",
   ]);
+}
+
+async function assertSharedContentDataBoundary() {
+  const files = [
+    {
+      file: "netlify/functions/_shared/news-data.mjs",
+      forbidden: ["writeNews", "toPublicNewsItem"],
+    },
+    {
+      file: "netlify/functions/_shared/videos-data.mjs",
+      forbidden: ["buildVideoData", "toPublicVideo"],
+    },
+    {
+      file: "netlify/functions/_shared/admin-news-data.mjs",
+      forbidden: ["toPublicNewsItem"],
+    },
+    {
+      file: "netlify/functions/_shared/admin-videos-data.mjs",
+      forbidden: ["toPublicVideo"],
+    },
+    {
+      file: "netlify/functions/_shared/public-news-data.mjs",
+      forbidden: ["writeNews", "requireAdmin"],
+    },
+    {
+      file: "netlify/functions/_shared/public-videos-data.mjs",
+      forbidden: ["buildVideoData", "requireAdmin"],
+    },
+  ];
+
+  for (const { file, forbidden } of files) {
+    const absolutePath = path.join(repoRoot, file);
+    const content = await readText(absolutePath);
+    assertNotContains(absolutePath, content, forbidden);
+  }
 }
 
 async function assertRemovedFilesStayRemoved() {

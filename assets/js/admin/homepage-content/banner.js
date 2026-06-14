@@ -21,15 +21,15 @@ function escapeHtml(value) {
 
 function setBannerTab(tab) {
   currentBannerTab = tab;
-  document.querySelectorAll('.banner-tab-btn').forEach((btn) => {
+  document.querySelectorAll('.admin-homepage-banner-tab-btn').forEach((btn) => {
     btn.classList.toggle('active', btn.dataset.tab === tab);
   });
-  document.getElementById('banner-tab-url').style.display = tab === 'url' ? '' : 'none';
-  document.getElementById('banner-tab-upload').style.display = tab === 'upload' ? '' : 'none';
+  document.getElementById('admin-homepage-banner-tab-url').style.display = tab === 'url' ? '' : 'none';
+  document.getElementById('admin-homepage-banner-tab-upload').style.display = tab === 'upload' ? '' : 'none';
 }
 
 async function loadBannerSettings() {
-  const body = document.getElementById('banner-preview-body');
+  const body = document.getElementById('admin-homepage-banner-preview-body');
   if (!body) return;
   body.innerHTML = '<div class="loading">Lade Banner</div>';
 
@@ -44,8 +44,8 @@ async function loadBannerSettings() {
         : settings.bannerUrl;
 
       body.innerHTML = `
-        <div class="banner-preview-container">
-          <span class="banner-preview-label">1920 &times; 600</span>
+        <div class="admin-homepage-banner-preview">
+          <span class="admin-homepage-banner-preview__label">1920 &times; 600</span>
           <img src="${escapeHtml(imgUrl)}" alt="Header Banner" onerror="this.parentElement.innerHTML='<div class=\\'empty-state\\'><div class=\\'empty-state__icon\\'>&#9888;</div><div class=\\'empty-state__text\\'>Bild konnte nicht geladen werden.</div></div>'">
         </div>
         <p style="font-family:var(--ff-mono);font-size:.75rem;color:var(--clr-text-muted);margin-top:.75rem;">
@@ -53,7 +53,7 @@ async function loadBannerSettings() {
         </p>`;
 
       if (settings.bannerUrl !== BANNER_IMAGE_PREVIEW_API) {
-        document.getElementById('banner-url').value = settings.bannerUrl;
+        document.getElementById('admin-homepage-banner-url').value = settings.bannerUrl;
       }
     } else {
       body.innerHTML = `
@@ -69,21 +69,21 @@ async function loadBannerSettings() {
 
 async function saveBanner(e) {
   e.preventDefault();
-  const btn = document.getElementById('banner-submit');
+  const btn = document.getElementById('admin-homepage-banner-submit');
   btn.disabled = true;
 
   try {
     let bannerUrl = '';
 
     if (currentBannerTab === 'url') {
-      bannerUrl = document.getElementById('banner-url').value.trim();
+      bannerUrl = document.getElementById('admin-homepage-banner-url').value.trim();
       if (!bannerUrl) {
         alert('Bitte eine Bild-URL eingeben.');
         btn.disabled = false;
         return;
       }
     } else {
-      const fileInput = document.getElementById('banner-file');
+      const fileInput = document.getElementById('admin-homepage-banner-file');
       const file = fileInput.files[0];
       if (!file) {
         alert('Bitte eine Datei auswaehlen.');
@@ -91,7 +91,7 @@ async function saveBanner(e) {
         return;
       }
 
-      const statusEl = document.getElementById('banner-upload-status');
+      const statusEl = document.getElementById('admin-homepage-banner-upload-status');
       statusEl.textContent = 'Lade hoch...';
       statusEl.style.color = 'var(--clr-accent-arc)';
 
@@ -139,8 +139,8 @@ async function removeBanner() {
     });
 
     if (!res.ok) throw new Error('Fehler beim Entfernen');
-    document.getElementById('banner-url').value = '';
-    document.getElementById('banner-file').value = '';
+    document.getElementById('admin-homepage-banner-url').value = '';
+    document.getElementById('admin-homepage-banner-file').value = '';
     await loadBannerSettings();
     alert('Banner wurde entfernt.');
   } catch (err) {
@@ -152,12 +152,12 @@ function initEventListeners() {
   if (initialized) return;
   initialized = true;
 
-  document.querySelectorAll('.banner-tab-btn').forEach((btn) => {
+  document.querySelectorAll('.admin-homepage-banner-tab-btn').forEach((btn) => {
     btn.addEventListener('click', () => setBannerTab(btn.dataset.tab));
   });
-  document.getElementById('banner-form')?.addEventListener('submit', saveBanner);
-  document.getElementById('banner-remove')?.addEventListener('click', removeBanner);
-  document.getElementById('btn-refresh-banner')?.addEventListener('click', loadBannerSettings);
+  document.getElementById('admin-homepage-banner-form')?.addEventListener('submit', saveBanner);
+  document.getElementById('admin-homepage-banner-remove')?.addEventListener('click', removeBanner);
+  document.getElementById('admin-homepage-banner-refresh')?.addEventListener('click', loadBannerSettings);
 }
 
 async function load() {

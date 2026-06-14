@@ -10,16 +10,3 @@ export async function readNews(store, logLabel = "News") {
     return [];
   }
 }
-
-export async function writeNews(store, news) {
-  await store.setJSON(NEWS_KEY, news, {
-    metadata: { type: "clan-news" },
-  });
-}
-
-export function toPublicNewsItem(item = {}) {
-  return {
-    text: item.text || "",
-    type: item.type || "info",
-  };
-}
