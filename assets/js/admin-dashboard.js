@@ -1,17 +1,17 @@
 'use strict';
 
-const ADMIN_API_BASE = '/api/admin';
-const API_URL = `${ADMIN_API_BASE}/applications`;
-const EVENTS_API = `${ADMIN_API_BASE}/events`;
-const EVENT_IMAGE_API = `${ADMIN_API_BASE}/event-image`;
-const VIDEOS_API = `${ADMIN_API_BASE}/videos`;
-const EVT_REGISTRATIONS_API = `${ADMIN_API_BASE}/event-registrations`;
-const NEWS_API_URL = `${ADMIN_API_BASE}/news`;
-const SETTINGS_API = `${ADMIN_API_BASE}/settings`;
-const BANNER_IMAGE_API = `${ADMIN_API_BASE}/banner-image`;
-const COMMUNITY_SHOUTS_API = `${ADMIN_API_BASE}/community-shouts`;
-const ADMIN_SESSION_API = `${ADMIN_API_BASE}/session`;
-const ADMIN_LOGOUT_API = `${ADMIN_API_BASE}/logout`;
+const ADMIN_DASHBOARD_API_BASE = '/api/admin';
+const API_URL = `${ADMIN_DASHBOARD_API_BASE}/applications`;
+const EVENTS_API = `${ADMIN_DASHBOARD_API_BASE}/events`;
+const EVENT_IMAGE_API = `${ADMIN_DASHBOARD_API_BASE}/event-image`;
+const VIDEOS_API = `${ADMIN_DASHBOARD_API_BASE}/videos`;
+const EVT_REGISTRATIONS_API = `${ADMIN_DASHBOARD_API_BASE}/event-registrations`;
+const NEWS_API_URL = `${ADMIN_DASHBOARD_API_BASE}/news`;
+const SETTINGS_API = `${ADMIN_DASHBOARD_API_BASE}/settings`;
+const BANNER_IMAGE_API = `${ADMIN_DASHBOARD_API_BASE}/banner-image`;
+const COMMUNITY_SHOUTS_API = `${ADMIN_DASHBOARD_API_BASE}/community-shouts`;
+const ADMIN_SESSION_API = `${ADMIN_DASHBOARD_API_BASE}/session`;
+const ADMIN_LOGOUT_API = `${ADMIN_DASHBOARD_API_BASE}/logout`;
 
 const EVENT_GAME_OPTIONS = [
   'PUBG',
