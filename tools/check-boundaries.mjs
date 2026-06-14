@@ -92,6 +92,7 @@ async function main() {
   await assertAdminHomepageEditorBoundary();
   await assertAdminDashboardShellBoundary();
   await assertNetlifyFunctionBoundary();
+  await assertSharedImportBoundary();
   await assertNetlifyRoutingBoundary();
   await assertEdgeFunctionBoundary();
   await assertPublicIndexProjectionBoundary();
@@ -208,6 +209,15 @@ async function assertHtmlScriptReferences(htmlBoundaryFiles) {
     "/assets/js/public/roster.js",
     "/assets/js/public/roster-slideshow.js",
   ]);
+  const publicConfigDependentScripts = [
+    "/assets/js/public/application-form.js",
+    "/assets/js/public/clan-news-ticker.js",
+    "/assets/js/public/community-shouts.js",
+    "/assets/js/public/event-signup-form.js",
+    "/assets/js/public/index.js",
+    "/assets/js/public/roster.js",
+    "/assets/js/public/roster-slideshow.js",
+  ];
   const adminScriptAllowList = new Set([
     "/assets/js/admin/config.js",
     "/assets/js/admin/media-preview.js",
@@ -228,6 +238,10 @@ async function assertHtmlScriptReferences(htmlBoundaryFiles) {
       if (!publicScriptAllowList.has(scriptSource)) {
         failures.push(`${relative}: public page must not load ${JSON.stringify(scriptSource)}`);
       }
+    }
+
+    for (const scriptSource of publicConfigDependentScripts) {
+      assertRequiredScriptBefore(relative, scriptSources, "/assets/js/public/config.js", scriptSource);
     }
   }
 
@@ -282,10 +296,18 @@ async function assertHtmlInlineBehaviorBoundary(htmlBoundaryFiles) {
 }
 
 async function assertCssBoundaries() {
+  const tokensPath = path.join(repoRoot, "assets/css/tokens.css");
+  const tokens = await readText(tokensPath);
+  assertOnlyRootTokenRules(tokensPath, tokens);
+
   const publicStylesPath = path.join(repoRoot, "assets/css/styles.css");
   const publicStyles = await readText(publicStylesPath);
   assertNotContains(publicStylesPath, publicStyles, [
     ".admin-",
+    ".admin-layout",
+    ".admin-login",
+    ".admin-main",
+    ".sidebar",
     "admin-dashboard",
   ]);
 
@@ -297,6 +319,18 @@ async function assertCssBoundaries() {
     ".site-header",
     ".site-footer",
     ".top-community",
+    ".header-banner",
+    ".clan-news-ticker",
+    ".community-shouts",
+    ".live-status",
+    ".timeline",
+    ".video-card",
+    ".recruit",
+    ".terminal",
+    ".roster-grid",
+    ".roster-card",
+    ".roster-slideshow",
+    ".visitor-counter",
     'data-page="page-news"',
     'data-page="page-banner"',
     ".roster-slideshow-admin",
@@ -438,7 +472,11 @@ async function assertNetlifyFunctionBoundary() {
 
     assertApiPathsMatchBoundary(file, content, "public");
     for (const importPath of imports) {
-      if (importPath === "./admin-auth.mjs" || importPath.startsWith("./_shared/admin-")) {
+      if (
+        importPath === "./admin-auth.mjs"
+        || importPath.startsWith("./_shared/admin-")
+        || importPath === "./_shared/media-url-contract.mjs"
+      ) {
         failures.push(`${relative}: public handler must not import admin helper ${JSON.stringify(importPath)}`);
       }
     }
@@ -621,6 +659,39 @@ async function assertSharedContentDataBoundary() {
   }
 }
 
+async function assertSharedImportBoundary() {
+  const sharedDir = path.join(repoRoot, "netlify/functions/_shared");
+  const files = await listFiles(sharedDir);
+
+  for (const file of files.filter((item) => item.endsWith(".mjs"))) {
+    const relative = path.relative(repoRoot, file);
+    const basename = path.basename(file);
+    const content = await readText(file);
+    const imports = extractRelativeImports(content);
+    const isAdminHelper = basename.startsWith("admin-");
+    const isPublicHelper = basename.startsWith("public-");
+    const isNeutralHelper = !isAdminHelper && !isPublicHelper;
+
+    for (const importPath of imports) {
+      if (importPath.endsWith("admin-auth.mjs")) {
+        failures.push(`${relative}: shared data helpers must not import admin auth ${JSON.stringify(importPath)}`);
+      }
+
+      if (isPublicHelper && (importPath.startsWith("./admin-") || importPath === "./media-url-contract.mjs")) {
+        failures.push(`${relative}: public shared helper must not import admin/preview helper ${JSON.stringify(importPath)}`);
+      }
+
+      if (isAdminHelper && importPath.startsWith("./public-")) {
+        failures.push(`${relative}: admin shared helper must not import public projection helper ${JSON.stringify(importPath)}`);
+      }
+
+      if (isNeutralHelper && (importPath.startsWith("./admin-") || importPath.startsWith("./public-"))) {
+        failures.push(`${relative}: neutral shared helper must not import boundary-specific helper ${JSON.stringify(importPath)}`);
+      }
+    }
+  }
+}
+
 async function assertRemovedFilesStayRemoved() {
   for (const file of removedFiles) {
     try {
@@ -708,7 +779,7 @@ function extractApiPathLiterals(content) {
 
 function extractRelativeImports(content) {
   const imports = new Set();
-  const matches = content.matchAll(/\bimport\s+(?:[^"']+\s+from\s+)?["'](\.\/[^"']+)["']/g);
+  const matches = content.matchAll(/\bimport\s+(?:[^"']+\s+from\s+)?["'](\.{1,2}\/[^"']+)["']/g);
   for (const match of matches) {
     imports.add(match[1]);
   }
@@ -758,6 +829,34 @@ function assertScriptBefore(file, scriptSources, firstScript, secondScript) {
   if (firstIndex === -1 || secondIndex === -1) return;
   if (firstIndex > secondIndex) {
     failures.push(`${file}: ${JSON.stringify(firstScript)} must be loaded before ${JSON.stringify(secondScript)}`);
+  }
+}
+
+function assertRequiredScriptBefore(file, scriptSources, requiredScript, dependentScript) {
+  const requiredIndex = scriptSources.indexOf(requiredScript);
+  const dependentIndex = scriptSources.indexOf(dependentScript);
+
+  if (dependentIndex === -1) return;
+  if (requiredIndex === -1) {
+    failures.push(`${file}: ${JSON.stringify(dependentScript)} requires ${JSON.stringify(requiredScript)}`);
+    return;
+  }
+  if (requiredIndex > dependentIndex) {
+    failures.push(`${file}: ${JSON.stringify(requiredScript)} must be loaded before ${JSON.stringify(dependentScript)}`);
+  }
+}
+
+function assertOnlyRootTokenRules(file, content) {
+  const relative = path.relative(repoRoot, file);
+  const uncommented = content.replace(/\/\*[\s\S]*?\*\//g, "").trim();
+  const selectors = [...uncommented.matchAll(/(^|})([^{}]+)\{/g)]
+    .map((match) => match[2].trim())
+    .filter(Boolean);
+
+  for (const selector of selectors) {
+    if (selector !== ":root") {
+      failures.push(`${relative}: shared tokens must only define :root custom properties, found selector ${JSON.stringify(selector)}`);
+    }
   }
 }
 
