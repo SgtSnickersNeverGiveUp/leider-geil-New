@@ -1,4 +1,4 @@
-import { getStore } from "@netlify/blobs";
+import { serveStoredImage } from "./_shared/media-response.mjs";
 
 const STORE_NAME = "roster-avatars";
 
@@ -10,7 +10,6 @@ export default async (req) => {
     });
   }
 
-  const store = getStore(STORE_NAME);
   const url = new URL(req.url);
   const memberId = url.searchParams.get("id");
 
@@ -21,28 +20,12 @@ export default async (req) => {
     });
   }
 
-  // GET – Serve the stored avatar image
-  try {
-    const meta = await store.get(`${memberId}-meta`, { type: "json" });
-    if (!meta) {
-      return new Response("No avatar", { status: 404 });
-    }
-
-    const imageData = await store.get(memberId, { type: "arrayBuffer" });
-    if (!imageData) {
-      return new Response("No avatar", { status: 404 });
-    }
-
-    return new Response(imageData, {
-      status: 200,
-      headers: {
-        "Content-Type": meta.contentType || "image/jpeg",
-        "Cache-Control": "public, max-age=60",
-      },
-    });
-  } catch {
-    return new Response("Avatar not found", { status: 404 });
-  }
+  return serveStoredImage({
+    storeName: STORE_NAME,
+    imageKey: memberId,
+    metaKey: `${memberId}-meta`,
+    missingMessage: "No avatar",
+  });
 };
 
 export const config = {

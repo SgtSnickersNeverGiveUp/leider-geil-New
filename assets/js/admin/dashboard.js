@@ -11,7 +11,7 @@ const EVT_REGISTRATIONS_API = ADMIN_CONFIG.eventRegistrationsApi || `${ADMIN_DAS
 const COMMUNITY_SHOUTS_API = ADMIN_CONFIG.communityShoutsApi || `${ADMIN_DASHBOARD_API_BASE}/community-shouts`;
 const ADMIN_SESSION_API = ADMIN_CONFIG.sessionApi || `${ADMIN_DASHBOARD_API_BASE}/session`;
 const ADMIN_LOGOUT_API = ADMIN_CONFIG.logoutApi || `${ADMIN_DASHBOARD_API_BASE}/logout`;
-const EVENT_IMAGE_PREVIEW_API = ADMIN_CONFIG.eventImagePreviewApi || '/api/event-image';
+const EVENT_IMAGE_PREVIEW_API = ADMIN_CONFIG.eventImagePreviewApi || `${ADMIN_DASHBOARD_API_BASE}/event-image`;
 
 const EVENT_GAME_OPTIONS = [
   'PUBG',
@@ -33,6 +33,30 @@ function getEventGameVariant(game) {
   if (game === 'ARC Raiders' || game === 'ARC Raiders NEWS') return 'arc';
   if (game === 'NEWS') return 'news';
   return '';
+}
+
+function toAdminEventImagePreviewUrl(imageUrl) {
+  const value = String(imageUrl || '');
+  const publicEventImagePath = EVENT_IMAGE_API.replace('/api/admin/', '/api/');
+  const sameOriginPublicEventImageUrl = `${window.location.origin}${publicEventImagePath}`;
+
+  if (value.startsWith(publicEventImagePath)) {
+    return `${EVENT_IMAGE_PREVIEW_API}${value.slice(publicEventImagePath.length)}`;
+  }
+  if (value.startsWith(sameOriginPublicEventImageUrl)) {
+    return `${EVENT_IMAGE_PREVIEW_API}${value.slice(sameOriginPublicEventImageUrl.length)}`;
+  }
+  return value;
+}
+
+function cacheBustAdminPreview(imageUrl, previewApi) {
+  const value = String(imageUrl || '');
+  if (!value.startsWith(previewApi)) return value;
+  return `${value}${value.includes('?') ? '&' : '?'}t=${Math.floor(Date.now() / 60000)}`;
+}
+
+function getEventImagePreviewSrc(imageUrl) {
+  return cacheBustAdminPreview(toAdminEventImagePreviewUrl(imageUrl), EVENT_IMAGE_PREVIEW_API);
 }
 
 function redirectToAdminLogin() {
@@ -357,7 +381,7 @@ function renderEventsAdmin(events) {
   body.innerHTML = events.map(ev => {
     const dateStr = new Date(ev.date).toLocaleDateString('de-DE', { year: 'numeric', month: 'long', day: 'numeric' });
     const thumbHtml = ev.image
-      ? `<img class="admin-event-thumb" src="${escapeHtml(ev.image)}${ev.image.startsWith(EVENT_IMAGE_PREVIEW_API) ? (ev.image.includes('?') ? '&' : '?') + 't=' + Math.floor(Date.now() / 60000) : ''}" alt="" loading="lazy" onerror="this.style.display='none'">`
+      ? `<img class="admin-event-thumb" src="${escapeHtml(getEventImagePreviewSrc(ev.image))}" alt="" loading="lazy" onerror="this.style.display='none'">`
       : '';
     const game = ev.game || 'Mixed';
     const gameVariant = getEventGameVariant(game);
@@ -400,7 +424,7 @@ function openEditEvent(id) {
     if (!ev) { alert('Event nicht gefunden.'); return; }
 
     const imgSrc = ev.image
-      ? escapeHtml(ev.image) + (ev.image.startsWith(EVENT_IMAGE_PREVIEW_API) ? (ev.image.includes('?') ? '&' : '?') + 't=' + Math.floor(Date.now() / 60000) : '')
+      ? escapeHtml(getEventImagePreviewSrc(ev.image))
       : "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 50'%3E%3Crect fill='%231a1a2e' width='80' height='50'/%3E%3Ctext x='50%25' y='55%25' text-anchor='middle' fill='%237a7a8e' font-size='14'%3E%3F%3C/text%3E%3C/svg%3E";
 
     const overlay = document.createElement('div');

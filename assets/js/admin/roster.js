@@ -5,7 +5,7 @@ const ADMIN_CONFIG = window.LG_ADMIN_CONFIG || {};
 const ADMIN_ROSTER_API_BASE = ADMIN_CONFIG.apiBase || '/api/admin';
 const ROSTER_API = ADMIN_CONFIG.rosterApi || `${ADMIN_ROSTER_API_BASE}/roster`;
 const ROSTER_AVATAR_API = ADMIN_CONFIG.rosterAvatarApi || `${ADMIN_ROSTER_API_BASE}/roster-avatar`;
-const ROSTER_AVATAR_PREVIEW_API = ADMIN_CONFIG.rosterAvatarPreviewApi || '/api/roster-avatar';
+const ROSTER_AVATAR_PREVIEW_API = ADMIN_CONFIG.rosterAvatarPreviewApi || `${ADMIN_ROSTER_API_BASE}/roster-avatar`;
 
 function escapeHtml(value) {
   return String(value || '')
@@ -14,6 +14,26 @@ function escapeHtml(value) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
+}
+
+function toAdminRosterAvatarPreviewUrl(avatarUrl) {
+  const value = String(avatarUrl || '');
+  const publicRosterAvatarPath = ROSTER_AVATAR_API.replace('/api/admin/', '/api/');
+  const sameOriginPublicRosterAvatarUrl = `${window.location.origin}${publicRosterAvatarPath}`;
+
+  if (value.startsWith(publicRosterAvatarPath)) {
+    return `${ROSTER_AVATAR_PREVIEW_API}${value.slice(publicRosterAvatarPath.length)}`;
+  }
+  if (value.startsWith(sameOriginPublicRosterAvatarUrl)) {
+    return `${ROSTER_AVATAR_PREVIEW_API}${value.slice(sameOriginPublicRosterAvatarUrl.length)}`;
+  }
+  return value;
+}
+
+function cacheBustAdminAvatarPreview(avatarUrl) {
+  const value = toAdminRosterAvatarPreviewUrl(avatarUrl);
+  if (!value.startsWith(ROSTER_AVATAR_PREVIEW_API)) return value;
+  return `${value}${value.includes('?') ? '&' : '?'}t=${Math.floor(Date.now() / 60000)}`;
 }
 
 // ══════════════════════════════════════════════════════════
@@ -95,7 +115,7 @@ function renderRosterAdmin(members) {
   }
 
   body.innerHTML = `<div class="admin-roster-grid">${members.map(m => {
-    const avatarSrc = m.avatar ? escapeHtml(m.avatar) + (m.avatar.startsWith(ROSTER_AVATAR_PREVIEW_API) ? '&t=' + Math.floor(Date.now() / 60000) : '') : '';
+    const avatarSrc = m.avatar ? escapeHtml(cacheBustAdminAvatarPreview(m.avatar)) : '';
 
     const gamesHtml = (m.games || []).map(g => {
       const cls = g === 'PUBG' ? 'pubg' : g === 'ARC Raiders' ? 'arc' : 'other';
@@ -148,7 +168,9 @@ function openEditMember(id) {
     const m = members.find(x => x.id === id);
     if (!m) { alert('Mitglied nicht gefunden.'); return; }
 
-    const avatarSrc = m.avatar || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect fill='%231a1a2e' width='64' height='64'/%3E%3Ctext x='50%25' y='55%25' text-anchor='middle' fill='%237a7a8e' font-size='22'%3E%3F%3C/text%3E%3C/svg%3E";
+    const avatarSrc = m.avatar
+      ? cacheBustAdminAvatarPreview(m.avatar)
+      : "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect fill='%231a1a2e' width='64' height='64'/%3E%3Ctext x='50%25' y='55%25' text-anchor='middle' fill='%237a7a8e' font-size='22'%3E%3F%3C/text%3E%3C/svg%3E";
     const games = m.games || [];
     const clanRole = m.clanRole || 'Member';
     const bio = m.bio || '';

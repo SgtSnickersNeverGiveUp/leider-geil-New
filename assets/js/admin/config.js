@@ -25,9 +25,9 @@
     rosterApi: `${apiBase}/roster`,
     rosterAvatarApi: `${apiBase}/roster-avatar`,
 
-    /* Read-only media URLs used only for admin previews. */
-    eventImagePreviewApi: '/api/event-image',
-    bannerImagePreviewApi: '/api/banner-image',
-    rosterAvatarPreviewApi: '/api/roster-avatar',
+    /* Read-only media URLs used only for protected admin previews. */
+    eventImagePreviewApi: `${apiBase}/event-image`,
+    bannerImagePreviewApi: `${apiBase}/banner-image`,
+    rosterAvatarPreviewApi: `${apiBase}/roster-avatar`,
   });
 })();

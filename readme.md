@@ -20,7 +20,7 @@ Willkommen bei **Clan Leider‑Geil** – deine zentrale Anlaufstelle für Gamin
 ## Code-Grenzen
 
 - Public-/Index-Code liegt unter `assets/js/public/` und spricht nur die oeffentlichen `/api/*`-Endpunkte an.
-- Admin-Code liegt unter `assets/js/admin/` und verwendet ausschliesslich `/api/admin/*` fuer schreibende und vollstaendige Datensaetze.
+- Admin-Code liegt unter `assets/js/admin/` und verwendet ausschliesslich `/api/admin/*` fuer schreibende, vollstaendige Datensaetze und geschuetzte Media-Vorschauen.
 - Admin-Editoren fuer Startseiten-Inhalte liegen gebuendelt unter `assets/js/admin/homepage-content/` und werden im Dashboard nur ueber einen registrierten Admin-Page-Loader geladen.
 - Gemeinsame Server-Datenlogik liegt in `netlify/functions/_shared/`; Public-Handler geben daraus nur explizit sanitizte Public-Objekte aus.
 - Public- und Admin-Views fuer Public-Content-Settings sind getrennt: `public-settings-data.mjs` enthaelt nur Public-Ausgabe, `admin-public-settings-data.mjs` nur Admin-Sanitizing und Admin-Ausgabe.

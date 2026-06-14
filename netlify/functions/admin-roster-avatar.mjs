@@ -1,5 +1,6 @@
 import { getStore } from "@netlify/blobs";
 import { requireAdmin } from "./admin-auth.mjs";
+import { serveStoredImage } from "./_shared/media-response.mjs";
 
 const STORE_NAME = "roster-avatars";
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -18,7 +19,7 @@ function getMemberId(req) {
 }
 
 export default async (req) => {
-  if (req.method !== "POST" && req.method !== "DELETE") {
+  if (req.method !== "GET" && req.method !== "POST" && req.method !== "DELETE") {
     return jsonResponse({ error: "Method not allowed" }, 405);
   }
 
@@ -29,6 +30,16 @@ export default async (req) => {
   if (!memberId) return jsonResponse({ error: "Member-ID fehlt." }, 400);
 
   const store = getStore(STORE_NAME);
+
+  if (req.method === "GET") {
+    return serveStoredImage({
+      storeName: STORE_NAME,
+      imageKey: memberId,
+      metaKey: `${memberId}-meta`,
+      missingMessage: "No avatar",
+      cacheControl: "private, no-store",
+    });
+  }
 
   if (req.method === "POST") {
     try {
@@ -55,6 +66,7 @@ export default async (req) => {
       return jsonResponse({
         success: true,
         url: `/api/roster-avatar?id=${encodeURIComponent(memberId)}`,
+        previewUrl: `/api/admin/roster-avatar?id=${encodeURIComponent(memberId)}`,
         size: buffer.byteLength,
       });
     } catch {

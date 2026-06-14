@@ -1,5 +1,6 @@
 import { getStore } from "@netlify/blobs";
 import { requireAdmin } from "./admin-auth.mjs";
+import { serveStoredImage } from "./_shared/media-response.mjs";
 
 const STORE_NAME = "banner";
 const BANNER_KEY = "header-banner";
@@ -13,12 +14,22 @@ function jsonResponse(body, status = 200) {
 }
 
 export default async (req) => {
-  if (req.method !== "POST") {
+  if (req.method !== "GET" && req.method !== "POST") {
     return jsonResponse({ error: "Method not allowed" }, 405);
   }
 
   const adminGuard = requireAdmin(req);
   if (adminGuard) return adminGuard;
+
+  if (req.method === "GET") {
+    return serveStoredImage({
+      storeName: STORE_NAME,
+      imageKey: BANNER_KEY,
+      metaKey: META_KEY,
+      missingMessage: "No banner uploaded",
+      cacheControl: "private, no-store",
+    });
+  }
 
   try {
     const store = getStore(STORE_NAME);
@@ -43,6 +54,7 @@ export default async (req) => {
     return jsonResponse({
       success: true,
       url: "/api/banner-image",
+      previewUrl: "/api/admin/banner-image",
       size: buffer.byteLength,
     });
   } catch {
