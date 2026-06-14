@@ -4,6 +4,8 @@ const loginForm = document.getElementById('admin-login-form');
 const passwordInput = document.getElementById('admin-password');
 const submitButton = document.getElementById('admin-login-submit');
 const statusEl = document.getElementById('admin-login-status');
+const ADMIN_SESSION_API = '/api/admin/session';
+const ADMIN_LOGIN_API = '/api/admin/login';
 
 function getRedirectTarget() {
   const redirect = new URLSearchParams(window.location.search).get('redirect') || '/lg-dashboard.html';
@@ -18,7 +20,7 @@ function setStatus(message, type = 'info') {
 
 async function checkExistingSession() {
   try {
-    const res = await fetch('/api/admin-session', { credentials: 'same-origin' });
+    const res = await fetch(ADMIN_SESSION_API, { credentials: 'same-origin' });
     if (!res.ok) return;
 
     const session = await res.json();
@@ -44,7 +46,7 @@ loginForm.addEventListener('submit', async (event) => {
   setStatus('Login wird geprueft...');
 
   try {
-    const res = await fetch('/api/admin-login', {
+    const res = await fetch(ADMIN_LOGIN_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'same-origin',

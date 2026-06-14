@@ -1,8 +1,9 @@
 'use strict';
 
-const ROSTER_API = '/api/roster';
-const ROSTER_AVATAR_API = '/api/roster-avatar';
-const ROSTER_SETTINGS_API = '/api/settings';
+const ADMIN_API_BASE = '/api/admin';
+const ROSTER_API = `${ADMIN_API_BASE}/roster`;
+const ROSTER_AVATAR_API = `${ADMIN_API_BASE}/roster-avatar`;
+const ROSTER_SETTINGS_API = `${ADMIN_API_BASE}/settings`;
 
 // ══════════════════════════════════════════════════════════
 // CLAN ROSTER
