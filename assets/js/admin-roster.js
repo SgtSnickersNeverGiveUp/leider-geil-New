@@ -1,8 +1,18 @@
 'use strict';
 
-const ROSTER_API = '/api/roster';
-const ROSTER_AVATAR_API = '/api/roster-avatar';
-const ROSTER_SETTINGS_API = '/api/settings';
+const ADMIN_ROSTER_API_BASE = '/api/admin';
+const ROSTER_API = `${ADMIN_ROSTER_API_BASE}/roster`;
+const ROSTER_AVATAR_API = `${ADMIN_ROSTER_API_BASE}/roster-avatar`;
+const ROSTER_SETTINGS_API = `${ADMIN_ROSTER_API_BASE}/settings`;
+
+function escapeHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
 
 // ══════════════════════════════════════════════════════════
 // CLAN ROSTER

@@ -1,14 +1,17 @@
 'use strict';
 
-const API_URL = '/api/applications';
-const EVENTS_API = '/api/events';
-const EVENT_IMAGE_API = '/api/event-image';
-const VIDEOS_API = '/api/videos';
-const EVT_REGISTRATIONS_API = '/api/event-registrations';
-const NEWS_API_URL = '/api/news';
-const SETTINGS_API = '/api/settings';
-const BANNER_IMAGE_API = '/api/banner-image';
-const COMMUNITY_SHOUTS_API = '/api/community-shouts';
+const ADMIN_DASHBOARD_API_BASE = '/api/admin';
+const API_URL = `${ADMIN_DASHBOARD_API_BASE}/applications`;
+const EVENTS_API = `${ADMIN_DASHBOARD_API_BASE}/events`;
+const EVENT_IMAGE_API = `${ADMIN_DASHBOARD_API_BASE}/event-image`;
+const VIDEOS_API = `${ADMIN_DASHBOARD_API_BASE}/videos`;
+const EVT_REGISTRATIONS_API = `${ADMIN_DASHBOARD_API_BASE}/event-registrations`;
+const NEWS_API_URL = `${ADMIN_DASHBOARD_API_BASE}/news`;
+const SETTINGS_API = `${ADMIN_DASHBOARD_API_BASE}/settings`;
+const BANNER_IMAGE_API = `${ADMIN_DASHBOARD_API_BASE}/banner-image`;
+const COMMUNITY_SHOUTS_API = `${ADMIN_DASHBOARD_API_BASE}/community-shouts`;
+const ADMIN_SESSION_API = `${ADMIN_DASHBOARD_API_BASE}/session`;
+const ADMIN_LOGOUT_API = `${ADMIN_DASHBOARD_API_BASE}/logout`;
 
 const EVENT_GAME_OPTIONS = [
   'PUBG',
@@ -39,7 +42,7 @@ function redirectToAdminLogin() {
 
 async function ensureAdminSession() {
   try {
-    const res = await fetch('/api/admin-session', { credentials: 'same-origin' });
+    const res = await fetch(ADMIN_SESSION_API, { credentials: 'same-origin' });
     if (!res.ok) {
       redirectToAdminLogin();
       return false;
@@ -60,7 +63,7 @@ async function ensureAdminSession() {
 
 async function logoutAdmin() {
   try {
-    await fetch('/api/admin-logout', {
+    await fetch(ADMIN_LOGOUT_API, {
       method: 'POST',
       credentials: 'same-origin',
     });
@@ -135,7 +138,7 @@ async function loadApplications() {
   body.innerHTML = '<div class="loading">Lade Bewerbungen</div>';
 
   try {
-    const res = await fetch(API_URL); // '/api/applications'
+    const res = await fetch(API_URL);
     if (!res.ok) throw new Error('API error ' + res.status);
     currentApplications = await res.json();
   } catch (err) {
@@ -174,26 +177,63 @@ function renderApplications() {
         </tr>
       </thead>
       <tbody>
-        ${currentApplications.map(app => `
+        ${currentApplications.map((app) => {
+          const id = escapeHtml(app.id);
+          const about = app.ueberMich || '';
+          return `
           <tr>
-            <td><strong>${app.gamingId}</strong></td>
-            <td>${app.alter}</td>
+            <td><strong>${escapeHtml(app.gamingId)}</strong></td>
+            <td>${escapeHtml(app.alter)}</td>
+            <td>${renderApplicationGameBadge(app.hauptspiel)}</td>
+            <td>${escapeHtml(app.rolle)}</td>
+            <td class="app-about">${escapeHtml(about.substring(0, 80))}${about.length > 80 ? '...' : ''}</td>
+            <td class="app-date">${formatDate(app.createdAt)}</td>
             <td>
-              ${app.hauptspiel === 'PUBG' ? '<span class="tag tag--pubg">PUBG</span>' : 
-                app.hauptspiel === 'ARC Raiders' ? '<span class="tag tag--arc">ARC</span>' : 
-                '<span class="tag tag--both">PUBG + ARC</span>'}
-            </td>
-            <td>${app.rolle}</td>
-            <td class="app-about">${app.ueberMich.substring(0,80)}${app.ueberMich.length > 80 ? '...' : ''}</td>
-            <td class="app-date">${new Date(app.createdAt).toLocaleString('de-DE')}</td>
-            <td>
-  <button class="btn-sm" onclick="alert('Details: ${app.gamingId} | ${app.ueberMich}')">Details</button>
-  <button class="btn-delete" onclick="deleteApplication('${app.id}')">Löschen</button>
+  <button class="btn-sm" onclick="openApplicationDetails('${id}')">Details</button>
+  <button class="btn-delete" onclick="deleteApplication('${id}')">Löschen</button>
 </td>
           </tr>
-        `).join('')}
+        `;
+        }).join('')}
       </tbody>
     </table>`;
+}
+
+function renderApplicationGameBadge(game) {
+  if (game === 'PUBG') return '<span class="tag tag--pubg">PUBG</span>';
+  if (game === 'ARC Raiders') return '<span class="tag tag--arc">ARC</span>';
+  return `<span class="tag tag--both">${escapeHtml(game || 'PUBG + ARC')}</span>`;
+}
+
+function openApplicationDetails(id) {
+  const app = currentApplications.find((item) => item.id === id);
+  if (!app) return;
+
+  currentModalId = id;
+  currentEvtModalId = null;
+  document.getElementById('modal-title').textContent = `Bewerbung: ${app.gamingId || 'Details'}`;
+  document.getElementById('modal-body').innerHTML = `
+    <p><strong>Gaming-ID:</strong> ${escapeHtml(app.gamingId)}</p>
+    <p><strong>Alter:</strong> ${escapeHtml(app.alter)}</p>
+    <p><strong>Hauptspiel:</strong> ${escapeHtml(app.hauptspiel)}</p>
+    <p><strong>Rolle:</strong> ${escapeHtml(app.rolle)}</p>
+    <p><strong>Eingegangen:</strong> ${formatDate(app.createdAt)}</p>
+    <p><strong>Über mich:</strong><br>${escapeHtml(app.ueberMich)}</p>
+  `;
+  document.getElementById('modal-overlay')?.classList.add('active');
+}
+
+async function deleteApplication(id) {
+  if (!confirm('Bewerbung wirklich löschen?')) return;
+
+  try {
+    const res = await fetch(`${API_URL}?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    closeModal();
+    await loadApplications();
+  } catch (err) {
+    alert('Fehler beim Löschen: ' + err.message);
+  }
 }
 
 function updateStats() {
@@ -1146,6 +1186,7 @@ document.getElementById('btn-refresh-videos').addEventListener('click', loadVide
 document.getElementById('btn-refresh-banner').addEventListener('click', loadBannerSettings);
 document.getElementById('btn-refresh-evt-registrations').addEventListener('click', loadEventRegistrations);
 document.getElementById('btn-refresh-community-shouts')?.addEventListener('click', loadCommunityShouts);
+document.getElementById('btn-refresh-news')?.addEventListener('click', loadNewsIntoAdmin);
 document.getElementById('admin-logout')?.addEventListener('click', logoutAdmin);
 
 document.getElementById('modal-close').addEventListener('click', closeModal);
