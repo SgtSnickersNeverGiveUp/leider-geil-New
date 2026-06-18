@@ -12,7 +12,7 @@
 
     try {
       const [settings, members] = await Promise.all([
-        fetchJson(SITE_CONFIG.settingsApi || '/api/settings', {}),
+        fetchJson(SITE_CONFIG.settingsApi || '/api/public-settings', {}),
         fetchJson(SITE_CONFIG.rosterApi || '/api/roster', []),
       ]);
       const config = normalizeSlideshowSettings(settings.rosterSlideshow);
@@ -35,9 +35,7 @@
 
   function normalizeSlideshowSettings(value) {
     const settings = value && typeof value === 'object' ? value : {};
-    const entries = Array.isArray(settings.entries) ? settings.entries
-      : Array.isArray(settings.members) ? settings.members
-        : [];
+    const entries = Array.isArray(settings.entries) ? settings.entries : [];
     return {
       enabled: Boolean(settings.enabled),
       autoplay: settings.autoplay !== false,

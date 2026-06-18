@@ -33,5 +33,5 @@ export default async (req) => {
 };
 
 export const config = {
-  path: "/api/admin-login",
+  path: "/api/admin/login",
 };
