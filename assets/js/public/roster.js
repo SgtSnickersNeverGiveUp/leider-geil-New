@@ -59,7 +59,7 @@
     return `
       <div class="roster-filter-status">
         <span>${escapeRosterHtml(label)}: ${count} Member</span>
-        <button type="button" class="btn-sm" data-roster-filter-clear>Alle anzeigen</button>
+        <button type="button" class="roster-btn" data-roster-filter-clear>Alle anzeigen</button>
       </div>`;
   }
 
@@ -74,7 +74,7 @@
   }
 
   function renderPublicRosterCard(member) {
-    const avatarSrc = member.avatar ? escapeRosterHtml(member.avatar) : 'assets/img/default-avatar.png';
+    const avatarSrc = member.avatar ? escapeRosterHtml(member.avatar) : '/assets/img/default-avatar.svg';
     const clanRole = member.clanRole || 'Member';
     const genderLabel = getGenderLabel(member.gender);
     const genderBadge = genderLabel
@@ -103,7 +103,7 @@
           </div>
         </header>
 
-        <button type="button" class="btn-sm roster-toggle-btn" data-toggle="more">
+        <button type="button" class="roster-btn roster-toggle-btn" data-toggle="more">
           Mehr Infos
         </button>
 
