@@ -2,7 +2,7 @@
   'use strict';
 
   const DEFAULT_SPEED_SECONDS = 8;
-  const DEFAULT_AVATAR = 'assets/img/default-avatar.png';
+  const DEFAULT_AVATAR = '/assets/img/default-avatar.svg';
 
   document.addEventListener('DOMContentLoaded', initRosterSlideshow);
 
@@ -12,10 +12,10 @@
 
     try {
       const [settings, members] = await Promise.all([
-        fetchJson(SITE_CONFIG.settingsApi || '/api/settings', {}),
+        fetchJson(SITE_CONFIG.settingsApi || '/api/public-settings', {}),
         fetchJson(SITE_CONFIG.rosterApi || '/api/roster', []),
       ]);
-      const config = normalizeSlideshowSettings(settings.rosterSlideshow);
+      const config = readPublicSlideshowSettings(settings.rosterSlideshow);
       if (!config.enabled || !Array.isArray(members) || members.length === 0) return;
 
       const slides = buildSlides(config, members);
@@ -33,27 +33,21 @@
     return await res.json();
   }
 
-  function normalizeSlideshowSettings(value) {
+  function readPublicSlideshowSettings(value) {
     const settings = value && typeof value === 'object' ? value : {};
-    const entries = Array.isArray(settings.entries) ? settings.entries
-      : Array.isArray(settings.members) ? settings.members
-        : [];
     return {
-      enabled: Boolean(settings.enabled),
+      enabled: settings.enabled === true,
       autoplay: settings.autoplay !== false,
-      speedSeconds: Math.max(3, Number(settings.speedSeconds) || DEFAULT_SPEED_SECONDS),
-      pinnedMemberId: settings.pinnedMemberId || '',
-      entries: entries.map((entry) => ({
-        memberId: entry.memberId || entry.id,
-        text: entry.text || '',
-      })),
+      speedSeconds: Number(settings.speedSeconds) || DEFAULT_SPEED_SECONDS,
+      pinnedMemberId: String(settings.pinnedMemberId || ''),
+      entries: Array.isArray(settings.entries) ? settings.entries : [],
     };
   }
 
   function buildSlides(config, members) {
     const memberById = new Map(members.map((member) => [member.id, member]));
     const entries = config.entries
-      .filter((entry) => entry && entry.enabled !== false && memberById.has(entry.memberId));
+      .filter((entry) => entry && memberById.has(entry.memberId));
 
     if (!config.autoplay && config.pinnedMemberId) {
       const pinnedEntry = entries.find((entry) => entry.memberId === config.pinnedMemberId);
@@ -71,7 +65,6 @@
       avatar: member.avatar || DEFAULT_AVATAR,
       games: member.games || [],
       text: entry.text || member.bio || 'Leider Geil Member im Spotlight.',
-      pinned: Boolean(entry.pinned),
     };
   }
 
@@ -89,6 +82,7 @@
     let index = 0;
     const speedMs = config.speedSeconds * 1000;
     const canRotate = config.autoplay && slides.length > 1;
+    elements.avatar?.addEventListener('error', useDefaultAvatar);
 
     const showSlide = () => {
       renderSlide(elements, slides[index], canRotate ? 'Member Spotlight' : 'Fixer Spotlight');
@@ -107,9 +101,8 @@
 
   function renderSlide(elements, slide, eyebrow) {
     if (elements.avatar) {
-      elements.avatar.src = slide.avatar;
       elements.avatar.alt = slide.name;
-      elements.avatar.onerror = () => { elements.avatar.src = DEFAULT_AVATAR; };
+      elements.avatar.src = slide.avatar;
     }
     if (elements.eyebrow) elements.eyebrow.textContent = eyebrow;
     if (elements.name) elements.name.textContent = slide.name;
@@ -120,6 +113,12 @@
         .map((game) => `<span>${escapeHtml(game)}</span>`)
         .join('');
     }
+  }
+
+  function useDefaultAvatar(event) {
+    const avatar = event.currentTarget;
+    if (!avatar || avatar.getAttribute('src') === DEFAULT_AVATAR) return;
+    avatar.src = DEFAULT_AVATAR;
   }
 
   function escapeHtml(value) {

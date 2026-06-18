@@ -1,8 +1,12 @@
+/* Public clan news ticker. */
+'use strict';
+
+(function () {
 document.addEventListener('DOMContentLoaded', () => {
   const tickerItemsEl = document.querySelector('#clan-news-ticker .clan-news-ticker__items');
   if (!tickerItemsEl) return;
 
-  const settingsApi = SITE_CONFIG.settingsApi || '/api/settings';
+  const settingsApi = SITE_CONFIG.settingsApi || '/api/public-settings';
   const newsApi = SITE_CONFIG.newsApi || '/api/news';
 
   Promise.all([
@@ -28,3 +32,4 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('[Clan News Ticker] Fehler beim Laden von Settings/News:', err);
     });
 });
+})();
