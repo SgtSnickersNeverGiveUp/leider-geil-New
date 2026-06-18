@@ -12,5 +12,5 @@ export default async (req) => {
 };
 
 export const config = {
-  path: "/api/admin-session",
+  path: "/api/admin/session",
 };
