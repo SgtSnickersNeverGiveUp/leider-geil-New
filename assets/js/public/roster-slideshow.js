@@ -2,7 +2,7 @@
   'use strict';
 
   const DEFAULT_SPEED_SECONDS = 8;
-  const DEFAULT_AVATAR = 'assets/img/default-avatar.png';
+  const DEFAULT_AVATAR = '/assets/img/default-avatar.svg';
 
   document.addEventListener('DOMContentLoaded', initRosterSlideshow);
 
@@ -12,7 +12,7 @@
 
     try {
       const [settings, members] = await Promise.all([
-        fetchJson(SITE_CONFIG.settingsApi || '/api/settings', {}),
+        fetchJson(SITE_CONFIG.settingsApi || '/api/public-settings', {}),
         fetchJson(SITE_CONFIG.rosterApi || '/api/roster', []),
       ]);
       const config = normalizeSlideshowSettings(settings.rosterSlideshow);
@@ -35,16 +35,14 @@
 
   function normalizeSlideshowSettings(value) {
     const settings = value && typeof value === 'object' ? value : {};
-    const entries = Array.isArray(settings.entries) ? settings.entries
-      : Array.isArray(settings.members) ? settings.members
-        : [];
+    const entries = Array.isArray(settings.entries) ? settings.entries : [];
     return {
       enabled: Boolean(settings.enabled),
       autoplay: settings.autoplay !== false,
       speedSeconds: Math.max(3, Number(settings.speedSeconds) || DEFAULT_SPEED_SECONDS),
       pinnedMemberId: settings.pinnedMemberId || '',
       entries: entries.map((entry) => ({
-        memberId: entry.memberId || entry.id,
+        memberId: String(entry.memberId || ''),
         text: entry.text || '',
       })),
     };
