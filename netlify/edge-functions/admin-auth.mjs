@@ -1,4 +1,9 @@
 const ADMIN_COOKIE_NAME = "lg_admin_session";
+const PUBLIC_ADMIN_API_PATHS = new Set([
+  "/api/admin/login",
+  "/api/admin/logout",
+  "/api/admin/session",
+]);
 
 function getSessionSecret() {
   return Deno.env.get("ADMIN_SESSION_SECRET") || Deno.env.get("ADMIN_PASSWORD") || "";
@@ -77,11 +82,27 @@ async function isAdminAuthenticated(request) {
 }
 
 export default async (request, context) => {
+  const requestUrl = new URL(request.url);
+  const isAdminApiRequest = requestUrl.pathname.startsWith("/api/admin/");
+
+  if (isAdminApiRequest && PUBLIC_ADMIN_API_PATHS.has(requestUrl.pathname)) {
+    return context.next();
+  }
+
   if (await isAdminAuthenticated(request)) {
     return context.next();
   }
 
-  const requestUrl = new URL(request.url);
+  if (isAdminApiRequest) {
+    return new Response(JSON.stringify({ error: "Admin login required." }), {
+      status: 401,
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "no-store",
+      },
+    });
+  }
+
   const loginUrl = new URL("/admin-login.html", request.url);
   loginUrl.searchParams.set("redirect", `${requestUrl.pathname}${requestUrl.search}`);
 

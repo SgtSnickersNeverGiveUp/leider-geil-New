@@ -1,25 +1,3 @@
-    /* ── CSS Custom Properties (same as main site) ─── */
-    :root {
-      --clr-bg:           #0d0d12;
-      --clr-surface:      #14141c;
-      --clr-surface-alt:  #1a1a2e;
-      --clr-border:       #2a2a3c;
-      --clr-text:         #e0e0e6;
-      --clr-text-muted:   #7a7a8e;
-      --clr-accent-arc:   #0FF2A9;
-      --clr-accent-pubg:  #FF9C43;
-      --clr-accent-news:  #FFD640;
-      --clr-danger:       #ff3b5c;
-      --clr-glass:        rgba(20, 20, 28, .55);
-      --clr-glass-border: rgba(255, 255, 255, .06);
-      --ff-heading: 'Rajdhani', 'Segoe UI', sans-serif;
-      --ff-body:    'Inter', 'Segoe UI', sans-serif;
-      --ff-mono:    'Fira Code', 'Consolas', monospace;
-      --radius:     8px;
-      --radius-lg:  16px;
-      --ease: cubic-bezier(.25, .8, .25, 1);
-    }
-
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
     html { font-size: 16px; -webkit-font-smoothing: antialiased; }
 
@@ -111,8 +89,7 @@
     .sidebar__link[data-page="page-roster"] { --nav-accent-rgb: 255, 156, 67; }
     .sidebar__link[data-page="page-events"] { --nav-accent-rgb: 120, 119, 255; }
     .sidebar__link[data-page="page-videos"] { --nav-accent-rgb: 255, 59, 130; }
-    .sidebar__link[data-page="page-news"] { --nav-accent-rgb: 255, 214, 64; }
-    .sidebar__link[data-page="page-banner"] { --nav-accent-rgb: 56, 189, 248; }
+    .sidebar__link[data-page="page-homepage-content"] { --nav-accent-rgb: 56, 189, 248; }
     .sidebar__link[data-page="page-event-anmeldungen"] { --nav-accent-rgb: 168, 85, 247; }
     .sidebar__link[data-page="page-community-shouts"] { --nav-accent-rgb: 34, 197, 94; }
 
@@ -898,12 +875,12 @@
       margin-top: .5rem;
     }
 
-    .roster-slideshow-admin {
+    .admin-homepage-roster-slideshow {
       display: grid;
       gap: 1.25rem;
     }
 
-    .roster-slideshow-admin__grid {
+    .admin-homepage-roster-slideshow__grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 1rem;
@@ -925,23 +902,23 @@
       accent-color: var(--clr-accent-arc);
     }
 
-    .roster-slideshow-admin__add {
+    .admin-homepage-roster-slideshow__add {
       display: flex;
       gap: .6rem;
       align-items: flex-end;
       flex-wrap: wrap;
     }
 
-    .roster-slideshow-admin__add .admin-form__group {
+    .admin-homepage-roster-slideshow__add .admin-form__group {
       flex: 1 1 260px;
     }
 
-    .roster-slideshow-admin__list {
+    .admin-homepage-roster-slideshow__list {
       display: grid;
       gap: .75rem;
     }
 
-    .roster-slideshow-admin__item {
+    .admin-homepage-roster-slideshow__item {
       display: grid;
       grid-template-columns: 56px minmax(0, 1fr) auto;
       gap: .85rem;
@@ -952,7 +929,7 @@
       background: rgba(13, 13, 18, .45);
     }
 
-    .roster-slideshow-admin__avatar {
+    .admin-homepage-roster-slideshow__avatar {
       width: 56px;
       height: 56px;
       border-radius: 50%;
@@ -961,7 +938,7 @@
       background: var(--clr-surface-alt);
     }
 
-    .roster-slideshow-admin__name {
+    .admin-homepage-roster-slideshow__name {
       font-family: var(--ff-heading);
       font-size: 1.05rem;
       font-weight: 700;
@@ -969,7 +946,7 @@
       letter-spacing: .05em;
     }
 
-    .roster-slideshow-admin__meta {
+    .admin-homepage-roster-slideshow__meta {
       font-family: var(--ff-mono);
       font-size: .72rem;
       color: var(--clr-text-muted);
@@ -977,11 +954,11 @@
     }
 
     @media (max-width: 700px) {
-      .roster-slideshow-admin__item {
+      .admin-homepage-roster-slideshow__item {
         grid-template-columns: 44px minmax(0, 1fr);
       }
 
-      .roster-slideshow-admin__item .btn-delete {
+      .admin-homepage-roster-slideshow__item .btn-delete {
         grid-column: 1 / -1;
         width: fit-content;
       }
@@ -1205,7 +1182,7 @@
     }
 
     /* ── Banner Preview in Admin ─── */
-    .banner-preview-container {
+    .admin-homepage-banner-preview {
       border: 2px solid var(--clr-border);
       border-radius: var(--radius-lg);
       overflow: hidden;
@@ -1213,7 +1190,7 @@
       background: var(--clr-surface);
     }
 
-    .banner-preview-container img {
+    .admin-homepage-banner-preview img {
       width: 100%;
       height: auto;
       display: block;
@@ -1221,7 +1198,7 @@
       object-fit: cover;
     }
 
-    .banner-preview-label {
+    .admin-homepage-banner-preview__label {
       position: absolute;
       top: .5rem;
       left: .5rem;
@@ -1235,7 +1212,7 @@
       color: var(--clr-accent-arc);
     }
 
-    .banner-tab-btn.active {
+    .admin-homepage-banner-tab-btn.active {
       border-color: var(--clr-accent-arc);
       color: var(--clr-accent-arc);
       background: rgba(15, 242, 169, .1);
