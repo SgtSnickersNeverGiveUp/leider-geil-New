@@ -10,6 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Rajdhani:wght@500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
 
+  <link rel="stylesheet" href="/assets/css/tokens.css">
   <link rel="stylesheet" href="/assets/css/admin-dashboard.css">
 
 </head>
@@ -36,6 +37,12 @@
           </a>
         </li>
         <li>
+          <a href="#startseite" class="sidebar__link" data-page="page-homepage-content">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h3m10-11v10a1 1 0 01-1 1h-3m-6 0h6m-6 0v-6a1 1 0 011-1h4a1 1 0 011 1v6"/></svg>
+            Startseite
+          </a>
+        </li>
+        <li>
           <a href="#events" class="sidebar__link" data-page="page-events">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
             Events
@@ -45,17 +52,6 @@
           <a href="#videos" class="sidebar__link" data-page="page-videos">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             Videos
-          </a>
-        </li>
-       <li>
-  <a href="#" class="sidebar__link" data-page="page-news">
-    Clan News
-  </a>
-</li>
-        <li>
-          <a href="#banner" class="sidebar__link" data-page="page-banner">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-            Banner
           </a>
         </li>
         <li>
@@ -178,7 +174,7 @@
               </div>
               <div class="custom-game-row">
                 <input class="admin-form__input" type="text" id="roster-custom-game" placeholder="Weiteres Spiel hinzufügen…">
-                <button type="button" class="btn-sm" onclick="addCustomGame('roster')">+</button>
+                <button type="button" class="btn-sm" onclick="LGAdminRoster.addCustomGame('roster')">+</button>
               </div>
             </div>
             <div class="admin-form__group">
@@ -213,60 +209,6 @@
       <section class="panel">
         <div class="panel__header">
           <h2 class="panel__title">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 5h16M4 19h16M4 9h16M4 15h16"/></svg>
-            Roster Diashow
-          </h2>
-          <div class="panel__actions">
-            <button class="btn-sm" id="btn-refresh-roster-slideshow">Aktualisieren</button>
-          </div>
-        </div>
-        <div class="panel__body">
-          <form class="admin-form admin-form--wide roster-slideshow-admin" id="roster-slideshow-form">
-            <div class="admin-form__section">// Anzeige</div>
-            <div class="roster-slideshow-admin__grid">
-              <label class="admin-form__check">
-                <input type="checkbox" id="roster-slideshow-enabled">
-                <span>Diashow auf der Startseite anzeigen</span>
-              </label>
-              <label class="admin-form__check">
-                <input type="checkbox" id="roster-slideshow-autoplay">
-                <span>Automatisch rotieren</span>
-              </label>
-              <div class="admin-form__group">
-                <label class="admin-form__label" for="roster-slideshow-speed">Geschwindigkeit in Sekunden</label>
-                <input class="admin-form__input" type="number" id="roster-slideshow-speed" min="3" max="60" step="1" value="8">
-              </div>
-              <div class="admin-form__group">
-                <label class="admin-form__label" for="roster-slideshow-pinned-member">Fix angezeigter Member</label>
-                <select class="admin-form__select" id="roster-slideshow-pinned-member">
-                  <option value="">Automatisch / erster ausgewählter Member</option>
-                </select>
-                <div class="admin-form__hint">Wenn automatische Rotation aus ist, bleibt dieser Member dauerhaft sichtbar.</div>
-              </div>
-            </div>
-
-            <div class="admin-form__section">// Member auswählen</div>
-            <div class="roster-slideshow-admin__add">
-              <select class="admin-form__select" id="roster-slideshow-add-member">
-                <option value="">Member auswählen</option>
-              </select>
-              <button type="button" class="btn-sm btn-sm--accent" id="roster-slideshow-add">Zur Diashow hinzufügen</button>
-            </div>
-            <div id="roster-slideshow-selected" class="roster-slideshow-admin__list">
-              <div class="empty-state">
-                <div class="empty-state__text">Noch keine Diashow-Member ausgewählt.</div>
-              </div>
-            </div>
-            <div class="admin-form__hint">Pro Member kannst du einen eigenen Text für Geburtstag, neuen Member oder Spotlight eintragen.</div>
-            <button type="submit" class="admin-form__submit" id="roster-slideshow-save">Diashow speichern</button>
-            <div class="admin-form__hint" id="roster-slideshow-status"></div>
-          </form>
-        </div>
-      </section>
-
-      <section class="panel">
-        <div class="panel__header">
-          <h2 class="panel__title">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
             Aktuelle Mitglieder
           </h2>
@@ -279,51 +221,10 @@
         </div>
       </section>
     </div>
-<!-- PAGE CLAN NEWS -->
-<div class="admin-page" id="page-news">
-  <section class="panel">
-    <div class="panelheader">
-      <h2 class="paneltitle">Clan News Ticker</h2>
-      <div class="panelactions">
-        <button class="btn-sm" id="btn-refresh-news">Aktualisieren</button>
-        <button class="btn-sm btn-sm--accent" id="news-add">Eintrag</button>
-      </div>
-    </div>
-
-    <div class="panelbody">
-      <div class="admin-formsection">Ticker-Einstellungen</div>
-
-      <div class="admin-formgroup">
-        <label class="admin-formlabel" for="ticker-speed">
-          Ticker-Geschwindigkeit (Sekunden für eine Runde)
-        </label>
-        <input class="admin-forminput" type="number" id="ticker-speed" min="5" max="120" step="5">
-        <div class="admin-formhint">
-          Größere Zahl = langsamer, kleinere Zahl = schneller.
-        </div>
-      </div>
-
-      <div class="admin-formgroup">
-        <label class="admin-formlabel" for="ticker-separator">
-          Trenner zwischen Nachrichten
-        </label>
-        <input class="admin-forminput" type="text" id="ticker-separator" placeholder="   ●   ">
-        <div class="admin-formhint">
-          Wird zwischen die Texte gesetzt, z.B. • oder |.
-        </div>
-      </div>
-
-      <div class="admin-formsection" style="margin-top:1.5rem;">Ticker-Einträge</div>
-
-      <div id="news-status" class="admin-formhint">Noch nicht geladen.</div>
-      <div id="news-list" class="admin-form" style="margin-top:1rem"></div>
-
-      <button type="button" class="admin-formsubmit" id="news-save">
-        News & Ticker speichern
-      </button>
-    </div>
-  </section>
-</div>
+    <!-- ═══════════════════════════════════════════════════════
+         PAGE: STARTSEITEN-INHALTE
+         ═══════════════════════════════════════════════════════ -->
+    <div class="admin-page" id="page-homepage-content"></div>
     <!-- ═══════════════════════════════════════════════════════
          PAGE: COMMUNITY SHOUTS
          ═══════════════════════════════════════════════════════ -->
@@ -426,26 +327,26 @@
         </div>
         <div class="panel__body">
           <form class="admin-form" id="videos-form">
-  <div class="admin-formgroup">
-    <label class="admin-formlabel" for="video-title">Titel</label>
-    <input class="admin-forminput" type="text" id="video-title" placeholder="Video-Titel" required>
+  <div class="admin-form__group">
+    <label class="admin-form__label" for="video-title">Titel</label>
+    <input class="admin-form__input" type="text" id="video-title" placeholder="Video-Titel" required>
   </div>
 
-  <div class="admin-formgroup">
-    <label class="admin-formlabel" for="video-platform">Plattform</label>
-    <select class="admin-formselect" id="video-platform" required>
+  <div class="admin-form__group">
+    <label class="admin-form__label" for="video-platform">Plattform</label>
+    <select class="admin-form__select" id="video-platform" required>
       <option value="" disabled selected>Plattform wählen</option>
       <option value="youtube">YouTube</option>
       <option value="twitch">Twitch</option>
     </select>
   </div>
 
-  <div class="admin-formgroup">
-    <label class="admin-formlabel" for="video-url">Video-Link</label>
-    <input class="admin-forminput" type="url" id="video-url" placeholder="https://www.youtube.com/watch?v=... oder https://www.twitch.tv/videos/..." required>
+  <div class="admin-form__group">
+    <label class="admin-form__label" for="video-url">Video-Link</label>
+    <input class="admin-form__input" type="url" id="video-url" placeholder="https://www.youtube.com/watch?v=... oder https://www.twitch.tv/videos/..." required>
   </div>
 
-  <button type="submit" class="admin-formsubmit" id="videos-submit">Video hinzufügen</button>
+  <button type="submit" class="admin-form__submit" id="videos-submit">Video hinzufügen</button>
 </form>
         </div>
       </section>
@@ -462,64 +363,6 @@
         </div>
         <div class="panel__body" id="videos-list-body">
           <div class="loading">Lade Videos</div>
-        </div>
-      </section>
-    </div>
-
-    <!-- ═══════════════════════════════════════════════════════
-         PAGE: BANNER
-         ═══════════════════════════════════════════════════════ -->
-    <div class="admin-page" id="page-banner">
-      <section class="panel">
-        <div class="panel__header">
-          <h2 class="panel__title">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-            Header-Banner verwalten
-          </h2>
-        </div>
-        <div class="panel__body">
-          <p style="font-family:var(--ff-mono);font-size:.8rem;color:var(--clr-text-muted);margin-bottom:1.5rem;">
-            Empfohlene Aufl&ouml;sung: <strong style="color:var(--clr-accent-arc);">1920 &times; 600 px</strong>. Das Bild wird als Header-Banner auf der Startseite angezeigt.
-          </p>
-
-          <form class="admin-form" id="banner-form" style="max-width:600px;">
-            <!-- Tab selection -->
-            <div style="display:flex;gap:.5rem;margin-bottom:1rem;">
-              <button type="button" class="btn-sm btn-sm--accent banner-tab-btn active" data-tab="url">Bild-URL</button>
-              <button type="button" class="btn-sm banner-tab-btn" data-tab="upload">Datei hochladen</button>
-            </div>
-
-            <!-- URL input -->
-            <div class="admin-form__group banner-tab" id="banner-tab-url">
-              <label class="admin-form__label" for="banner-url">Bild-URL</label>
-              <input class="admin-form__input" type="url" id="banner-url" placeholder="https://beispiel.de/banner.jpg">
-            </div>
-
-            <!-- File upload -->
-            <div class="admin-form__group banner-tab" id="banner-tab-upload" style="display:none;">
-              <label class="admin-form__label" for="banner-file">Bild-Datei</label>
-              <input class="admin-form__input" type="file" id="banner-file" accept="image/*" style="padding:.4rem;">
-              <div id="banner-upload-status" style="font-family:var(--ff-mono);font-size:.75rem;color:var(--clr-text-muted);margin-top:.25rem;"></div>
-            </div>
-
-            <button type="submit" class="admin-form__submit" id="banner-submit">Banner speichern</button>
-            <button type="button" class="btn-sm btn-sm--danger" id="banner-remove" style="margin-top:.5rem;">Banner entfernen</button>
-          </form>
-        </div>
-      </section>
-
-      <section class="panel">
-        <div class="panel__header">
-          <h2 class="panel__title">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-            Vorschau
-          </h2>
-          <div class="panel__actions">
-            <button class="btn-sm" id="btn-refresh-banner">Aktualisieren</button>
-          </div>
-        </div>
-        <div class="panel__body" id="banner-preview-body">
-          <div class="loading">Lade Banner</div>
         </div>
       </section>
     </div>
@@ -579,8 +422,13 @@
   </div>
 </div>
 
-<script src="/assets/js/admin-roster.js"></script>
-<script src="/assets/js/admin-dashboard.js"></script>
+<script src="/assets/js/admin/config.js"></script>
+<script src="/assets/js/admin/roster.js"></script>
+<script src="/assets/js/admin/homepage-content/roster-slideshow.js"></script>
+<script src="/assets/js/admin/homepage-content/news-ticker.js"></script>
+<script src="/assets/js/admin/homepage-content/banner.js"></script>
+<script src="/assets/js/admin/homepage-content/page.js"></script>
+<script src="/assets/js/admin/dashboard.js"></script>
 
 </body>
 </html>
