@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-labelledby="title desc">
+  <title id="title">Twitch video placeholder</title>
+  <desc id="desc">A public placeholder image for Twitch videos without a thumbnail.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#17142f"/>
+      <stop offset="1" stop-color="#301052"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#9146ff"/>
+      <stop offset="1" stop-color="#ff3b5c"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="360" rx="32" fill="url(#bg)"/>
+  <rect x="64" y="56" width="512" height="248" rx="24" fill="#211d3f" stroke="url(#glow)" stroke-width="8"/>
+  <path d="M250 122h148v116H296l-46 42v-42h-38V122h38z" fill="#9146ff"/>
+  <path d="M318 154v52M368 154v52" stroke="#fff" stroke-width="22" stroke-linecap="square"/>
+  <text x="320" y="318" text-anchor="middle" fill="#f8f7ff" font-family="Arial, sans-serif" font-size="28" font-weight="700" letter-spacing="3">TWITCH CLIP</text>
+</svg>
