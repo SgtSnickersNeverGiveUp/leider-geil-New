@@ -1,14 +1,18 @@
 'use strict';
 
-const API_URL = '/api/applications';
-const EVENTS_API = '/api/events';
-const EVENT_IMAGE_API = '/api/event-image';
-const VIDEOS_API = '/api/videos';
-const EVT_REGISTRATIONS_API = '/api/event-registrations';
-const NEWS_API_URL = '/api/news';
-const SETTINGS_API = '/api/settings';
-const BANNER_IMAGE_API = '/api/banner-image';
-const COMMUNITY_SHOUTS_API = '/api/community-shouts';
+(function () {
+const ADMIN_DASHBOARD_API_BASE = '/api/admin';
+const API_URL = `${ADMIN_DASHBOARD_API_BASE}/applications`;
+const EVENTS_API = `${ADMIN_DASHBOARD_API_BASE}/events`;
+const EVENT_IMAGE_API = `${ADMIN_DASHBOARD_API_BASE}/event-image`;
+const VIDEOS_API = `${ADMIN_DASHBOARD_API_BASE}/videos`;
+const EVT_REGISTRATIONS_API = `${ADMIN_DASHBOARD_API_BASE}/event-registrations`;
+const NEWS_API_URL = `${ADMIN_DASHBOARD_API_BASE}/news`;
+const SETTINGS_API = `${ADMIN_DASHBOARD_API_BASE}/settings`;
+const BANNER_IMAGE_API = `${ADMIN_DASHBOARD_API_BASE}/banner-image`;
+const COMMUNITY_SHOUTS_API = `${ADMIN_DASHBOARD_API_BASE}/community-shouts`;
+const ADMIN_SESSION_API = `${ADMIN_DASHBOARD_API_BASE}/session`;
+const ADMIN_LOGOUT_API = `${ADMIN_DASHBOARD_API_BASE}/logout`;
 
 const EVENT_GAME_OPTIONS = [
   'PUBG',
@@ -39,7 +43,7 @@ function redirectToAdminLogin() {
 
 async function ensureAdminSession() {
   try {
-    const res = await fetch('/api/admin-session', { credentials: 'same-origin' });
+    const res = await fetch(ADMIN_SESSION_API, { credentials: 'same-origin' });
     if (!res.ok) {
       redirectToAdminLogin();
       return false;
@@ -60,13 +64,20 @@ async function ensureAdminSession() {
 
 async function logoutAdmin() {
   try {
-    await fetch('/api/admin-logout', {
+    await fetch(ADMIN_LOGOUT_API, {
       method: 'POST',
       credentials: 'same-origin',
     });
   } finally {
     redirectToAdminLogin();
   }
+}
+
+function loadAdminRoster() {
+  const rosterAdmin = window.LGAdminRoster;
+  if (rosterAdmin?.loadRoster) return rosterAdmin.loadRoster();
+  console.error('[Admin Dashboard] Roster-Modul ist nicht geladen.');
+  return Promise.resolve();
 }
 
 async function loadTickerSettings() {
@@ -104,7 +115,7 @@ function switchPage(pageId) {
 
   // Load data for the page
   if (pageId === 'page-bewerbungen') loadApplications();
-  if (pageId === 'page-roster') loadRoster();
+  if (pageId === 'page-roster') loadAdminRoster();
   if (pageId === 'page-events') loadEvents();
   if (pageId === 'page-videos') loadVideos();
   if (pageId === 'page-banner') loadBannerSettings();
@@ -135,7 +146,7 @@ async function loadApplications() {
   body.innerHTML = '<div class="loading">Lade Bewerbungen</div>';
 
   try {
-    const res = await fetch(API_URL); // '/api/applications'
+    const res = await fetch(API_URL);
     if (!res.ok) throw new Error('API error ' + res.status);
     currentApplications = await res.json();
   } catch (err) {
@@ -174,26 +185,63 @@ function renderApplications() {
         </tr>
       </thead>
       <tbody>
-        ${currentApplications.map(app => `
+        ${currentApplications.map((app) => {
+          const id = escapeHtml(app.id);
+          const about = app.ueberMich || '';
+          return `
           <tr>
-            <td><strong>${app.gamingId}</strong></td>
-            <td>${app.alter}</td>
+            <td><strong>${escapeHtml(app.gamingId)}</strong></td>
+            <td>${escapeHtml(app.alter)}</td>
+            <td>${renderApplicationGameBadge(app.hauptspiel)}</td>
+            <td>${escapeHtml(app.rolle)}</td>
+            <td class="app-about">${escapeHtml(about.substring(0, 80))}${about.length > 80 ? '...' : ''}</td>
+            <td class="app-date">${formatDate(app.createdAt)}</td>
             <td>
-              ${app.hauptspiel === 'PUBG' ? '<span class="tag tag--pubg">PUBG</span>' : 
-                app.hauptspiel === 'ARC Raiders' ? '<span class="tag tag--arc">ARC</span>' : 
-                '<span class="tag tag--both">PUBG + ARC</span>'}
-            </td>
-            <td>${app.rolle}</td>
-            <td class="app-about">${app.ueberMich.substring(0,80)}${app.ueberMich.length > 80 ? '...' : ''}</td>
-            <td class="app-date">${new Date(app.createdAt).toLocaleString('de-DE')}</td>
-            <td>
-  <button class="btn-sm" onclick="alert('Details: ${app.gamingId} | ${app.ueberMich}')">Details</button>
-  <button class="btn-delete" onclick="deleteApplication('${app.id}')">Löschen</button>
+  <button class="btn-sm" onclick="LGAdminDashboard.openApplicationDetails('${id}')">Details</button>
+  <button class="btn-delete" onclick="LGAdminDashboard.deleteApplication('${id}')">Löschen</button>
 </td>
           </tr>
-        `).join('')}
+        `;
+        }).join('')}
       </tbody>
     </table>`;
+}
+
+function renderApplicationGameBadge(game) {
+  if (game === 'PUBG') return '<span class="tag tag--pubg">PUBG</span>';
+  if (game === 'ARC Raiders') return '<span class="tag tag--arc">ARC</span>';
+  return `<span class="tag tag--both">${escapeHtml(game || 'PUBG + ARC')}</span>`;
+}
+
+function openApplicationDetails(id) {
+  const app = currentApplications.find((item) => item.id === id);
+  if (!app) return;
+
+  currentModalId = id;
+  currentEvtModalId = null;
+  document.getElementById('modal-title').textContent = `Bewerbung: ${app.gamingId || 'Details'}`;
+  document.getElementById('modal-body').innerHTML = `
+    <p><strong>Gaming-ID:</strong> ${escapeHtml(app.gamingId)}</p>
+    <p><strong>Alter:</strong> ${escapeHtml(app.alter)}</p>
+    <p><strong>Hauptspiel:</strong> ${escapeHtml(app.hauptspiel)}</p>
+    <p><strong>Rolle:</strong> ${escapeHtml(app.rolle)}</p>
+    <p><strong>Eingegangen:</strong> ${formatDate(app.createdAt)}</p>
+    <p><strong>Über mich:</strong><br>${escapeHtml(app.ueberMich)}</p>
+  `;
+  document.getElementById('modal-overlay')?.classList.add('active');
+}
+
+async function deleteApplication(id) {
+  if (!confirm('Bewerbung wirklich löschen?')) return;
+
+  try {
+    const res = await fetch(`${API_URL}?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    closeModal();
+    await loadApplications();
+  } catch (err) {
+    alert('Fehler beim Löschen: ' + err.message);
+  }
 }
 
 function updateStats() {
@@ -441,8 +489,8 @@ function renderEventsAdmin(events) {
           </div>
         </div>
         <div class="admin-event-actions">
-          <button class="btn-sm" onclick="openEditEvent('${ev.id}')">&#9998;</button>
-          <button class="btn-delete" onclick="deleteEvent('${ev.id}')">Löschen</button>
+          <button class="btn-sm" onclick="LGAdminDashboard.openEditEvent('${ev.id}')">&#9998;</button>
+          <button class="btn-delete" onclick="LGAdminDashboard.deleteEvent('${ev.id}')">Löschen</button>
         </div>
       </div>`;
   }).join('');
@@ -703,7 +751,7 @@ function renderVideosAdmin(videos) {
       <img class="admin-video-card__thumb" src="${escapeHtml(v.thumbnail)}" alt="${escapeHtml(v.title)}" loading="lazy">
       <div class="admin-video-card__body">
         <span class="admin-video-card__title">${escapeHtml(v.title)}</span>
-        <button class="btn-delete" onclick="deleteVideo('${v.id}')">&#10005;</button>
+        <button class="btn-delete" onclick="LGAdminDashboard.deleteVideo('${v.id}')">&#10005;</button>
       </div>
     </div>
   `).join('')}</div>`;
@@ -954,8 +1002,8 @@ function renderEventRegistrations() {
 <td class="app-about">${escapeHtml(truncate(reg.bemerkungen || '', 60))}</td>
 <td class="app-date">${formatDate(reg.createdAt)}</td>
 <td>
-  <button class="btn-sm" onclick="showEvtDetail('${reg.id}')">Details</button>
-  <button class="btn-delete" onclick="deleteEventRegistration('${reg.id}')">Löschen</button>
+  <button class="btn-sm" onclick="LGAdminDashboard.showEvtDetail('${reg.id}')">Details</button>
+  <button class="btn-delete" onclick="LGAdminDashboard.deleteEventRegistration('${reg.id}')">Löschen</button>
 </td>
 
           </tr>
@@ -1078,10 +1126,10 @@ function renderCommunityShoutsAdmin() {
             <td class="app-about">${escapeHtml(shout.message)}</td>
             <td class="app-date">${formatDate(shout.createdAt)}</td>
             <td>
-              <button class="btn-sm" onclick="setCommunityShoutApproval('${shout.id}', ${!shout.approved})">
+              <button class="btn-sm" onclick="LGAdminDashboard.setCommunityShoutApproval('${shout.id}', ${!shout.approved})">
                 ${shout.approved ? 'Ausblenden' : 'Freigeben'}
               </button>
-              <button class="btn-delete" onclick="deleteCommunityShout('${shout.id}')">Löschen</button>
+              <button class="btn-delete" onclick="LGAdminDashboard.deleteCommunityShout('${shout.id}')">Löschen</button>
             </td>
           </tr>
         `).join('')}
@@ -1140,12 +1188,13 @@ function formatDate(value) {
 // EVENT LISTENERS
 // ══════════════════════════════════════════════════════════
 document.getElementById('btn-refresh').addEventListener('click', loadApplications);
-document.getElementById('btn-refresh-roster').addEventListener('click', loadRoster);
+document.getElementById('btn-refresh-roster').addEventListener('click', loadAdminRoster);
 document.getElementById('btn-refresh-events').addEventListener('click', loadEvents);
 document.getElementById('btn-refresh-videos').addEventListener('click', loadVideos);
 document.getElementById('btn-refresh-banner').addEventListener('click', loadBannerSettings);
 document.getElementById('btn-refresh-evt-registrations').addEventListener('click', loadEventRegistrations);
 document.getElementById('btn-refresh-community-shouts')?.addEventListener('click', loadCommunityShouts);
+document.getElementById('btn-refresh-news')?.addEventListener('click', loadNewsIntoAdmin);
 document.getElementById('admin-logout')?.addEventListener('click', logoutAdmin);
 
 document.getElementById('modal-close').addEventListener('click', closeModal);
@@ -1184,4 +1233,17 @@ async function checkTwitchStatus() {
   loadApplications();
   checkTwitchStatus();
   setInterval(checkTwitchStatus, 60000);
+})();
+
+window.LGAdminDashboard = {
+  openApplicationDetails,
+  deleteApplication,
+  openEditEvent,
+  deleteEvent,
+  deleteVideo,
+  showEvtDetail,
+  deleteEventRegistration,
+  setCommunityShoutApproval,
+  deleteCommunityShout,
+};
 })();

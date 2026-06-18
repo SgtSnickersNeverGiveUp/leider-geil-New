@@ -1,8 +1,19 @@
 'use strict';
 
-const ROSTER_API = '/api/roster';
-const ROSTER_AVATAR_API = '/api/roster-avatar';
-const ROSTER_SETTINGS_API = '/api/settings';
+(function () {
+const ADMIN_ROSTER_API_BASE = '/api/admin';
+const ROSTER_API = `${ADMIN_ROSTER_API_BASE}/roster`;
+const ROSTER_AVATAR_API = `${ADMIN_ROSTER_API_BASE}/roster-avatar`;
+const ROSTER_SETTINGS_API = `${ADMIN_ROSTER_API_BASE}/settings`;
+
+function escapeHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
 
 // ══════════════════════════════════════════════════════════
 // CLAN ROSTER
@@ -104,8 +115,8 @@ function renderRosterAdmin(members) {
 
     return `
     <div class="admin-roster-card" data-id="${escapeHtml(m.id)}">
-      <button class="btn-sm admin-roster-card__edit" onclick="openEditMember('${escapeHtml(m.id)}')">&#9998;</button>
-      <button class="btn-delete admin-roster-card__delete" onclick="deleteRosterMember('${escapeHtml(m.id)}')">&#10005;</button>
+      <button class="btn-sm admin-roster-card__edit" onclick="LGAdminRoster.openEditMember('${escapeHtml(m.id)}')">&#9998;</button>
+      <button class="btn-delete admin-roster-card__delete" onclick="LGAdminRoster.deleteRosterMember('${escapeHtml(m.id)}')">&#10005;</button>
       <img class="admin-roster-cardavatar" src="${avatarSrc}" alt="${escapeHtml(m.name)}" loading="lazy"
      onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 80 80%27%3E%3Crect fill=%27%231a1a2e%27 width=%2780%27 height=%2780%27/%3E%3Ctext x=%2750%25%27 y=%2755%25%27 text-anchor=%27middle%27 fill=%27%237a7a8e%27 font-size=%2724%27%3E${escapeHtml(m.name.slice(0,2).toUpperCase())}%3C/text%3E%3C/svg%3E'">
       <div class="admin-roster-card__name">${escapeHtml(m.name)}</div>
@@ -361,7 +372,7 @@ function openEditMember(id) {
             </div>
             <div class="custom-game-row">
               <input class="admin-form__input" type="text" id="edit-custom-game" placeholder="Weiteres Spiel hinzufügen…">
-              <button type="button" class="btn-sm" onclick="addCustomGame('edit')">+</button>
+              <button type="button" class="btn-sm" onclick="LGAdminRoster.addCustomGame('edit')">+</button>
             </div>
           </div>
           <div class="admin-form__group">
@@ -600,3 +611,11 @@ document.getElementById('roster-slideshow-selected')?.addEventListener('click', 
   if (!btn) return;
   removeRosterSlideshowMember(btn.dataset.slideshowRemove);
 });
+
+window.LGAdminRoster = {
+  loadRoster,
+  openEditMember,
+  deleteRosterMember,
+  addCustomGame,
+};
+})();
