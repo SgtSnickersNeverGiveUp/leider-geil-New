@@ -1,5 +1,4 @@
 import { getStore } from "@netlify/blobs";
-import { requireAdmin } from "./admin-auth.mjs";
 
 const STORE_NAME = "community-shouts";
 const MAX_NAME_LENGTH = 32;
@@ -20,38 +19,37 @@ function sanitizeText(value, maxLength) {
     .slice(0, maxLength);
 }
 
-async function listShouts(store, includePending = false) {
+function toPublicShout(shout) {
+  return {
+    name: shout.name || "",
+    message: shout.message || "",
+    tag: shout.tag || "Community",
+  };
+}
+
+async function listApprovedShouts(store) {
   const { blobs } = await store.list();
   const shouts = [];
 
   for (const blob of blobs) {
     const data = await store.get(blob.key, { type: "json" });
-    if (data && (includePending || data.approved)) shouts.push(data);
+    if (data?.approved) shouts.push(data);
   }
 
   shouts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  return shouts;
+  return shouts.map(toPublicShout);
 }
 
 export default async (req) => {
-  const url = new URL(req.url);
-
-  if (
-    (req.method === "GET" && url.searchParams.get("all") === "1") ||
-    req.method === "PUT" ||
-    req.method === "DELETE"
-  ) {
-    const adminGuard = requireAdmin(req);
-    if (adminGuard) return adminGuard;
+  if (req.method !== "GET" && req.method !== "POST") {
+    return jsonResponse({ error: "Method not allowed" }, 405);
   }
 
   const store = getStore(STORE_NAME);
 
   if (req.method === "GET") {
     try {
-      const includePending = url.searchParams.get("all") === "1";
-      const shouts = await listShouts(store, includePending);
-      return jsonResponse(shouts);
+      return jsonResponse(await listApprovedShouts(store));
     } catch (err) {
       return jsonResponse({ error: "Shouts konnten nicht geladen werden." }, 500);
     }
@@ -89,42 +87,6 @@ export default async (req) => {
       return jsonResponse({ error: "Shout konnte nicht gespeichert werden." }, 500);
     }
   }
-
-  if (req.method === "PUT") {
-    try {
-      const body = await req.json();
-      const id = sanitizeText(body.id, 80);
-      if (!id) return jsonResponse({ error: "ID fehlt." }, 400);
-
-      const existing = await store.get(id, { type: "json" });
-      if (!existing) return jsonResponse({ error: "Shout nicht gefunden." }, 404);
-
-      const updated = {
-        ...existing,
-        approved: Boolean(body.approved),
-        moderatedAt: new Date().toISOString(),
-      };
-
-      await store.setJSON(id, updated);
-      return jsonResponse({ success: true, shout: updated });
-    } catch (err) {
-      return jsonResponse({ error: "Shout konnte nicht aktualisiert werden." }, 500);
-    }
-  }
-
-  if (req.method === "DELETE") {
-    try {
-      const id = sanitizeText(url.searchParams.get("id"), 80);
-      if (!id) return jsonResponse({ error: "ID fehlt." }, 400);
-
-      await store.delete(id);
-      return jsonResponse({ success: true });
-    } catch (err) {
-      return jsonResponse({ error: "Shout konnte nicht gelöscht werden." }, 500);
-    }
-  }
-
-  return jsonResponse({ error: "Method not allowed" }, 405);
 };
 
 export const config = {

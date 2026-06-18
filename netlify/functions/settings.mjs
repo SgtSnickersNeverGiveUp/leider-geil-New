@@ -5,10 +5,15 @@ const STORE_NAME = "settings";
 const SETTINGS_KEY = "site-settings";
 
 export default async (req) => {
-  if (req.method === "POST") {
-    const adminGuard = requireAdmin(req);
-    if (adminGuard) return adminGuard;
+  if (req.method !== "GET" && req.method !== "POST") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+      status: 405,
+      headers: { "Content-Type": "application/json" },
+    });
   }
+
+  const adminGuard = requireAdmin(req);
+  if (adminGuard) return adminGuard;
 
   const store = getStore(STORE_NAME);
 
@@ -61,5 +66,5 @@ export default async (req) => {
 };
 
 export const config = {
-  path: "/api/settings",
+  path: "/api/admin/settings",
 };

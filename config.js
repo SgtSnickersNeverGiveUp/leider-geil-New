@@ -34,7 +34,7 @@ const SITE_CONFIG = {
   eventImageApi: "/api/event-image",
   videosApi: "/api/videos",
   newsApi: "/api/news",
-  settingsApi: "/api/settings",
+  settingsApi: "/api/public-settings",
   communityShoutsApi: "/api/community-shouts",
   eventRegistrationsApi: "/api/event-registrations",
   visitorCounterApi: "/api/visitor-count",
