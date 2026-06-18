@@ -89,7 +89,11 @@ async function getStreamStatus(token) {
 }
 
 // ── Handler ──
-export default async () => {
+export default async (req) => {
+  if (req.method !== "GET") {
+    return jsonResponse({ error: "Method not allowed" }, 405);
+  }
+
   try {
     if (!CLIENT_ID || !CLIENT_SECRET) {
       console.error("[twitch-status] TWITCH_CLIENT_ID or TWITCH_CLIENT_SECRET not set");
