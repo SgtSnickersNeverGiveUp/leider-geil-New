@@ -1,0 +1,765 @@
+import { access, readdir, readFile } from "node:fs/promises";
+import path from "node:path";
+
+const repoRoot = path.resolve(new URL("..", import.meta.url).pathname);
+
+const failures = [];
+
+const removedFiles = [
+  "assets/data/events.json",
+  "assets/data/news.json",
+  "assets/data/roster.json",
+  "assets/js/admin-dashboard.js",
+  "assets/js/admin-login.js",
+  "assets/js/admin-roster.js",
+  "assets/js/clan-news-ticker.js",
+  "assets/js/community-shouts.js",
+  "assets/js/public-roster.js",
+  "assets/js/roster-slideshow.js",
+  "assets/js/admin/public-content/banner.js",
+  "assets/js/admin/public-content/news-ticker.js",
+  "assets/js/admin/public-content/roster-slideshow.js",
+  "assets/js/admin/homepage-content/index.js",
+  "assets/js/script.js",
+  "config.js",
+  "netlify/functions/admin-settings.mjs",
+  "netlify/functions/settings.mjs",
+  "netlify/functions/_shared/settings-data.mjs",
+];
+
+const ignoredDirectories = new Set([
+  ".git",
+  ".netlify",
+  "node_modules",
+]);
+
+const adminHtmlEntries = new Set([
+  "admin-login.html",
+  "lg-dashboard.html",
+]);
+
+const sharedStylesheetAllowList = new Set([
+  "/assets/css/tokens.css",
+]);
+
+const publicStylesheetAllowList = new Set([
+  ...sharedStylesheetAllowList,
+  "/assets/css/styles.css",
+]);
+
+const adminStylesheetAllowList = new Set([
+  ...sharedStylesheetAllowList,
+  "/assets/css/admin-dashboard.css",
+]);
+
+const publicHandlerProjectionImports = [
+  {
+    storeImport: "./_shared/news-data.mjs",
+    projectionImport: "./_shared/public-news-data.mjs",
+  },
+  {
+    storeImport: "./_shared/videos-data.mjs",
+    projectionImport: "./_shared/public-videos-data.mjs",
+  },
+  {
+    storeImport: "./_shared/events-data.mjs",
+    projectionImport: "./_shared/public-events-data.mjs",
+  },
+  {
+    storeImport: "./_shared/roster-data.mjs",
+    projectionImport: "./_shared/public-roster-data.mjs",
+  },
+  {
+    storeImport: "./_shared/community-shouts-data.mjs",
+    projectionImport: "./_shared/public-community-shouts-data.mjs",
+  },
+];
+
+async function main() {
+  const htmlBoundaryFiles = await discoverHtmlBoundaryFiles();
+
+  await assertAssetsJsLayout();
+  await assertPublicJsBoundary();
+  await assertPublicAssetBoundary();
+  await assertHtmlBoundaries(htmlBoundaryFiles);
+  await assertHtmlScriptReferences(htmlBoundaryFiles);
+  await assertHtmlStylesheetReferences(htmlBoundaryFiles);
+  await assertHtmlInlineBehaviorBoundary(htmlBoundaryFiles);
+  await assertCssBoundaries();
+  await assertAdminCoreBoundary();
+  await assertAdminMediaPreviewBoundary();
+  await assertAdminHomepageEditorBoundary();
+  await assertAdminDashboardShellBoundary();
+  await assertNetlifyFunctionBoundary();
+  await assertNetlifyRoutingBoundary();
+  await assertEdgeFunctionBoundary();
+  await assertPublicIndexProjectionBoundary();
+  await assertPublicSettingsHelperBoundary();
+  await assertSharedContentDataBoundary();
+  await assertRemovedFilesStayRemoved();
+
+  if (failures.length > 0) {
+    console.error("Boundary checks failed:");
+    for (const failure of failures) {
+      console.error(`- ${failure}`);
+    }
+    process.exit(1);
+  }
+
+  console.log("Boundary checks passed.");
+}
+
+async function discoverHtmlBoundaryFiles() {
+  const htmlFiles = (await listFiles(repoRoot))
+    .filter((file) => file.endsWith(".html"))
+    .sort();
+
+  return Promise.all(htmlFiles.map(async (file) => {
+    const content = await readText(file);
+    const relative = path.relative(repoRoot, file);
+    const boundary = isAdminHtml(relative) ? "admin" : "public";
+    return { file, relative, boundary, content };
+  }));
+}
+
+function isAdminHtml(relative) {
+  return adminHtmlEntries.has(relative);
+}
+
+async function assertAssetsJsLayout() {
+  const jsRoot = path.join(repoRoot, "assets/js");
+  const jsRootFiles = (await listFiles(jsRoot))
+    .filter((file) => path.dirname(file) === jsRoot);
+
+  for (const file of jsRootFiles) {
+    failures.push(`${path.relative(repoRoot, file)}: browser code must live under assets/js/public or assets/js/admin`);
+  }
+}
+
+async function assertPublicJsBoundary() {
+  const files = await listFiles(path.join(repoRoot, "assets/js/public"));
+  for (const file of files) {
+    const content = await readText(file);
+    assertApiPathsMatchBoundary(file, content, "public");
+    assertNotContains(file, content, [
+      "/api/admin",
+      "LG_ADMIN",
+      "LGAdmin",
+      "assets/js/admin",
+    ]);
+  }
+}
+
+async function assertPublicAssetBoundary() {
+  const publicJsFiles = await listFiles(path.join(repoRoot, "assets/js/public"));
+  for (const file of publicJsFiles.filter((item) => item.endsWith(".js"))) {
+    const content = await readText(file);
+    if (/(^|["'`])assets\//.test(content)) {
+      failures.push(`${path.relative(repoRoot, file)}: public assets must use root-relative /assets/... paths`);
+    }
+  }
+
+  const files = await listFiles(repoRoot);
+  for (const file of files.filter((item) => /\.(?:css|html|js|mjs)$/.test(item))) {
+    const content = await readText(file);
+    for (const assetPath of extractAssetImageReferences(content)) {
+      await assertFileExists(file, assetPath);
+    }
+  }
+}
+
+async function assertHtmlBoundaries(htmlBoundaryFiles) {
+  for (const { file, content, boundary } of htmlBoundaryFiles) {
+    if (boundary !== "public") continue;
+
+    assertNotContains(file, content, [
+      "/assets/js/admin/",
+      "/assets/css/admin-dashboard.css",
+      "/api/admin",
+      "LG_ADMIN",
+      "LGAdmin",
+    ]);
+  }
+
+  for (const { file, content, boundary } of htmlBoundaryFiles) {
+    if (boundary !== "admin") continue;
+
+    assertNotContains(file, content, [
+      "/assets/js/public/",
+      "/assets/css/styles.css",
+      "/assets/js/admin/public-content/",
+      "SITE_CONFIG",
+      'data-page="page-news"',
+      'data-page="page-banner"',
+    ]);
+  }
+}
+
+async function assertHtmlScriptReferences(htmlBoundaryFiles) {
+  const publicScriptAllowList = new Set([
+    "/assets/js/public/application-form.js",
+    "/assets/js/public/clan-news-ticker.js",
+    "/assets/js/public/community-shouts.js",
+    "/assets/js/public/config.js",
+    "/assets/js/public/event-signup-form.js",
+    "/assets/js/public/index.js",
+    "/assets/js/public/nav.js",
+    "/assets/js/public/roster.js",
+    "/assets/js/public/roster-slideshow.js",
+  ]);
+  const adminScriptAllowList = new Set([
+    "/assets/js/admin/config.js",
+    "/assets/js/admin/media-preview.js",
+    "/assets/js/admin/dashboard.js",
+    "/assets/js/admin/login.js",
+    "/assets/js/admin/roster.js",
+    "/assets/js/admin/homepage-content/page.js",
+    "/assets/js/admin/homepage-content/banner.js",
+    "/assets/js/admin/homepage-content/news-ticker.js",
+    "/assets/js/admin/homepage-content/roster-slideshow.js",
+  ]);
+
+  for (const { relative, boundary, content } of htmlBoundaryFiles) {
+    if (boundary !== "public") continue;
+
+    const scriptSources = extractScriptSources(content);
+    for (const scriptSource of scriptSources) {
+      if (!publicScriptAllowList.has(scriptSource)) {
+        failures.push(`${relative}: public page must not load ${JSON.stringify(scriptSource)}`);
+      }
+    }
+  }
+
+  for (const { relative, boundary, content } of htmlBoundaryFiles) {
+    if (boundary !== "admin") continue;
+
+    const scriptSources = extractScriptSources(content);
+    for (const scriptSource of scriptSources) {
+      if (!adminScriptAllowList.has(scriptSource)) {
+        failures.push(`${relative}: admin page must not load ${JSON.stringify(scriptSource)}`);
+      }
+    }
+
+    if (relative === "lg-dashboard.html") {
+      assertScriptBefore(relative, scriptSources, "/assets/js/admin/config.js", "/assets/js/admin/media-preview.js");
+      assertScriptBefore(relative, scriptSources, "/assets/js/admin/media-preview.js", "/assets/js/admin/roster.js");
+      assertScriptBefore(relative, scriptSources, "/assets/js/admin/homepage-content/roster-slideshow.js", "/assets/js/admin/homepage-content/page.js");
+      assertScriptBefore(relative, scriptSources, "/assets/js/admin/homepage-content/news-ticker.js", "/assets/js/admin/homepage-content/page.js");
+      assertScriptBefore(relative, scriptSources, "/assets/js/admin/homepage-content/banner.js", "/assets/js/admin/homepage-content/page.js");
+      assertScriptBefore(relative, scriptSources, "/assets/js/admin/homepage-content/page.js", "/assets/js/admin/dashboard.js");
+    }
+  }
+}
+
+async function assertHtmlStylesheetReferences(htmlBoundaryFiles) {
+  for (const { relative, boundary, content } of htmlBoundaryFiles) {
+    const stylesheetHrefs = extractStylesheetHrefs(content);
+    const allowList = boundary === "admin"
+      ? adminStylesheetAllowList
+      : publicStylesheetAllowList;
+
+    for (const stylesheetHref of stylesheetHrefs) {
+      if (isExternalStylesheet(stylesheetHref)) continue;
+      if (!allowList.has(stylesheetHref)) {
+        failures.push(`${relative}: ${boundary} page must not load stylesheet ${JSON.stringify(stylesheetHref)}`);
+      }
+    }
+  }
+}
+
+async function assertHtmlInlineBehaviorBoundary(htmlBoundaryFiles) {
+  for (const { relative, boundary, content } of htmlBoundaryFiles) {
+    const inlineScripts = extractInlineScriptBlocks(content);
+    if (inlineScripts.length > 0) {
+      failures.push(`${relative}: move inline <script> code into the dedicated ${boundary} browser bundle`);
+    }
+
+    if (boundary === "public" && /\son[a-z]+\s*=/i.test(content)) {
+      failures.push(`${relative}: public pages must not use inline event handlers`);
+    }
+  }
+}
+
+async function assertCssBoundaries() {
+  const publicStylesPath = path.join(repoRoot, "assets/css/styles.css");
+  const publicStyles = await readText(publicStylesPath);
+  assertNotContains(publicStylesPath, publicStyles, [
+    ".admin-",
+    "admin-dashboard",
+  ]);
+
+  const adminStylesPath = path.join(repoRoot, "assets/css/admin-dashboard.css");
+  const adminStyles = await readText(adminStylesPath);
+  assertNotContains(adminStylesPath, adminStyles, [
+    ".hero",
+    ".navbar",
+    ".site-header",
+    ".site-footer",
+    ".top-community",
+    'data-page="page-news"',
+    'data-page="page-banner"',
+    ".roster-slideshow-admin",
+    ".banner-preview-container",
+    ".banner-tab-btn",
+  ]);
+}
+
+async function assertAdminCoreBoundary() {
+  const files = await listFiles(path.join(repoRoot, "assets/js/admin"));
+  for (const file of files.filter((item) => item.endsWith(".js"))) {
+    const content = await readText(file);
+    assertApiPathsMatchBoundary(file, content, "admin");
+    assertNotContains(file, content, [
+      "SITE_CONFIG",
+      "/assets/js/public/",
+      "/assets/js/admin/public-content/",
+      "/api/public-settings",
+      "/api/event-image",
+      "/api/banner-image",
+      "/api/roster-avatar",
+      "LGAdminPublic",
+      "publicContentSettingsApi",
+      "publicEventImageApi",
+      "publicBannerImageApi",
+      "publicRosterAvatarApi",
+      ".replace('/api/admin/', '/api/')",
+      '.replace("/api/admin/", "/api/")',
+    ]);
+  }
+}
+
+async function assertAdminMediaPreviewBoundary() {
+  const adminConfigPath = path.join(repoRoot, "assets/js/admin/config.js");
+  const adminConfig = await readText(adminConfigPath);
+  assertNotContains(adminConfigPath, adminConfig, [
+    "toPublicApiPath",
+    "createMediaPreviewEndpoint",
+    "getPublicMediaSuffix",
+    "toAdminMediaPreviewUrl",
+    "isManagedPublicMediaUrl",
+    "publicApi",
+  ]);
+
+  const adminMediaPreviewPath = path.join(repoRoot, "assets/js/admin/media-preview.js");
+  const adminMediaPreview = await readText(adminMediaPreviewPath);
+  assertNotContains(adminMediaPreviewPath, adminMediaPreview, [
+    "/api/event-image",
+    "/api/banner-image",
+    "/api/roster-avatar",
+    ".replace('/api/admin/', '/api/')",
+    '.replace("/api/admin/", "/api/")',
+    "toPublicApiPath",
+    "createMediaPreviewEndpoint",
+    "getPublicMediaSuffix",
+    "toAdminMediaPreviewUrl",
+    "isManagedPublicMediaUrl",
+    "publicApi",
+  ]);
+}
+
+async function assertAdminDashboardShellBoundary() {
+  const dashboardPath = path.join(repoRoot, "assets/js/admin/dashboard.js");
+  const dashboard = await readText(dashboardPath);
+  assertNotContains(dashboardPath, dashboard, [
+    "LGAdminHomepage",
+    "loadHomepage",
+    "homepage-content",
+    "page-homepage-content",
+    "page-news",
+    "page-banner",
+  ]);
+}
+
+async function assertAdminHomepageEditorBoundary() {
+  const dashboardHtmlPath = path.join(repoRoot, "lg-dashboard.html");
+  const dashboardHtml = await readText(dashboardHtmlPath);
+  assertNotContains(dashboardHtmlPath, dashboardHtml, [
+    'id="roster-slideshow-',
+    'id="ticker-',
+    'id="news-',
+    'id="banner-',
+    'class="roster-slideshow-admin',
+    'class="banner-tab',
+    'class="banner-preview',
+  ]);
+
+  const homepageEditorFiles = [
+    "assets/js/admin/homepage-content/page.js",
+    "assets/js/admin/homepage-content/banner.js",
+    "assets/js/admin/homepage-content/news-ticker.js",
+    "assets/js/admin/homepage-content/roster-slideshow.js",
+  ];
+
+  for (const file of homepageEditorFiles) {
+    const absolutePath = path.join(repoRoot, file);
+    const content = await readText(absolutePath);
+    assertNotContains(absolutePath, content, [
+      "document.getElementById('roster-slideshow",
+      'id="roster-slideshow-',
+      "document.getElementById('ticker-",
+      'id="ticker-',
+      "document.getElementById('news-",
+      'id="news-',
+      "document.getElementById('banner-",
+      'id="banner-',
+      ".banner-tab-btn",
+      "roster-slideshow-admin",
+      "data-slideshow-",
+      "data-news-remove",
+    ]);
+  }
+}
+
+async function assertNetlifyFunctionBoundary() {
+  const functionsDir = path.join(repoRoot, "netlify/functions");
+  const files = await listFiles(functionsDir);
+
+  for (const file of files.filter((item) => item.endsWith(".mjs"))) {
+    const relative = path.relative(repoRoot, file);
+    const content = await readText(file);
+    const imports = extractRelativeImports(content);
+    const endpointPath = extractConfiguredFunctionPath(content);
+    const isSharedModule = relative.includes("_shared/");
+    const isAdminHandler = relative.startsWith("netlify/functions/admin-")
+      || endpointPath?.startsWith("/api/admin/");
+
+    if (isSharedModule) continue;
+
+    if (isAdminHandler) {
+      assertApiPathsMatchBoundary(file, content, "admin");
+      for (const importPath of imports) {
+        if (importPath.startsWith("./_shared/public-")
+          && importPath !== "./_shared/public-content-settings-schema.mjs") {
+          failures.push(`${relative}: admin handler must not import public projection helper ${JSON.stringify(importPath)}`);
+        }
+      }
+      continue;
+    }
+
+    assertApiPathsMatchBoundary(file, content, "public");
+    for (const importPath of imports) {
+      if (importPath === "./admin-auth.mjs" || importPath.startsWith("./_shared/admin-")) {
+        failures.push(`${relative}: public handler must not import admin helper ${JSON.stringify(importPath)}`);
+      }
+    }
+
+    for (const { storeImport, projectionImport } of publicHandlerProjectionImports) {
+      if (imports.includes(storeImport) && !imports.includes(projectionImport)) {
+        failures.push(`${relative}: public handler importing ${JSON.stringify(storeImport)} must also use ${JSON.stringify(projectionImport)}`);
+      }
+    }
+  }
+
+  const publicSettings = await readText(path.join(repoRoot, "netlify/functions/public-settings.mjs"));
+  assertNotContains(path.join(repoRoot, "netlify/functions/public-settings.mjs"), publicSettings, [
+    "admin-public-settings-data.mjs",
+    "pickAdminPublicContentSettings",
+    "sanitizePublicContentSettingsPatch",
+  ]);
+
+  const adminPublicSettings = await readText(path.join(repoRoot, "netlify/functions/admin-public-settings.mjs"));
+  assertNotContains(path.join(repoRoot, "netlify/functions/admin-public-settings.mjs"), adminPublicSettings, [
+    'path: "/api/admin/settings"',
+    "./_shared/public-settings-data.mjs",
+  ]);
+}
+
+async function assertNetlifyRoutingBoundary() {
+  const netlifyTomlPath = path.join(repoRoot, "netlify.toml");
+  const netlifyToml = await readText(netlifyTomlPath);
+  const adminEdgeRoutes = new Set([
+    "/lg-dashboard",
+    "/lg-dashboard.html",
+    "/api/admin/*",
+  ]);
+  const protectedRoutes = new Set();
+
+  for (const block of extractNetlifyEdgeFunctionBlocks(netlifyToml)) {
+    const routePath = extractTomlValue(block, "path");
+    const functionName = extractTomlValue(block, "function");
+    if (!routePath || !functionName) {
+      failures.push("netlify.toml: each [[edge_functions]] block must declare path and function");
+      continue;
+    }
+
+    if (functionName === "admin-auth") {
+      if (!adminEdgeRoutes.has(routePath)) {
+        failures.push(`netlify.toml: admin-auth edge function must not protect non-admin route ${JSON.stringify(routePath)}`);
+      }
+      protectedRoutes.add(routePath);
+    }
+  }
+
+  for (const routePath of adminEdgeRoutes) {
+    if (!protectedRoutes.has(routePath)) {
+      failures.push(`netlify.toml: admin route ${JSON.stringify(routePath)} must be protected by admin-auth edge function`);
+    }
+  }
+}
+
+async function assertEdgeFunctionBoundary() {
+  const edgeFunctionsDir = path.join(repoRoot, "netlify/edge-functions");
+  const files = await listFiles(edgeFunctionsDir);
+
+  for (const file of files.filter((item) => item.endsWith(".mjs"))) {
+    const relative = path.relative(repoRoot, file);
+    const content = await readText(file);
+    const boundary = path.basename(file).startsWith("admin-") ? "admin" : "public";
+    assertApiPathsMatchBoundary(file, content, boundary);
+
+    if (boundary === "public" && content.includes("lg_admin_session")) {
+      failures.push(`${relative}: public edge function must not inspect admin session cookies`);
+    }
+  }
+}
+
+async function assertPublicIndexProjectionBoundary() {
+  const publicIndexPath = path.join(repoRoot, "assets/js/public/index.js");
+  const publicIndex = await readText(publicIndexPath);
+  assertNotContains(publicIndexPath, publicIndex, [
+    "getTimelineGameVariant",
+    "PUBG NEWS",
+    "ARC Raiders NEWS",
+  ]);
+}
+
+async function assertPublicSettingsHelperBoundary() {
+  const publicSettingsHelperPath = path.join(repoRoot, "netlify/functions/_shared/public-settings-data.mjs");
+  const publicSettingsHelper = await readText(publicSettingsHelperPath);
+  assertNotContains(publicSettingsHelperPath, publicSettingsHelper, [
+    "Admin",
+    "./admin-public-settings-data.mjs",
+    "sanitizePublicContentSettingsPatch",
+    "mergePublicContentSettings",
+  ]);
+
+  const adminSettingsHelperPath = path.join(repoRoot, "netlify/functions/_shared/admin-public-settings-data.mjs");
+  const adminSettingsHelper = await readText(adminSettingsHelperPath);
+  assertNotContains(adminSettingsHelperPath, adminSettingsHelper, [
+    "./public-settings-data.mjs",
+    "pickPublicSettings",
+    "toPublicRosterSlideshow",
+  ]);
+
+  const settingsSchemaPath = path.join(repoRoot, "netlify/functions/_shared/public-content-settings-schema.mjs");
+  const settingsSchema = await readText(settingsSchemaPath);
+  assertNotContains(settingsSchemaPath, settingsSchema, [
+    "pickPublicSettings",
+    "pickAdminPublicContentSettings",
+    "sanitizePublicContentSettingsPatch",
+    "mergePublicContentSettings",
+    "toPublicRosterSlideshow",
+  ]);
+}
+
+async function assertSharedContentDataBoundary() {
+  const files = [
+    {
+      file: "netlify/functions/_shared/news-data.mjs",
+      forbidden: ["writeNews", "toPublicNewsItem"],
+    },
+    {
+      file: "netlify/functions/_shared/videos-data.mjs",
+      forbidden: ["buildVideoData", "toPublicVideo"],
+    },
+    {
+      file: "netlify/functions/_shared/events-data.mjs",
+      forbidden: ["toPublicEvent"],
+    },
+    {
+      file: "netlify/functions/_shared/roster-data.mjs",
+      forbidden: ["toPublicRosterMember"],
+    },
+    {
+      file: "netlify/functions/_shared/community-shouts-data.mjs",
+      forbidden: ["toPublicCommunityShout", "requireAdmin"],
+    },
+    {
+      file: "netlify/functions/_shared/admin-news-data.mjs",
+      forbidden: ["toPublicNewsItem"],
+    },
+    {
+      file: "netlify/functions/_shared/admin-videos-data.mjs",
+      forbidden: ["toPublicVideo"],
+    },
+    {
+      file: "netlify/functions/_shared/admin-events-data.mjs",
+      forbidden: ["toPublicEvent"],
+    },
+    {
+      file: "netlify/functions/_shared/admin-roster-data.mjs",
+      forbidden: ["toPublicRosterMember"],
+    },
+    {
+      file: "netlify/functions/_shared/public-news-data.mjs",
+      forbidden: ["writeNews", "requireAdmin"],
+    },
+    {
+      file: "netlify/functions/_shared/public-videos-data.mjs",
+      forbidden: ["buildVideoData", "requireAdmin", "createdAt"],
+    },
+    {
+      file: "netlify/functions/_shared/public-events-data.mjs",
+      forbidden: ["requireAdmin", "PUBG NEWS", "ARC Raiders NEWS"],
+    },
+    {
+      file: "netlify/functions/_shared/public-roster-data.mjs",
+      forbidden: ["requireAdmin", "stats"],
+    },
+    {
+      file: "netlify/functions/_shared/public-community-shouts-data.mjs",
+      forbidden: ["requireAdmin", "approved", "createdAt", "moderatedAt"],
+    },
+  ];
+
+  for (const { file, forbidden } of files) {
+    const absolutePath = path.join(repoRoot, file);
+    const content = await readText(absolutePath);
+    assertNotContains(absolutePath, content, forbidden);
+  }
+}
+
+async function assertRemovedFilesStayRemoved() {
+  for (const file of removedFiles) {
+    try {
+      await readText(path.join(repoRoot, file));
+      failures.push(`${file}: removed mixed-boundary file exists again`);
+    } catch (err) {
+      if (err.code !== "ENOENT") {
+        throw err;
+      }
+    }
+  }
+}
+
+async function listFiles(directory) {
+  const entries = await readdir(directory, { withFileTypes: true });
+  const files = await Promise.all(entries.map(async (entry) => {
+    const entryPath = path.join(directory, entry.name);
+    if (entry.isDirectory()) {
+      if (ignoredDirectories.has(entry.name)) return [];
+      return listFiles(entryPath);
+    }
+    if (entry.isFile()) return entryPath;
+    return [];
+  }));
+  return files.flat();
+}
+
+async function readText(file) {
+  return readFile(file, "utf8");
+}
+
+function assertNotContains(file, content, forbiddenValues) {
+  const relative = path.relative(repoRoot, file);
+  for (const forbiddenValue of forbiddenValues) {
+    if (content.includes(forbiddenValue)) {
+      failures.push(`${relative}: must not contain ${JSON.stringify(forbiddenValue)}`);
+    }
+  }
+}
+
+function assertApiPathsMatchBoundary(file, content, boundary) {
+  const relative = path.relative(repoRoot, file);
+  for (const apiPath of extractApiPathLiterals(content)) {
+    if (boundary === "public" && apiPath.startsWith("/api/admin")) {
+      failures.push(`${relative}: public code must not reference admin API path ${JSON.stringify(apiPath)}`);
+    }
+
+    if (boundary === "admin" && apiPath.startsWith("/api/") && !apiPath.startsWith("/api/admin")) {
+      failures.push(`${relative}: admin code must not reference public API path ${JSON.stringify(apiPath)}`);
+    }
+  }
+}
+
+function extractScriptSources(content) {
+  return [...content.matchAll(/<script\s+[^>]*src=["']([^"']+)["'][^>]*>/gi)]
+    .map((match) => match[1]);
+}
+
+function extractStylesheetHrefs(content) {
+  return [...content.matchAll(/<link\b[^>]*>/gi)]
+    .map((match) => match[0])
+    .filter((tag) => /\brel=["'][^"']*\bstylesheet\b[^"']*["']/i.test(tag))
+    .map((tag) => tag.match(/\bhref=["']([^"']+)["']/i)?.[1])
+    .filter(Boolean);
+}
+
+function isExternalStylesheet(href) {
+  return href.startsWith("https://fonts.googleapis.com/");
+}
+
+function extractInlineScriptBlocks(content) {
+  return [...content.matchAll(/<script\b(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi)]
+    .map((match) => match[1].trim())
+    .filter(Boolean);
+}
+
+function extractApiPathLiterals(content) {
+  const paths = new Set();
+  const matches = content.matchAll(/["'`](\/api\/[^"'`\s),}]+)/g);
+  for (const match of matches) {
+    paths.add(match[1].replace(/[;]+$/, ""));
+  }
+  return paths;
+}
+
+function extractRelativeImports(content) {
+  const imports = new Set();
+  const matches = content.matchAll(/\bimport\s+(?:[^"']+\s+from\s+)?["'](\.\/[^"']+)["']/g);
+  for (const match of matches) {
+    imports.add(match[1]);
+  }
+  return [...imports];
+}
+
+function extractConfiguredFunctionPath(content) {
+  return content.match(/\bpath:\s*["']([^"']+)["']/)?.[1] || "";
+}
+
+function extractNetlifyEdgeFunctionBlocks(content) {
+  return content
+    .split(/\[\[edge_functions\]\]/)
+    .slice(1)
+    .map((block) => block.split(/\n\s*\[/)[0]);
+}
+
+function extractTomlValue(block, key) {
+  return block.match(new RegExp(`^\\s*${key}\\s*=\\s*["']([^"']+)["']`, "m"))?.[1] || "";
+}
+
+function extractAssetImageReferences(content) {
+  const references = new Set();
+  const matches = content.matchAll(/(?:^|[^A-Za-z0-9_-])(\/?assets\/img\/[A-Za-z0-9._~!$&()+,;=:@/%-]+)/g);
+  for (const match of matches) {
+    const normalizedPath = match[1].startsWith("/")
+      ? match[1].slice(1)
+      : match[1];
+    references.add(normalizedPath.split(/[?#]/)[0]);
+  }
+  return references;
+}
+
+async function assertFileExists(referencingFile, relativeAssetPath) {
+  try {
+    await access(path.join(repoRoot, relativeAssetPath));
+  } catch (err) {
+    if (err.code !== "ENOENT") throw err;
+    failures.push(`${path.relative(repoRoot, referencingFile)}: referenced asset ${JSON.stringify(`/${relativeAssetPath}`)} does not exist`);
+  }
+}
+
+function assertScriptBefore(file, scriptSources, firstScript, secondScript) {
+  const firstIndex = scriptSources.indexOf(firstScript);
+  const secondIndex = scriptSources.indexOf(secondScript);
+
+  if (firstIndex === -1 || secondIndex === -1) return;
+  if (firstIndex > secondIndex) {
+    failures.push(`${file}: ${JSON.stringify(firstScript)} must be loaded before ${JSON.stringify(secondScript)}`);
+  }
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
