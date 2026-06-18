@@ -1,28 +1,61 @@
 'use strict';
 
-const ROSTER_API = '/api/roster';
-const ROSTER_AVATAR_API = '/api/roster-avatar';
-const ROSTER_SETTINGS_API = '/api/settings';
+(function () {
+const ADMIN_CONFIG = window.LG_ADMIN_CONFIG || {};
+const ADMIN_ROSTER_API_BASE = ADMIN_CONFIG.apiBase || '/api/admin';
+const ROSTER_API = ADMIN_CONFIG.rosterApi || `${ADMIN_ROSTER_API_BASE}/roster`;
+const ROSTER_AVATAR_API = ADMIN_CONFIG.rosterAvatarApi || `${ADMIN_ROSTER_API_BASE}/roster-avatar`;
+const ROSTER_AVATAR_PREVIEW_API = ADMIN_CONFIG.rosterAvatarPreviewApi || `${ADMIN_ROSTER_API_BASE}/roster-avatar`;
+const ADMIN_MEDIA_PREVIEW = window.LG_ADMIN_MEDIA_PREVIEW || {};
+const ROSTER_AVATAR_PLACEHOLDER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect fill='%231a1a2e' width='64' height='64'/%3E%3Ctext x='50%25' y='55%25' text-anchor='middle' fill='%237a7a8e' font-size='22'%3E%3F%3C/text%3E%3C/svg%3E";
+
+function escapeHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function getAdminRosterAvatarPreviewUrl(member) {
+  if (typeof ADMIN_MEDIA_PREVIEW.getPreviewUrl === 'function') {
+    return ADMIN_MEDIA_PREVIEW.getPreviewUrl(member, 'adminAvatarPreviewUrl', 'avatar');
+  }
+  return String(member?.adminAvatarPreviewUrl || member?.avatar || '');
+}
+
+function cacheBustAdminAvatarPreview(member) {
+  const value = getAdminRosterAvatarPreviewUrl(member);
+  if (!value.startsWith(ROSTER_AVATAR_PREVIEW_API)) return value;
+  return `${value}${value.includes('?') ? '&' : '?'}t=${Math.floor(Date.now() / 60000)}`;
+}
+
+function getRosterAvatarFallback(name) {
+  const initials = encodeURIComponent(String(name || '?').slice(0, 2).toUpperCase());
+  return `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3E%3Crect fill='%231a1a2e' width='80' height='80'/%3E%3Ctext x='50%25' y='55%25' text-anchor='middle' fill='%237a7a8e' font-size='24'%3E${initials}%3C/text%3E%3C/svg%3E`;
+}
 
 // ══════════════════════════════════════════════════════════
 // CLAN ROSTER
 // ══════════════════════════════════════════════════════════
 let rosterAvatarFile = null;
 let editAvatarFile = null;
-let currentRosterSlideshowSettings = getDefaultRosterSlideshowSettings();
 
 // Drag & drop support for new member form
 const rosterAvatarArea = document.getElementById('roster-avatar-area');
-rosterAvatarArea.addEventListener('dragover', (e) => { e.preventDefault(); rosterAvatarArea.style.borderColor = 'var(--clr-accent-arc)'; });
-rosterAvatarArea.addEventListener('dragleave', () => { rosterAvatarArea.style.borderColor = ''; });
-rosterAvatarArea.addEventListener('drop', (e) => {
+const rosterAvatarFileInput = document.getElementById('roster-avatar-file');
+rosterAvatarArea?.addEventListener('click', () => rosterAvatarFileInput?.click());
+rosterAvatarArea?.addEventListener('dragover', (e) => { e.preventDefault(); rosterAvatarArea.style.borderColor = 'var(--clr-accent-arc)'; });
+rosterAvatarArea?.addEventListener('dragleave', () => { rosterAvatarArea.style.borderColor = ''; });
+rosterAvatarArea?.addEventListener('drop', (e) => {
   e.preventDefault();
   rosterAvatarArea.style.borderColor = '';
   const file = e.dataTransfer.files[0];
   if (file) handleAvatarFileSelect(file);
 });
 
-document.getElementById('roster-avatar-file').addEventListener('change', (e) => {
+rosterAvatarFileInput?.addEventListener('change', (e) => {
   if (e.target.files[0]) handleAvatarFileSelect(e.target.files[0]);
 });
 
@@ -69,7 +102,7 @@ async function loadRoster() {
     const members = await res.json();
     currentRosterMembers = members;
     renderRosterAdmin(members);
-    await renderRosterSlideshowAdmin(members);
+    document.dispatchEvent(new CustomEvent('lg-admin-roster:loaded', { detail: { members } }));
   } catch (err) {
     body.innerHTML = `<div class="empty-state"><div class="empty-state__icon">&#9888;</div><div class="empty-state__text">Fehler: ${err.message}</div></div>`;
   }
@@ -84,7 +117,8 @@ function renderRosterAdmin(members) {
   }
 
   body.innerHTML = `<div class="admin-roster-grid">${members.map(m => {
-    const avatarSrc = m.avatar ? escapeHtml(m.avatar) + (m.avatar.startsWith('/api/roster-avatar') ? '&t=' + Math.floor(Date.now() / 60000) : '') : '';
+    const avatarFallback = getRosterAvatarFallback(m.name);
+    const avatarSrc = m.avatar ? escapeHtml(cacheBustAdminAvatarPreview(m)) : avatarFallback;
 
     const gamesHtml = (m.games || []).map(g => {
       const cls = g === 'PUBG' ? 'pubg' : g === 'ARC Raiders' ? 'arc' : 'other';
@@ -104,10 +138,10 @@ function renderRosterAdmin(members) {
 
     return `
     <div class="admin-roster-card" data-id="${escapeHtml(m.id)}">
-      <button class="btn-sm admin-roster-card__edit" onclick="openEditMember('${escapeHtml(m.id)}')">&#9998;</button>
-      <button class="btn-delete admin-roster-card__delete" onclick="deleteRosterMember('${escapeHtml(m.id)}')">&#10005;</button>
+      <button class="btn-sm admin-roster-card__edit" data-admin-roster-edit-member="${escapeHtml(m.id)}">&#9998;</button>
+      <button class="btn-delete admin-roster-card__delete" data-admin-roster-delete-member="${escapeHtml(m.id)}">&#10005;</button>
       <img class="admin-roster-cardavatar" src="${avatarSrc}" alt="${escapeHtml(m.name)}" loading="lazy"
-     onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 80 80%27%3E%3Crect fill=%27%231a1a2e%27 width=%2780%27 height=%2780%27/%3E%3Ctext x=%2750%25%27 y=%2755%25%27 text-anchor=%27middle%27 fill=%27%237a7a8e%27 font-size=%2724%27%3E${escapeHtml(m.name.slice(0,2).toUpperCase())}%3C/text%3E%3C/svg%3E'">
+           data-admin-roster-avatar-fallback="${escapeHtml(avatarFallback)}">
       <div class="admin-roster-card__name">${escapeHtml(m.name)}</div>
       <div class="admin-roster-card__role">
   ${escapeHtml(m.clanRole || m.role || '')}
@@ -117,184 +151,32 @@ function renderRosterAdmin(members) {
       ${bioHtml}
     </div>`;
   }).join('')}</div>`;
+  bindRosterCardAvatarFallbacks(body);
 }
 
-function getDefaultRosterSlideshowSettings() {
-  return {
-    enabled: false,
-    autoplay: true,
-    speedSeconds: 8,
-    pinnedMemberId: '',
-    members: [],
-  };
+function bindRosterCardAvatarFallbacks(container) {
+  container.querySelectorAll('[data-admin-roster-avatar-fallback]').forEach((image) => {
+    image.addEventListener('error', () => {
+      const fallback = image.getAttribute('data-admin-roster-avatar-fallback') || ROSTER_AVATAR_PLACEHOLDER;
+      image.src = fallback;
+    }, { once: true });
+  });
 }
 
-async function loadRosterSlideshowSettings() {
-  try {
-    const res = await fetch(ROSTER_SETTINGS_API);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const settings = await res.json();
-    currentRosterSlideshowSettings = normalizeRosterSlideshowSettings(settings.rosterSlideshow);
-  } catch (err) {
-    console.warn('[Roster Slideshow Admin] Settings konnten nicht geladen werden:', err);
-    currentRosterSlideshowSettings = getDefaultRosterSlideshowSettings();
-  }
-}
-
-function normalizeRosterSlideshowSettings(settings) {
-  const defaults = getDefaultRosterSlideshowSettings();
-  if (!settings || typeof settings !== 'object') return defaults;
-
-  const members = Array.isArray(settings.members)
-    ? settings.members
-        .filter((entry) => entry && entry.id)
-        .map((entry) => ({
-          id: String(entry.id),
-          text: String(entry.text || ''),
-        }))
-    : [];
-
-  return {
-    enabled: Boolean(settings.enabled),
-    autoplay: settings.autoplay !== false,
-    speedSeconds: Math.max(3, Number(settings.speedSeconds) || defaults.speedSeconds),
-    pinnedMemberId: settings.pinnedMemberId ? String(settings.pinnedMemberId) : '',
-    members,
-  };
-}
-
-async function renderRosterSlideshowAdmin(members, reloadSettings = true) {
-  const selectedBody = document.getElementById('roster-slideshow-selected');
-  const addSelect = document.getElementById('roster-slideshow-add-member');
-  const pinnedSelect = document.getElementById('roster-slideshow-pinned-member');
-  if (!selectedBody || !addSelect || !pinnedSelect) return;
-
-  if (reloadSettings) await loadRosterSlideshowSettings();
-  const settings = currentRosterSlideshowSettings;
-  const selectedIds = new Set(settings.members.map((entry) => entry.id));
-
-  document.getElementById('roster-slideshow-enabled').checked = settings.enabled;
-  document.getElementById('roster-slideshow-autoplay').checked = settings.autoplay;
-  document.getElementById('roster-slideshow-speed').value = settings.speedSeconds;
-
-  addSelect.innerHTML = '<option value="">Member ausw&auml;hlen...</option>' + members
-    .filter((member) => !selectedIds.has(member.id))
-    .map((member) => `<option value="${escapeHtml(member.id)}">${escapeHtml(member.name)}</option>`)
-    .join('');
-
-  pinnedSelect.innerHTML = '<option value="">Automatisch erster aktiver Member</option>' + settings.members
-    .map((entry) => {
-      const member = members.find((item) => item.id === entry.id);
-      if (!member) return '';
-      const selected = settings.pinnedMemberId === entry.id ? ' selected' : '';
-      return `<option value="${escapeHtml(entry.id)}"${selected}>${escapeHtml(member.name)}</option>`;
-    })
-    .join('');
-
-  if (settings.members.length === 0) {
-    selectedBody.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-state__icon">&#9733;</div>
-        <div class="empty-state__text">Noch keine Member f&uuml;r die Diashow ausgew&auml;hlt.</div>
-      </div>`;
-    return;
-  }
-
-  selectedBody.innerHTML = settings.members.map((entry) => {
-    const member = members.find((item) => item.id === entry.id);
-    if (!member) return '';
-    const avatarSrc = member.avatar ? escapeHtml(member.avatar) : '';
-    return `
-      <div class="roster-slideshow-admin__item" data-slideshow-member-id="${escapeHtml(entry.id)}">
-        <img class="roster-slideshow-admin__avatar" src="${avatarSrc}" alt="${escapeHtml(member.name)}" loading="lazy"
-             onerror="this.style.display='none'">
-        <div>
-          <div class="roster-slideshow-admin__name">${escapeHtml(member.name)}</div>
-          <div class="roster-slideshow-admin__meta">${escapeHtml(member.clanRole || member.role || 'Member')}</div>
-          <label class="admin-form__label" for="slideshow-text-${escapeHtml(entry.id)}">Diashow-Text</label>
-          <textarea class="admin-form__textarea roster-slideshow-text"
-                    id="slideshow-text-${escapeHtml(entry.id)}"
-                    data-slideshow-text="${escapeHtml(entry.id)}"
-                    maxlength="180"
-                    placeholder="z.B. Alles Gute zum Geburtstag oder Willkommen im Clan!">${escapeHtml(entry.text)}</textarea>
-        </div>
-        <button type="button" class="btn-delete" data-slideshow-remove="${escapeHtml(entry.id)}">Entfernen</button>
-      </div>`;
-  }).join('');
-}
-
-function addRosterSlideshowMember() {
-  const select = document.getElementById('roster-slideshow-add-member');
-  const memberId = select?.value;
-  if (!memberId) return;
-  currentRosterSlideshowSettings = collectRosterSlideshowSettingsFromForm();
-  if (currentRosterSlideshowSettings.members.some((entry) => entry.id === memberId)) return;
-
-  currentRosterSlideshowSettings.members.push({ id: memberId, text: '' });
-  renderRosterSlideshowAdmin(currentRosterMembers, false);
-}
-
-function removeRosterSlideshowMember(memberId) {
-  currentRosterSlideshowSettings = collectRosterSlideshowSettingsFromForm();
-  currentRosterSlideshowSettings.members = currentRosterSlideshowSettings.members
-    .filter((entry) => entry.id !== memberId);
-  if (currentRosterSlideshowSettings.pinnedMemberId === memberId) {
-    currentRosterSlideshowSettings.pinnedMemberId = '';
-  }
-  renderRosterSlideshowAdmin(currentRosterMembers, false);
-}
-
-function collectRosterSlideshowSettingsFromForm() {
-  const textFields = document.querySelectorAll('[data-slideshow-text]');
-  const textById = new Map([...textFields].map((field) => [field.dataset.slideshowText, field.value.trim()]));
-  const speed = Number(document.getElementById('roster-slideshow-speed')?.value) || 8;
-
-  return {
-    enabled: Boolean(document.getElementById('roster-slideshow-enabled')?.checked),
-    autoplay: Boolean(document.getElementById('roster-slideshow-autoplay')?.checked),
-    speedSeconds: Math.max(3, speed),
-    pinnedMemberId: document.getElementById('roster-slideshow-pinned-member')?.value || '',
-    members: currentRosterSlideshowSettings.members.map((entry) => ({
-      id: entry.id,
-      text: textById.get(entry.id) || '',
-    })),
-  };
-}
-
-async function saveRosterSlideshowSettings() {
-  const btn = document.getElementById('roster-slideshow-save');
-  const status = document.getElementById('roster-slideshow-status');
-  if (!btn) return;
-
-  btn.disabled = true;
-  btn.textContent = 'Speichert...';
-  if (status) status.textContent = '';
-
-  try {
-    const rosterSlideshow = collectRosterSlideshowSettingsFromForm();
-    const res = await fetch(ROSTER_SETTINGS_API, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rosterSlideshow }),
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    currentRosterSlideshowSettings = rosterSlideshow;
-    if (status) {
-      status.textContent = 'Diashow gespeichert.';
-      status.style.color = 'var(--clr-accent-arc)';
+function bindRosterListActions() {
+  const body = document.getElementById('roster-list-body');
+  body?.addEventListener('click', (e) => {
+    const editButton = e.target.closest('[data-admin-roster-edit-member]');
+    if (editButton) {
+      openEditMember(editButton.getAttribute('data-admin-roster-edit-member'));
+      return;
     }
-    await loadRoster();
-  } catch (err) {
-    if (status) {
-      status.textContent = 'Fehler beim Speichern: ' + err.message;
-      status.style.color = 'var(--clr-danger)';
-    } else {
-      alert('Fehler beim Speichern: ' + err.message);
+
+    const deleteButton = e.target.closest('[data-admin-roster-delete-member]');
+    if (deleteButton) {
+      deleteRosterMember(deleteButton.getAttribute('data-admin-roster-delete-member'));
     }
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Diashow speichern';
-  }
+  });
 }
 
 // Store all members for edit lookups
@@ -315,7 +197,9 @@ function openEditMember(id) {
     const m = members.find(x => x.id === id);
     if (!m) { alert('Mitglied nicht gefunden.'); return; }
 
-    const avatarSrc = m.avatar || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect fill='%231a1a2e' width='64' height='64'/%3E%3Ctext x='50%25' y='55%25' text-anchor='middle' fill='%237a7a8e' font-size='22'%3E%3F%3C/text%3E%3C/svg%3E";
+    const avatarSrc = m.avatar
+      ? cacheBustAdminAvatarPreview(m)
+      : ROSTER_AVATAR_PLACEHOLDER;
     const games = m.games || [];
     const clanRole = m.clanRole || 'Member';
     const bio = m.bio || '';
@@ -361,7 +245,7 @@ function openEditMember(id) {
             </div>
             <div class="custom-game-row">
               <input class="admin-form__input" type="text" id="edit-custom-game" placeholder="Weiteres Spiel hinzufügen…">
-              <button type="button" class="btn-sm" onclick="addCustomGame('edit')">+</button>
+              <button type="button" class="btn-sm" id="edit-custom-game-add">+</button>
             </div>
           </div>
           <div class="admin-form__group">
@@ -376,9 +260,8 @@ function openEditMember(id) {
           <div class="admin-form__group">
             <label class="admin-form__label">Profilbild</label>
             <div class="admin-form__hint">Empfehlung: Quadratisch oder 4:5, ca. 500–800 px breit.</div>
-            <div class="avatar-upload-area" id="edit-avatar-area" onclick="document.getElementById('edit-avatar-file').click()">
-              <img class="avatar-upload-area__preview" id="edit-avatar-preview" src="${escapeHtml(avatarSrc)}" alt="Vorschau"
-                   onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect fill=%27%231a1a2e%27 width=%2764%27 height=%2764%27/%3E%3Ctext x=%2750%25%27 y=%2755%25%27 text-anchor=%27middle%27 fill=%27%237a7a8e%27 font-size=%2722%27%3E%3F%3C/text%3E%3C/svg%3E'">
+            <div class="avatar-upload-area" id="edit-avatar-area">
+              <img class="avatar-upload-area__preview" id="edit-avatar-preview" src="${escapeHtml(avatarSrc)}" alt="Vorschau">
               <div class="avatar-upload-area__text">
                 <strong>Klicken</strong> um ein neues Bild auszuwählen
               </div>
@@ -403,9 +286,14 @@ function openEditMember(id) {
     // Close on overlay click
     overlay.addEventListener('click', (e) => { if (e.target === overlay) closeEditModal(); });
     document.getElementById('edit-member-cancel').addEventListener('click', closeEditModal);
+    document.getElementById('edit-custom-game-add')?.addEventListener('click', () => addCustomGame('edit'));
+    document.getElementById('edit-avatar-preview')?.addEventListener('error', (e) => {
+      e.currentTarget.src = ROSTER_AVATAR_PLACEHOLDER;
+    }, { once: true });
 
     // File select
-    document.getElementById('edit-avatar-file').addEventListener('change', (e) => {
+    const editAvatarInput = document.getElementById('edit-avatar-file');
+    editAvatarInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (!file) return;
       const allowed = ['image/jpeg', 'image/png', 'image/webp'];
@@ -429,6 +317,7 @@ function openEditMember(id) {
 
     // Drag & drop on edit area
     const editArea = document.getElementById('edit-avatar-area');
+    editArea.addEventListener('click', () => editAvatarInput.click());
     editArea.addEventListener('dragover', (e) => { e.preventDefault(); editArea.style.borderColor = 'var(--clr-accent-arc)'; });
     editArea.addEventListener('dragleave', () => { editArea.style.borderColor = ''; });
     editArea.addEventListener('drop', (e) => {
@@ -577,7 +466,7 @@ document.getElementById('roster-form').addEventListener('submit', async (e) => {
     }
 
     document.getElementById('roster-form').reset();
-    document.getElementById('roster-avatar-preview').src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect fill='%231a1a2e' width='64' height='64'/%3E%3Ctext x='50%25' y='55%25' text-anchor='middle' fill='%237a7a8e' font-size='22'%3E%3F%3C/text%3E%3C/svg%3E";
+    document.getElementById('roster-avatar-preview').src = ROSTER_AVATAR_PLACEHOLDER;
     document.getElementById('roster-avatar-status').textContent = '';
     rosterAvatarFile = null;
     await loadRoster();
@@ -589,14 +478,13 @@ document.getElementById('roster-form').addEventListener('submit', async (e) => {
   }
 });
 
-document.getElementById('roster-slideshow-add')?.addEventListener('click', addRosterSlideshowMember);
-document.getElementById('roster-slideshow-form')?.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  await saveRosterSlideshowSettings();
-});
-document.getElementById('btn-refresh-roster-slideshow')?.addEventListener('click', loadRoster);
-document.getElementById('roster-slideshow-selected')?.addEventListener('click', (e) => {
-  const btn = e.target.closest('[data-slideshow-remove]');
-  if (!btn) return;
-  removeRosterSlideshowMember(btn.dataset.slideshowRemove);
-});
+document.getElementById('roster-custom-game-add')?.addEventListener('click', () => addCustomGame('roster'));
+bindRosterListActions();
+
+window.LGAdminRoster = {
+  loadRoster,
+  openEditMember,
+  deleteRosterMember,
+  addCustomGame,
+};
+})();
