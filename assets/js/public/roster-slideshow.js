@@ -12,7 +12,7 @@
 
     try {
       const [settings, members] = await Promise.all([
-        fetchJson(SITE_CONFIG.settingsApi || '/api/settings', {}),
+        fetchJson(SITE_CONFIG.settingsApi || '/api/public-settings', {}),
         fetchJson(SITE_CONFIG.rosterApi || '/api/roster', []),
       ]);
       const config = normalizeSlideshowSettings(settings.rosterSlideshow);

@@ -2,7 +2,6 @@
   "name": "repo",
   "version": "1.0.0",
   "description": "Willkommen bei **Clan‑Leider‑Geil** – deine zentrale Anlaufstelle für Gaming‑Streams, Events und Community‑Chat!",
-  "main": "config.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
