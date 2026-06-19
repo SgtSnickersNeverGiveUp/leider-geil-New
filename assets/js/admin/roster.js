@@ -1,15 +1,26 @@
 'use strict';
 
-const ROSTER_API = '/api/roster';
-const ROSTER_AVATAR_API = '/api/roster-avatar';
-const ROSTER_SETTINGS_API = '/api/settings';
+(function () {
+const ADMIN_CONFIG = window.LG_ADMIN_CONFIG || {};
+const ADMIN_ROSTER_API_BASE = ADMIN_CONFIG.apiBase || '/api/admin';
+const ROSTER_API = ADMIN_CONFIG.rosterApi || `${ADMIN_ROSTER_API_BASE}/roster`;
+const ROSTER_AVATAR_API = ADMIN_CONFIG.rosterAvatarApi || `${ADMIN_ROSTER_API_BASE}/roster-avatar`;
+const PUBLIC_ROSTER_AVATAR_API = ADMIN_CONFIG.publicRosterAvatarApi || '/api/roster-avatar';
+
+function escapeHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
 
 // ══════════════════════════════════════════════════════════
 // CLAN ROSTER
 // ══════════════════════════════════════════════════════════
 let rosterAvatarFile = null;
 let editAvatarFile = null;
-let currentRosterSlideshowSettings = getDefaultRosterSlideshowSettings();
 
 // Drag & drop support for new member form
 const rosterAvatarArea = document.getElementById('roster-avatar-area');
@@ -69,9 +80,16 @@ async function loadRoster() {
     const members = await res.json();
     currentRosterMembers = members;
     renderRosterAdmin(members);
-    await renderRosterSlideshowAdmin(members);
+    await syncRosterSlideshowAdmin(members);
   } catch (err) {
     body.innerHTML = `<div class="empty-state"><div class="empty-state__icon">&#9888;</div><div class="empty-state__text">Fehler: ${err.message}</div></div>`;
+  }
+}
+
+async function syncRosterSlideshowAdmin(members) {
+  const slideshowAdmin = window.LGAdminPublicRosterSlideshow;
+  if (slideshowAdmin?.render) {
+    await slideshowAdmin.render(members);
   }
 }
 
@@ -84,7 +102,7 @@ function renderRosterAdmin(members) {
   }
 
   body.innerHTML = `<div class="admin-roster-grid">${members.map(m => {
-    const avatarSrc = m.avatar ? escapeHtml(m.avatar) + (m.avatar.startsWith('/api/roster-avatar') ? '&t=' + Math.floor(Date.now() / 60000) : '') : '';
+    const avatarSrc = m.avatar ? escapeHtml(m.avatar) + (m.avatar.startsWith(PUBLIC_ROSTER_AVATAR_API) ? '&t=' + Math.floor(Date.now() / 60000) : '') : '';
 
     const gamesHtml = (m.games || []).map(g => {
       const cls = g === 'PUBG' ? 'pubg' : g === 'ARC Raiders' ? 'arc' : 'other';
@@ -104,8 +122,8 @@ function renderRosterAdmin(members) {
 
     return `
     <div class="admin-roster-card" data-id="${escapeHtml(m.id)}">
-      <button class="btn-sm admin-roster-card__edit" onclick="openEditMember('${escapeHtml(m.id)}')">&#9998;</button>
-      <button class="btn-delete admin-roster-card__delete" onclick="deleteRosterMember('${escapeHtml(m.id)}')">&#10005;</button>
+      <button class="btn-sm admin-roster-card__edit" onclick="LGAdminRoster.openEditMember('${escapeHtml(m.id)}')">&#9998;</button>
+      <button class="btn-delete admin-roster-card__delete" onclick="LGAdminRoster.deleteRosterMember('${escapeHtml(m.id)}')">&#10005;</button>
       <img class="admin-roster-cardavatar" src="${avatarSrc}" alt="${escapeHtml(m.name)}" loading="lazy"
      onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 80 80%27%3E%3Crect fill=%27%231a1a2e%27 width=%2780%27 height=%2780%27/%3E%3Ctext x=%2750%25%27 y=%2755%25%27 text-anchor=%27middle%27 fill=%27%237a7a8e%27 font-size=%2724%27%3E${escapeHtml(m.name.slice(0,2).toUpperCase())}%3C/text%3E%3C/svg%3E'">
       <div class="admin-roster-card__name">${escapeHtml(m.name)}</div>
@@ -117,184 +135,6 @@ function renderRosterAdmin(members) {
       ${bioHtml}
     </div>`;
   }).join('')}</div>`;
-}
-
-function getDefaultRosterSlideshowSettings() {
-  return {
-    enabled: false,
-    autoplay: true,
-    speedSeconds: 8,
-    pinnedMemberId: '',
-    members: [],
-  };
-}
-
-async function loadRosterSlideshowSettings() {
-  try {
-    const res = await fetch(ROSTER_SETTINGS_API);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const settings = await res.json();
-    currentRosterSlideshowSettings = normalizeRosterSlideshowSettings(settings.rosterSlideshow);
-  } catch (err) {
-    console.warn('[Roster Slideshow Admin] Settings konnten nicht geladen werden:', err);
-    currentRosterSlideshowSettings = getDefaultRosterSlideshowSettings();
-  }
-}
-
-function normalizeRosterSlideshowSettings(settings) {
-  const defaults = getDefaultRosterSlideshowSettings();
-  if (!settings || typeof settings !== 'object') return defaults;
-
-  const members = Array.isArray(settings.members)
-    ? settings.members
-        .filter((entry) => entry && entry.id)
-        .map((entry) => ({
-          id: String(entry.id),
-          text: String(entry.text || ''),
-        }))
-    : [];
-
-  return {
-    enabled: Boolean(settings.enabled),
-    autoplay: settings.autoplay !== false,
-    speedSeconds: Math.max(3, Number(settings.speedSeconds) || defaults.speedSeconds),
-    pinnedMemberId: settings.pinnedMemberId ? String(settings.pinnedMemberId) : '',
-    members,
-  };
-}
-
-async function renderRosterSlideshowAdmin(members, reloadSettings = true) {
-  const selectedBody = document.getElementById('roster-slideshow-selected');
-  const addSelect = document.getElementById('roster-slideshow-add-member');
-  const pinnedSelect = document.getElementById('roster-slideshow-pinned-member');
-  if (!selectedBody || !addSelect || !pinnedSelect) return;
-
-  if (reloadSettings) await loadRosterSlideshowSettings();
-  const settings = currentRosterSlideshowSettings;
-  const selectedIds = new Set(settings.members.map((entry) => entry.id));
-
-  document.getElementById('roster-slideshow-enabled').checked = settings.enabled;
-  document.getElementById('roster-slideshow-autoplay').checked = settings.autoplay;
-  document.getElementById('roster-slideshow-speed').value = settings.speedSeconds;
-
-  addSelect.innerHTML = '<option value="">Member ausw&auml;hlen...</option>' + members
-    .filter((member) => !selectedIds.has(member.id))
-    .map((member) => `<option value="${escapeHtml(member.id)}">${escapeHtml(member.name)}</option>`)
-    .join('');
-
-  pinnedSelect.innerHTML = '<option value="">Automatisch erster aktiver Member</option>' + settings.members
-    .map((entry) => {
-      const member = members.find((item) => item.id === entry.id);
-      if (!member) return '';
-      const selected = settings.pinnedMemberId === entry.id ? ' selected' : '';
-      return `<option value="${escapeHtml(entry.id)}"${selected}>${escapeHtml(member.name)}</option>`;
-    })
-    .join('');
-
-  if (settings.members.length === 0) {
-    selectedBody.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-state__icon">&#9733;</div>
-        <div class="empty-state__text">Noch keine Member f&uuml;r die Diashow ausgew&auml;hlt.</div>
-      </div>`;
-    return;
-  }
-
-  selectedBody.innerHTML = settings.members.map((entry) => {
-    const member = members.find((item) => item.id === entry.id);
-    if (!member) return '';
-    const avatarSrc = member.avatar ? escapeHtml(member.avatar) : '';
-    return `
-      <div class="roster-slideshow-admin__item" data-slideshow-member-id="${escapeHtml(entry.id)}">
-        <img class="roster-slideshow-admin__avatar" src="${avatarSrc}" alt="${escapeHtml(member.name)}" loading="lazy"
-             onerror="this.style.display='none'">
-        <div>
-          <div class="roster-slideshow-admin__name">${escapeHtml(member.name)}</div>
-          <div class="roster-slideshow-admin__meta">${escapeHtml(member.clanRole || member.role || 'Member')}</div>
-          <label class="admin-form__label" for="slideshow-text-${escapeHtml(entry.id)}">Diashow-Text</label>
-          <textarea class="admin-form__textarea roster-slideshow-text"
-                    id="slideshow-text-${escapeHtml(entry.id)}"
-                    data-slideshow-text="${escapeHtml(entry.id)}"
-                    maxlength="180"
-                    placeholder="z.B. Alles Gute zum Geburtstag oder Willkommen im Clan!">${escapeHtml(entry.text)}</textarea>
-        </div>
-        <button type="button" class="btn-delete" data-slideshow-remove="${escapeHtml(entry.id)}">Entfernen</button>
-      </div>`;
-  }).join('');
-}
-
-function addRosterSlideshowMember() {
-  const select = document.getElementById('roster-slideshow-add-member');
-  const memberId = select?.value;
-  if (!memberId) return;
-  currentRosterSlideshowSettings = collectRosterSlideshowSettingsFromForm();
-  if (currentRosterSlideshowSettings.members.some((entry) => entry.id === memberId)) return;
-
-  currentRosterSlideshowSettings.members.push({ id: memberId, text: '' });
-  renderRosterSlideshowAdmin(currentRosterMembers, false);
-}
-
-function removeRosterSlideshowMember(memberId) {
-  currentRosterSlideshowSettings = collectRosterSlideshowSettingsFromForm();
-  currentRosterSlideshowSettings.members = currentRosterSlideshowSettings.members
-    .filter((entry) => entry.id !== memberId);
-  if (currentRosterSlideshowSettings.pinnedMemberId === memberId) {
-    currentRosterSlideshowSettings.pinnedMemberId = '';
-  }
-  renderRosterSlideshowAdmin(currentRosterMembers, false);
-}
-
-function collectRosterSlideshowSettingsFromForm() {
-  const textFields = document.querySelectorAll('[data-slideshow-text]');
-  const textById = new Map([...textFields].map((field) => [field.dataset.slideshowText, field.value.trim()]));
-  const speed = Number(document.getElementById('roster-slideshow-speed')?.value) || 8;
-
-  return {
-    enabled: Boolean(document.getElementById('roster-slideshow-enabled')?.checked),
-    autoplay: Boolean(document.getElementById('roster-slideshow-autoplay')?.checked),
-    speedSeconds: Math.max(3, speed),
-    pinnedMemberId: document.getElementById('roster-slideshow-pinned-member')?.value || '',
-    members: currentRosterSlideshowSettings.members.map((entry) => ({
-      id: entry.id,
-      text: textById.get(entry.id) || '',
-    })),
-  };
-}
-
-async function saveRosterSlideshowSettings() {
-  const btn = document.getElementById('roster-slideshow-save');
-  const status = document.getElementById('roster-slideshow-status');
-  if (!btn) return;
-
-  btn.disabled = true;
-  btn.textContent = 'Speichert...';
-  if (status) status.textContent = '';
-
-  try {
-    const rosterSlideshow = collectRosterSlideshowSettingsFromForm();
-    const res = await fetch(ROSTER_SETTINGS_API, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rosterSlideshow }),
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    currentRosterSlideshowSettings = rosterSlideshow;
-    if (status) {
-      status.textContent = 'Diashow gespeichert.';
-      status.style.color = 'var(--clr-accent-arc)';
-    }
-    await loadRoster();
-  } catch (err) {
-    if (status) {
-      status.textContent = 'Fehler beim Speichern: ' + err.message;
-      status.style.color = 'var(--clr-danger)';
-    } else {
-      alert('Fehler beim Speichern: ' + err.message);
-    }
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Diashow speichern';
-  }
 }
 
 // Store all members for edit lookups
@@ -361,7 +201,7 @@ function openEditMember(id) {
             </div>
             <div class="custom-game-row">
               <input class="admin-form__input" type="text" id="edit-custom-game" placeholder="Weiteres Spiel hinzufügen…">
-              <button type="button" class="btn-sm" onclick="addCustomGame('edit')">+</button>
+              <button type="button" class="btn-sm" onclick="LGAdminRoster.addCustomGame('edit')">+</button>
             </div>
           </div>
           <div class="admin-form__group">
@@ -589,14 +429,10 @@ document.getElementById('roster-form').addEventListener('submit', async (e) => {
   }
 });
 
-document.getElementById('roster-slideshow-add')?.addEventListener('click', addRosterSlideshowMember);
-document.getElementById('roster-slideshow-form')?.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  await saveRosterSlideshowSettings();
-});
-document.getElementById('btn-refresh-roster-slideshow')?.addEventListener('click', loadRoster);
-document.getElementById('roster-slideshow-selected')?.addEventListener('click', (e) => {
-  const btn = e.target.closest('[data-slideshow-remove]');
-  if (!btn) return;
-  removeRosterSlideshowMember(btn.dataset.slideshowRemove);
-});
+window.LGAdminRoster = {
+  loadRoster,
+  openEditMember,
+  deleteRosterMember,
+  addCustomGame,
+};
+})();
