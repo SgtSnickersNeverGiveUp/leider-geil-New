@@ -1,12 +1,13 @@
-import { getStore } from "@netlify/blobs";
 import { requireAdmin } from "./admin-auth.mjs";
 import { jsonResponse, methodNotAllowed } from "./_shared/http.mjs";
-
-const STORE_NAME = "banner";
-const BANNER_KEY = "header-banner";
-const META_KEY = "header-banner-meta";
-const ALLOWED_CONTENT_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
-const MAX_BANNER_BYTES = 5 * 1024 * 1024;
+import {
+  ALLOWED_IMAGE_CONTENT_TYPES,
+  BANNER_IMAGE_KEY,
+  BANNER_META_KEY,
+  getBannerStore,
+  MAX_IMAGE_BYTES,
+  PUBLIC_BANNER_IMAGE_URL,
+} from "./_shared/media-stores.mjs";
 
 export default async (req) => {
   const adminGuard = requireAdmin(req);
@@ -16,17 +17,17 @@ export default async (req) => {
 
   try {
     const contentType = (req.headers.get("content-type") || "image/jpeg").split(";")[0].trim().toLowerCase();
-    if (!ALLOWED_CONTENT_TYPES.has(contentType)) {
+    if (!ALLOWED_IMAGE_CONTENT_TYPES.has(contentType)) {
       return jsonResponse({ error: "Nur JPEG, PNG oder WebP erlaubt." }, 400);
     }
 
     const buffer = await req.arrayBuffer();
     if (buffer.byteLength === 0) return jsonResponse({ error: "Keine Datei empfangen." }, 400);
-    if (buffer.byteLength > MAX_BANNER_BYTES) return jsonResponse({ error: "Datei zu groß (max. 5 MB)." }, 400);
+    if (buffer.byteLength > MAX_IMAGE_BYTES) return jsonResponse({ error: "Datei zu groß (max. 5 MB)." }, 400);
 
-    const store = getStore(STORE_NAME);
-    await store.set(BANNER_KEY, new Uint8Array(buffer));
-    await store.setJSON(META_KEY, {
+    const store = getBannerStore();
+    await store.set(BANNER_IMAGE_KEY, new Uint8Array(buffer));
+    await store.setJSON(BANNER_META_KEY, {
       contentType,
       size: buffer.byteLength,
       uploadedAt: new Date().toISOString(),
@@ -34,7 +35,7 @@ export default async (req) => {
 
     return jsonResponse({
       success: true,
-      url: "/api/banner-image",
+      url: PUBLIC_BANNER_IMAGE_URL,
       size: buffer.byteLength,
     });
   } catch {

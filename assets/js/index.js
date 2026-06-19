@@ -1,13 +1,10 @@
 'use strict';
 
 const VISITOR_COUNTER_STORAGE_KEY = 'lg-homepage-visitor-counted';
-
-function getTimelineGameVariant(game) {
-  if (game === 'PUBG' || game === 'PUBG NEWS') return 'pubg';
-  if (game === 'ARC Raiders' || game === 'ARC Raiders NEWS') return 'arc';
-  if (game === 'NEWS') return 'news';
-  return '';
-}
+const {
+  addMinuteCacheBust,
+  getEventGameVariant,
+} = window.LG_SHARED_UTILS;
 
 function initVideos() {
   const pubgFrame = $('#video-pubg');
@@ -94,7 +91,7 @@ async function renderTimeline() {
     wrap.innerHTML = events.map((e) => {
       const game = e.game || 'Mixed';
       const type = e.type || 'event';
-      const gameVariant = getTimelineGameVariant(game);
+      const gameVariant = getEventGameVariant(game);
 
       const itemClass = gameVariant ? `timeline__item--${gameVariant}` : '';
       const dotClass = gameVariant ? `timeline__dot--${gameVariant}` : '';
@@ -113,11 +110,7 @@ async function renderTimeline() {
         }
       }
 
-      const imgSrc = e.image
-        ? e.image + (e.image.startsWith(SITE_CONFIG.eventImageApi)
-            ? (e.image.includes('?') ? '&' : '?') + 't=' + Math.floor(Date.now() / 60000)
-            : '')
-        : '';
+      const imgSrc = e.image ? addMinuteCacheBust(e.image, SITE_CONFIG.eventImageApi) : '';
       const imgHtml = imgSrc
         ? `<img class="timeline__image" src="${imgSrc}" alt="${e.title || ''}" loading="lazy" onerror="this.style.display='none'">`
         : '';
@@ -202,9 +195,7 @@ async function renderHeaderBanner() {
     const settings = await res.json();
 
     if (settings.bannerUrl) {
-      const imgUrl = settings.bannerUrl === SITE_CONFIG.bannerImageApi
-        ? settings.bannerUrl + '?t=' + Math.floor(Date.now() / 60000)
-        : settings.bannerUrl;
+      const imgUrl = addMinuteCacheBust(settings.bannerUrl, SITE_CONFIG.bannerImageApi);
 
       img.src = imgUrl;
       img.onload = () => { section.style.display = ''; };

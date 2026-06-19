@@ -1,7 +1,5 @@
-import { getStore } from "@netlify/blobs";
 import { jsonResponse, methodNotAllowed } from "./_shared/http.mjs";
-
-const STORE_NAME = "event-registrations";
+import { getEventRegistrationsStore } from "./_shared/submission-stores.mjs";
 
 export default async (req) => {
   if (req.method !== "POST") return methodNotAllowed();
@@ -26,7 +24,7 @@ export default async (req) => {
       createdAt: new Date().toISOString(),
     };
 
-    await getStore(STORE_NAME).setJSON(id, registration);
+    await getEventRegistrationsStore().setJSON(id, registration);
     return jsonResponse({ success: true, id }, 201);
   } catch {
     return jsonResponse({ error: "Fehler beim Speichern." }, 500);

@@ -188,6 +188,54 @@
       flex-wrap: wrap;
     }
 
+    .twitch-admin-banner {
+      display: none;
+      margin: 0 0 1.2rem;
+      padding: .85rem 1.2rem;
+      border: 1px solid var(--clr-border);
+      border-radius: var(--radius);
+      background: var(--clr-surface-alt);
+      font-family: var(--ff-mono);
+      font-size: .85rem;
+      line-height: 1.5;
+    }
+
+    .twitch-admin-banner__row {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      flex-wrap: wrap;
+    }
+
+    .twitch-admin-banner__dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .twitch-admin-banner__label {
+      font-family: var(--ff-heading);
+      font-size: .95rem;
+    }
+
+    .twitch-admin-banner__detail {
+      color: var(--clr-text-muted);
+      font-size: .8rem;
+    }
+
+    .twitch-admin-banner__error {
+      display: none;
+      margin-top: .5rem;
+      padding: .6rem .8rem;
+      border: 1px solid rgba(255, 59, 92, .25);
+      border-radius: var(--radius);
+      background: rgba(255, 59, 92, .1);
+      color: #ff6b82;
+      font-size: .8rem;
+      word-break: break-word;
+    }
+
     /* ── Login ─── */
     .admin-login-page {
       min-height: 100vh;

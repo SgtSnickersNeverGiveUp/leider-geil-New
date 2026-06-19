@@ -11,6 +11,11 @@ const SETTINGS_API = ADMIN_DASHBOARD_CONFIG.settingsApi;
 const BANNER_IMAGE_API = ADMIN_DASHBOARD_CONFIG.bannerImageApi;
 const COMMUNITY_SHOUTS_API = ADMIN_DASHBOARD_CONFIG.communityShoutsApi;
 const PUBLIC_ASSET_URLS = ADMIN_DASHBOARD_CONFIG.publicAssetUrls;
+const {
+  addMinuteCacheBust,
+  escapeHtml,
+  getEventGameVariant,
+} = window.LG_SHARED_UTILS;
 const BANNER_ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const BANNER_MAX_SIZE_BYTES = 5 * 1024 * 1024;
 
@@ -27,18 +32,6 @@ function renderEventGameOptions(selectedGame) {
   return EVENT_GAME_OPTIONS
     .map((game) => `<option value="${escapeHtml(game)}" ${selectedGame === game ? 'selected' : ''}>${escapeHtml(game)}</option>`)
     .join('');
-}
-
-function getEventGameVariant(game) {
-  if (game === 'PUBG' || game === 'PUBG NEWS') return 'pubg';
-  if (game === 'ARC Raiders' || game === 'ARC Raiders NEWS') return 'arc';
-  if (game === 'NEWS') return 'news';
-  return '';
-}
-
-function addCacheBustForPublicAsset(url, publicAssetUrl) {
-  if (!url || !publicAssetUrl || !url.startsWith(publicAssetUrl)) return url || '';
-  return `${url}${url.includes('?') ? '&' : '?'}t=${Math.floor(Date.now() / 60000)}`;
 }
 
 function redirectToAdminLogin() {
@@ -448,7 +441,7 @@ function renderEventsAdmin(events) {
 
   body.innerHTML = events.map(ev => {
     const dateStr = new Date(ev.date).toLocaleDateString('de-DE', { year: 'numeric', month: 'long', day: 'numeric' });
-    const thumbSrc = ev.image ? addCacheBustForPublicAsset(ev.image, PUBLIC_ASSET_URLS.eventImage) : '';
+    const thumbSrc = ev.image ? addMinuteCacheBust(ev.image, PUBLIC_ASSET_URLS.eventImage) : '';
     const thumbHtml = thumbSrc
       ? `<img class="admin-event-thumb" src="${escapeHtml(thumbSrc)}" alt="" loading="lazy" onerror="this.style.display='none'">`
       : '';
@@ -493,7 +486,7 @@ function openEditEvent(id) {
     if (!ev) { alert('Event nicht gefunden.'); return; }
 
     const imgSrc = ev.image
-      ? escapeHtml(addCacheBustForPublicAsset(ev.image, PUBLIC_ASSET_URLS.eventImage))
+      ? escapeHtml(addMinuteCacheBust(ev.image, PUBLIC_ASSET_URLS.eventImage))
       : "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 50'%3E%3Crect fill='%231a1a2e' width='80' height='50'/%3E%3Ctext x='50%25' y='55%25' text-anchor='middle' fill='%237a7a8e' font-size='14'%3E%3F%3C/text%3E%3C/svg%3E";
 
     const overlay = document.createElement('div');
@@ -805,7 +798,7 @@ async function loadBannerSettings() {
     const settings = await res.json();
 
     if (settings.bannerUrl) {
-      const imgUrl = addCacheBustForPublicAsset(settings.bannerUrl, PUBLIC_ASSET_URLS.bannerImage);
+      const imgUrl = addMinuteCacheBust(settings.bannerUrl, PUBLIC_ASSET_URLS.bannerImage);
 
       body.innerHTML = `
         <div class="banner-preview-container">
@@ -1208,12 +1201,6 @@ async function deleteCommunityShout(id) {
 // ══════════════════════════════════════════════════════════
 // HELPERS
 // ══════════════════════════════════════════════════════════
-function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
-}
-
 function truncate(str, max) {
   if (!str) return '';
   return str.length > max ? str.slice(0, max) + '\u2026' : str;

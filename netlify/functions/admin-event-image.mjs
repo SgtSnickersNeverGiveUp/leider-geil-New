@@ -1,16 +1,18 @@
-import { getStore } from "@netlify/blobs";
 import { requireAdmin } from "./admin-auth.mjs";
 import { jsonResponse, methodNotAllowed } from "./_shared/http.mjs";
-
-const STORE_NAME = "event-images";
-const ALLOWED_CONTENT_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+import {
+  ALLOWED_IMAGE_CONTENT_TYPES,
+  getEventImagesStore,
+  MAX_IMAGE_BYTES,
+  mediaMetaKey,
+  publicEventImageUrl,
+} from "./_shared/media-stores.mjs";
 
 export default async (req) => {
   const adminGuard = requireAdmin(req);
   if (adminGuard) return adminGuard;
 
-  const store = getStore(STORE_NAME);
+  const store = getEventImagesStore();
   const eventId = new URL(req.url).searchParams.get("id");
 
   if (!eventId) {
@@ -20,7 +22,7 @@ export default async (req) => {
   if (req.method === "POST") {
     try {
       const contentType = (req.headers.get("content-type") || "image/jpeg").split(";")[0].trim().toLowerCase();
-      if (!ALLOWED_CONTENT_TYPES.has(contentType)) {
+      if (!ALLOWED_IMAGE_CONTENT_TYPES.has(contentType)) {
         return jsonResponse({ error: "Nur JPEG, PNG oder WebP erlaubt." }, 400);
       }
 
@@ -29,14 +31,13 @@ export default async (req) => {
       if (buffer.byteLength > MAX_IMAGE_BYTES) return jsonResponse({ error: "Datei zu groß (max. 5 MB)." }, 400);
 
       await store.set(eventId, new Uint8Array(buffer));
-      await store.setJSON(`${eventId}-meta`, {
+      await store.setJSON(mediaMetaKey(eventId), {
         contentType,
         size: buffer.byteLength,
         uploadedAt: new Date().toISOString(),
       });
 
-      const imageUrl = `/api/event-image?id=${encodeURIComponent(eventId)}`;
-      return jsonResponse({ success: true, url: imageUrl, size: buffer.byteLength });
+      return jsonResponse({ success: true, url: publicEventImageUrl(eventId), size: buffer.byteLength });
     } catch {
       return jsonResponse({ error: "Fehler beim Upload." }, 500);
     }
@@ -45,7 +46,7 @@ export default async (req) => {
   if (req.method === "DELETE") {
     try {
       await store.delete(eventId);
-      await store.delete(`${eventId}-meta`);
+      await store.delete(mediaMetaKey(eventId));
       return jsonResponse({ success: true });
     } catch {
       return jsonResponse({ error: "Fehler beim Löschen." }, 500);

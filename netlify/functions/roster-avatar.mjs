@@ -1,12 +1,10 @@
-import { getStore } from "@netlify/blobs";
 import { jsonResponse, methodNotAllowed } from "./_shared/http.mjs";
-
-const STORE_NAME = "roster-avatars";
+import { getRosterAvatarsStore, mediaMetaKey } from "./_shared/media-stores.mjs";
 
 export default async (req) => {
   if (req.method !== "GET") return methodNotAllowed();
 
-  const store = getStore(STORE_NAME);
+  const store = getRosterAvatarsStore();
   const memberId = new URL(req.url).searchParams.get("id");
 
   if (!memberId) {
@@ -14,7 +12,7 @@ export default async (req) => {
   }
 
   try {
-    const meta = await store.get(`${memberId}-meta`, { type: "json" });
+    const meta = await store.get(mediaMetaKey(memberId), { type: "json" });
     if (!meta) return new Response("No avatar", { status: 404 });
 
     const imageData = await store.get(memberId, { type: "arrayBuffer" });

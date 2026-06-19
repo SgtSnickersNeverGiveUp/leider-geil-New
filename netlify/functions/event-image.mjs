@@ -1,12 +1,10 @@
-import { getStore } from "@netlify/blobs";
 import { jsonResponse, methodNotAllowed } from "./_shared/http.mjs";
-
-const STORE_NAME = "event-images";
+import { getEventImagesStore, mediaMetaKey } from "./_shared/media-stores.mjs";
 
 export default async (req) => {
   if (req.method !== "GET") return methodNotAllowed();
 
-  const store = getStore(STORE_NAME);
+  const store = getEventImagesStore();
   const eventId = new URL(req.url).searchParams.get("id");
 
   if (!eventId) {
@@ -14,7 +12,7 @@ export default async (req) => {
   }
 
   try {
-    const meta = await store.get(`${eventId}-meta`, { type: "json" });
+    const meta = await store.get(mediaMetaKey(eventId), { type: "json" });
     if (!meta) return new Response("No image", { status: 404 });
 
     const imageData = await store.get(eventId, { type: "arrayBuffer" });

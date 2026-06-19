@@ -1,6 +1,7 @@
 (() => {
   'use strict';
 
+  const { escapeHtml } = window.LG_SHARED_UTILS;
   const MAX_VISIBLE_SHOUTS = 4;
 
   document.addEventListener('DOMContentLoaded', () => {
@@ -44,7 +45,7 @@
 
         form.reset();
         status.classList.add('community-shouts__status--success');
-        status.textContent = 'Shout empfangen. Wartet auf Admin-Freigabe, bevor er auf der Wall erscheint.';
+        status.textContent = 'Shout empfangen. Wartet auf Freigabe, bevor er auf der Wall erscheint.';
       } catch (err) {
         status.classList.add('community-shouts__status--error');
         status.textContent = 'Shout konnte nicht gesendet werden. Bitte später erneut versuchen.';
@@ -80,14 +81,5 @@
         <p>${escapeHtml(shout.message)}</p>
       </article>
     `).join('');
-  }
-
-  function escapeHtml(value) {
-    return String(value || '')
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
   }
 })();

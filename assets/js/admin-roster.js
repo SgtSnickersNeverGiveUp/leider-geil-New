@@ -5,6 +5,12 @@ const ROSTER_API = ADMIN_ROSTER_CONFIG.rosterApi;
 const ROSTER_AVATAR_API = ADMIN_ROSTER_CONFIG.rosterAvatarApi;
 const ROSTER_SETTINGS_API = ADMIN_ROSTER_CONFIG.settingsApi;
 const ROSTER_PUBLIC_ASSET_URLS = ADMIN_ROSTER_CONFIG.publicAssetUrls;
+const {
+  addMinuteCacheBust,
+  escapeHtml,
+  getDefaultRosterSlideshowSettings,
+  normalizeRosterSlideshowSettings,
+} = window.LG_SHARED_UTILS;
 
 // ══════════════════════════════════════════════════════════
 // CLAN ROSTER
@@ -12,11 +18,6 @@ const ROSTER_PUBLIC_ASSET_URLS = ADMIN_ROSTER_CONFIG.publicAssetUrls;
 let rosterAvatarFile = null;
 let editAvatarFile = null;
 let currentRosterSlideshowSettings = getDefaultRosterSlideshowSettings();
-
-function addCacheBustForPublicRosterAsset(url, publicAssetUrl) {
-  if (!url || !publicAssetUrl || !url.startsWith(publicAssetUrl)) return url || '';
-  return `${url}${url.includes('?') ? '&' : '?'}t=${Math.floor(Date.now() / 60000)}`;
-}
 
 // Drag & drop support for new member form
 const rosterAvatarArea = document.getElementById('roster-avatar-area');
@@ -92,7 +93,7 @@ function renderRosterAdmin(members) {
 
   body.innerHTML = `<div class="admin-roster-grid">${members.map(m => {
     const avatarSrc = m.avatar
-      ? escapeHtml(addCacheBustForPublicRosterAsset(m.avatar, ROSTER_PUBLIC_ASSET_URLS.rosterAvatar))
+      ? escapeHtml(addMinuteCacheBust(m.avatar, ROSTER_PUBLIC_ASSET_URLS.rosterAvatar))
       : '';
 
     const gamesHtml = (m.games || []).map(g => {
@@ -128,16 +129,6 @@ function renderRosterAdmin(members) {
   }).join('')}</div>`;
 }
 
-function getDefaultRosterSlideshowSettings() {
-  return {
-    enabled: false,
-    autoplay: true,
-    speedSeconds: 8,
-    pinnedMemberId: '',
-    entries: [],
-  };
-}
-
 async function loadRosterSlideshowSettings() {
   try {
     const res = await fetch(ROSTER_SETTINGS_API);
@@ -148,32 +139,6 @@ async function loadRosterSlideshowSettings() {
     console.warn('[Roster Slideshow Admin] Settings konnten nicht geladen werden:', err);
     currentRosterSlideshowSettings = getDefaultRosterSlideshowSettings();
   }
-}
-
-function normalizeRosterSlideshowSettings(settings) {
-  const defaults = getDefaultRosterSlideshowSettings();
-  if (!settings || typeof settings !== 'object') return defaults;
-
-  const rawEntries = Array.isArray(settings.entries)
-    ? settings.entries
-    : Array.isArray(settings.members)
-      ? settings.members
-      : [];
-
-  const entries = rawEntries
-    .filter((entry) => entry && (entry.memberId || entry.id))
-    .map((entry) => ({
-      memberId: String(entry.memberId || entry.id),
-      text: String(entry.text || ''),
-    }));
-
-  return {
-    enabled: Boolean(settings.enabled),
-    autoplay: settings.autoplay !== false,
-    speedSeconds: Math.max(3, Number(settings.speedSeconds) || defaults.speedSeconds),
-    pinnedMemberId: settings.pinnedMemberId ? String(settings.pinnedMemberId) : '',
-    entries,
-  };
 }
 
 async function renderRosterSlideshowAdmin(members, reloadSettings = true) {

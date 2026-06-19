@@ -1,19 +1,15 @@
-import { getStore } from "@netlify/blobs";
 import { methodNotAllowed } from "./_shared/http.mjs";
-
-const STORE_NAME = "banner";
-const BANNER_KEY = "header-banner";
-const META_KEY = "header-banner-meta";
+import { BANNER_IMAGE_KEY, BANNER_META_KEY, getBannerStore } from "./_shared/media-stores.mjs";
 
 export default async (req) => {
   if (req.method !== "GET") return methodNotAllowed();
 
   try {
-    const store = getStore(STORE_NAME);
-    const meta = await store.get(META_KEY, { type: "json" });
+    const store = getBannerStore();
+    const meta = await store.get(BANNER_META_KEY, { type: "json" });
     if (!meta) return new Response("No banner uploaded", { status: 404 });
 
-    const imageData = await store.get(BANNER_KEY, { type: "arrayBuffer" });
+    const imageData = await store.get(BANNER_IMAGE_KEY, { type: "arrayBuffer" });
     if (!imageData) return new Response("No banner uploaded", { status: 404 });
 
     return new Response(imageData, {

@@ -15,6 +15,16 @@ export async function readSettings(store = getSettingsStore()) {
   }
 }
 
+export async function readPublicSettings(store = getSettingsStore()) {
+  const settings = await readSettings(store);
+  return {
+    bannerUrl: settings.bannerUrl || "",
+    rosterSlideshow: settings.rosterSlideshow || {},
+    tickerSpeedSeconds: settings.tickerSpeedSeconds,
+    tickerSeparator: settings.tickerSeparator,
+  };
+}
+
 export async function mergeSettings(update, store = getSettingsStore()) {
   const existing = await readSettings(store);
   const updated = { ...existing, ...update, updatedAt: new Date().toISOString() };

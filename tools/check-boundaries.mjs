@@ -60,6 +60,9 @@ const publicBrowserFiles = listFiles("assets/js", ".js")
   .filter((file) => !file.startsWith("assets/js/admin-"));
 const publicScriptsRequiringConfig = publicBrowserFiles
   .filter((file) => read(file).includes("SITE_CONFIG"));
+const sharedUtilsScript = "assets/js/shared-utils.js";
+const publicScriptsRequiringSharedUtils = publicBrowserFiles
+  .filter((file) => file !== sharedUtilsScript && read(file).includes("LG_SHARED_UTILS"));
 
 for (const htmlFile of publicHtml) {
   const html = read(htmlFile);
@@ -71,7 +74,18 @@ for (const htmlFile of publicHtml) {
       `${htmlFile} must load public config.js before ${scriptFile}`,
     );
   }
+
+  for (const scriptFile of publicScriptsRequiringSharedUtils) {
+    if (!html.includes(scriptFile)) continue;
+    assert(html.includes(sharedUtilsScript), `${htmlFile} must load shared browser utils before ${scriptFile}`);
+    assert(
+      html.indexOf(sharedUtilsScript) < html.indexOf(scriptFile),
+      `${htmlFile} must load shared browser utils before ${scriptFile}`,
+    );
+  }
 }
+
+assert(!read("index.html").includes("Admin-Freigabe"), "public index.html must not mention admin approval");
 
 assert(!existsSync(path.join(root, "assets/js/script.js")), "legacy assets/js/script.js must stay removed");
 
@@ -115,6 +129,11 @@ assert(
     && dashboardHtml.indexOf("/assets/js/admin-config.js") < dashboardHtml.indexOf("/assets/js/admin-dashboard.js"),
   "lg-dashboard.html must load admin-config.js before admin dashboard scripts",
 );
+assert(
+  dashboardHtml.indexOf("/assets/js/shared-utils.js") < dashboardHtml.indexOf("/assets/js/admin-roster.js")
+    && dashboardHtml.indexOf("/assets/js/shared-utils.js") < dashboardHtml.indexOf("/assets/js/admin-dashboard.js"),
+  "lg-dashboard.html must load shared browser utils before admin dashboard scripts",
+);
 
 const publicFunctionFiles = [
   "applications.mjs",
@@ -154,6 +173,40 @@ for (const file of ["events.mjs", "admin-events.mjs"]) {
   const relativePath = `netlify/functions/${file}`;
   assert(!read(relativePath).includes("DEFAULT_EVENTS"), `${relativePath} must use the shared events store`);
 }
+
+const mediaStoreFunctionFiles = [
+  "banner-image.mjs",
+  "admin-banner-image.mjs",
+  "event-image.mjs",
+  "admin-event-image.mjs",
+  "roster-avatar.mjs",
+  "admin-roster-avatar.mjs",
+];
+
+for (const file of mediaStoreFunctionFiles) {
+  const relativePath = `netlify/functions/${file}`;
+  const source = read(relativePath);
+  assert(source.includes("./_shared/media-stores.mjs"), `${relativePath} must use the shared media store contract`);
+  assert(!source.includes("const STORE_NAME"), `${relativePath} must not own media store names`);
+}
+
+const submissionStoreFunctionFiles = [
+  "applications.mjs",
+  "admin-applications.mjs",
+  "event-registrations.mjs",
+  "admin-event-registrations.mjs",
+];
+
+for (const file of submissionStoreFunctionFiles) {
+  const relativePath = `netlify/functions/${file}`;
+  const source = read(relativePath);
+  assert(source.includes("./_shared/submission-stores.mjs"), `${relativePath} must use the shared submission store contract`);
+  assert(!source.includes("const STORE_NAME"), `${relativePath} must not own submission store names`);
+}
+
+const publicSettingsFunction = read("netlify/functions/settings.mjs");
+assert(publicSettingsFunction.includes("readPublicSettings"), "public settings.mjs must return allowlisted public settings");
+assert(!/\breadSettings\s*\(/.test(publicSettingsFunction), "public settings.mjs must not expose the full admin settings blob");
 
 const adminContentFunctions = [
   "admin-applications.mjs",
