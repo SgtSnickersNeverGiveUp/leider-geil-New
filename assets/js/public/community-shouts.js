@@ -2,6 +2,7 @@
   'use strict';
 
   const MAX_VISIBLE_SHOUTS = 4;
+  const { escapeHtml } = window.LG_SITE_UTILS;
 
   document.addEventListener('DOMContentLoaded', () => {
     const root = document.getElementById('community-shouts');
@@ -14,7 +15,7 @@
     const form = document.getElementById('community-shouts-form');
     const status = document.getElementById('community-shouts-status');
     const list = document.getElementById('community-shouts-list');
-    const apiUrl = SITE_CONFIG.communityShoutsApi || '/api/community-shouts';
+    const apiUrl = SITE_CONFIG.communityShoutsApi;
 
     loadApprovedShouts(apiUrl, list);
 
@@ -80,14 +81,5 @@
         <p>${escapeHtml(shout.message)}</p>
       </article>
     `).join('');
-  }
-
-  function escapeHtml(value) {
-    return String(value || '')
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
   }
 })();
