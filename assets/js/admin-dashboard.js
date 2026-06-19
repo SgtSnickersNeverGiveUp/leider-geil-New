@@ -9,6 +9,8 @@ const NEWS_API_URL = '/api/news';
 const SETTINGS_API = '/api/settings';
 const BANNER_IMAGE_API = '/api/banner-image';
 const COMMUNITY_SHOUTS_API = '/api/community-shouts';
+const BANNER_ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const BANNER_MAX_SIZE_BYTES = 5 * 1024 * 1024;
 
 const EVENT_GAME_OPTIONS = [
   'PUBG',
@@ -809,6 +811,59 @@ async function loadBannerSettings() {
   }
 }
 
+function getBannerContentType(file) {
+  if (BANNER_ALLOWED_TYPES.includes(file.type)) return file.type;
+
+  const name = (file.name || '').toLowerCase();
+  if (name.endsWith('.jpg') || name.endsWith('.jpeg')) return 'image/jpeg';
+  if (name.endsWith('.png')) return 'image/png';
+  if (name.endsWith('.webp')) return 'image/webp';
+  return '';
+}
+
+function validateBannerFile(file) {
+  if (!file) return 'Bitte eine Datei auswählen.';
+
+  if (!getBannerContentType(file)) {
+    return 'Nur JPEG, PNG oder WebP erlaubt.';
+  }
+
+  if (file.size > BANNER_MAX_SIZE_BYTES) {
+    return 'Datei zu groß (max. 5 MB).';
+  }
+
+  return '';
+}
+
+async function readJsonResponse(res) {
+  try {
+    return await res.json();
+  } catch {
+    return {};
+  }
+}
+
+document.getElementById('banner-file').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  const statusEl = document.getElementById('banner-upload-status');
+  if (!statusEl) return;
+
+  if (!file) {
+    statusEl.textContent = '';
+    return;
+  }
+
+  const validationError = validateBannerFile(file);
+  if (validationError) {
+    statusEl.textContent = validationError;
+    statusEl.style.color = 'var(--clr-danger)';
+    return;
+  }
+
+  statusEl.textContent = `${file.name} (${(file.size / 1024).toFixed(0)} KB) bereit zum Hochladen.`;
+  statusEl.style.color = 'var(--clr-accent-arc)';
+});
+
 document.getElementById('banner-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const btn = document.getElementById('banner-submit');
@@ -828,8 +883,12 @@ document.getElementById('banner-form').addEventListener('submit', async (e) => {
       // File upload
       const fileInput = document.getElementById('banner-file');
       const file = fileInput.files[0];
-      if (!file) {
-        alert('Bitte eine Datei ausw\u00e4hlen.');
+      const validationError = validateBannerFile(file);
+      if (validationError) {
+        const statusEl = document.getElementById('banner-upload-status');
+        statusEl.textContent = validationError;
+        statusEl.style.color = 'var(--clr-danger)';
+        alert(validationError);
         btn.disabled = false;
         return;
       }
@@ -838,18 +897,23 @@ document.getElementById('banner-form').addEventListener('submit', async (e) => {
       statusEl.textContent = 'Lade hoch...';
       statusEl.style.color = 'var(--clr-accent-arc)';
 
+      const contentType = getBannerContentType(file);
       const uploadRes = await fetch(BANNER_IMAGE_API, {
         method: 'POST',
-        headers: { 'Content-Type': file.type },
+        headers: { 'Content-Type': contentType },
         body: file,
       });
 
       if (!uploadRes.ok) {
-        const data = await uploadRes.json();
+        const data = await readJsonResponse(uploadRes);
         throw new Error(data.error || `Upload fehlgeschlagen (HTTP ${uploadRes.status})`);
       }
 
-      const uploadData = await uploadRes.json();
+      const uploadData = await readJsonResponse(uploadRes);
+      if (!uploadData.url) {
+        throw new Error('Upload-Antwort unvollständig.');
+      }
+
       bannerUrl = uploadData.url;
       statusEl.textContent = 'Upload erfolgreich!';
     }
@@ -866,6 +930,11 @@ document.getElementById('banner-form').addEventListener('submit', async (e) => {
     await loadBannerSettings();
     alert('Banner erfolgreich gespeichert! Die \u00c4nderung ist sofort auf der Startseite sichtbar.');
   } catch (err) {
+    const statusEl = document.getElementById('banner-upload-status');
+    if (currentBannerTab === 'upload' && statusEl) {
+      statusEl.textContent = err.message;
+      statusEl.style.color = 'var(--clr-danger)';
+    }
     alert('Fehler: ' + err.message);
   } finally {
     btn.disabled = false;
