@@ -1,14 +1,21 @@
 'use strict';
 
-const API_URL = '/api/applications';
-const EVENTS_API = '/api/events';
-const EVENT_IMAGE_API = '/api/event-image';
-const VIDEOS_API = '/api/videos';
-const EVT_REGISTRATIONS_API = '/api/event-registrations';
-const NEWS_API_URL = '/api/news';
-const SETTINGS_API = '/api/settings';
-const BANNER_IMAGE_API = '/api/banner-image';
-const COMMUNITY_SHOUTS_API = '/api/community-shouts';
+const ADMIN_DASHBOARD_CONFIG = window.ADMIN_CONFIG;
+const API_URL = ADMIN_DASHBOARD_CONFIG.applicationsApi;
+const EVENTS_API = ADMIN_DASHBOARD_CONFIG.eventsApi;
+const EVENT_IMAGE_API = ADMIN_DASHBOARD_CONFIG.eventImageApi;
+const VIDEOS_API = ADMIN_DASHBOARD_CONFIG.videosApi;
+const EVT_REGISTRATIONS_API = ADMIN_DASHBOARD_CONFIG.eventRegistrationsApi;
+const NEWS_API_URL = ADMIN_DASHBOARD_CONFIG.newsApi;
+const SETTINGS_API = ADMIN_DASHBOARD_CONFIG.settingsApi;
+const BANNER_IMAGE_API = ADMIN_DASHBOARD_CONFIG.bannerImageApi;
+const COMMUNITY_SHOUTS_API = ADMIN_DASHBOARD_CONFIG.communityShoutsApi;
+const PUBLIC_ASSET_URLS = ADMIN_DASHBOARD_CONFIG.publicAssetUrls;
+const {
+  addMinuteCacheBust,
+  escapeHtml,
+  getEventGameVariant,
+} = window.LG_SHARED_UTILS;
 const BANNER_ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const BANNER_MAX_SIZE_BYTES = 5 * 1024 * 1024;
 
@@ -27,21 +34,14 @@ function renderEventGameOptions(selectedGame) {
     .join('');
 }
 
-function getEventGameVariant(game) {
-  if (game === 'PUBG' || game === 'PUBG NEWS') return 'pubg';
-  if (game === 'ARC Raiders' || game === 'ARC Raiders NEWS') return 'arc';
-  if (game === 'NEWS') return 'news';
-  return '';
-}
-
 function redirectToAdminLogin() {
   const redirect = `${window.location.pathname}${window.location.search}`;
-  window.location.assign(`/admin-login.html?redirect=${encodeURIComponent(redirect)}`);
+  window.location.assign(`${ADMIN_DASHBOARD_CONFIG.loginPath}?redirect=${encodeURIComponent(redirect)}`);
 }
 
 async function ensureAdminSession() {
   try {
-    const res = await fetch('/api/admin-session', { credentials: 'same-origin' });
+    const res = await fetch(ADMIN_DASHBOARD_CONFIG.sessionApi, { credentials: 'same-origin' });
     if (!res.ok) {
       redirectToAdminLogin();
       return false;
@@ -62,7 +62,7 @@ async function ensureAdminSession() {
 
 async function logoutAdmin() {
   try {
-    await fetch('/api/admin-logout', {
+    await fetch(ADMIN_DASHBOARD_CONFIG.logoutApi, {
       method: 'POST',
       credentials: 'same-origin',
     });
@@ -137,7 +137,7 @@ async function loadApplications() {
   body.innerHTML = '<div class="loading">Lade Bewerbungen</div>';
 
   try {
-    const res = await fetch(API_URL); // '/api/applications'
+    const res = await fetch(API_URL);
     if (!res.ok) throw new Error('API error ' + res.status);
     currentApplications = await res.json();
   } catch (err) {
@@ -202,6 +202,22 @@ function updateStats() {
   document.getElementById('stat-total').textContent = currentApplications.length;
   document.getElementById('stat-pubg').textContent = currentApplications.filter(a => a.hauptspiel === 'PUBG' || a.hauptspiel === 'Beides').length;
   document.getElementById('stat-arc').textContent = currentApplications.filter(a => a.hauptspiel === 'ARC Raiders' || a.hauptspiel === 'Beides').length;
+}
+
+async function deleteApplication(id) {
+  if (!id) return;
+  if (!confirm('Bewerbung wirklich löschen?')) return;
+
+  try {
+    const res = await fetch(`${API_URL}?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    currentApplications = currentApplications.filter((app) => app.id !== id);
+    renderApplications();
+    updateStats();
+  } catch (err) {
+    console.error('[Applications] Löschen fehlgeschlagen', err);
+    alert('Bewerbung konnte nicht gelöscht werden.');
+  }
 }
 
 function closeModal() {
@@ -425,8 +441,9 @@ function renderEventsAdmin(events) {
 
   body.innerHTML = events.map(ev => {
     const dateStr = new Date(ev.date).toLocaleDateString('de-DE', { year: 'numeric', month: 'long', day: 'numeric' });
-    const thumbHtml = ev.image
-      ? `<img class="admin-event-thumb" src="${escapeHtml(ev.image)}${ev.image.startsWith('/api/event-image') ? (ev.image.includes('?') ? '&' : '?') + 't=' + Math.floor(Date.now() / 60000) : ''}" alt="" loading="lazy" onerror="this.style.display='none'">`
+    const thumbSrc = ev.image ? addMinuteCacheBust(ev.image, PUBLIC_ASSET_URLS.eventImage) : '';
+    const thumbHtml = thumbSrc
+      ? `<img class="admin-event-thumb" src="${escapeHtml(thumbSrc)}" alt="" loading="lazy" onerror="this.style.display='none'">`
       : '';
     const game = ev.game || 'Mixed';
     const gameVariant = getEventGameVariant(game);
@@ -469,7 +486,7 @@ function openEditEvent(id) {
     if (!ev) { alert('Event nicht gefunden.'); return; }
 
     const imgSrc = ev.image
-      ? escapeHtml(ev.image) + (ev.image.startsWith('/api/event-image') ? (ev.image.includes('?') ? '&' : '?') + 't=' + Math.floor(Date.now() / 60000) : '')
+      ? escapeHtml(addMinuteCacheBust(ev.image, PUBLIC_ASSET_URLS.eventImage))
       : "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 50'%3E%3Crect fill='%231a1a2e' width='80' height='50'/%3E%3Ctext x='50%25' y='55%25' text-anchor='middle' fill='%237a7a8e' font-size='14'%3E%3F%3C/text%3E%3C/svg%3E";
 
     const overlay = document.createElement('div');
@@ -781,10 +798,7 @@ async function loadBannerSettings() {
     const settings = await res.json();
 
     if (settings.bannerUrl) {
-      // Add cache-buster for uploaded images
-      const imgUrl = settings.bannerUrl === '/api/banner-image'
-        ? settings.bannerUrl + '?t=' + Date.now()
-        : settings.bannerUrl;
+      const imgUrl = addMinuteCacheBust(settings.bannerUrl, PUBLIC_ASSET_URLS.bannerImage);
 
       body.innerHTML = `
         <div class="banner-preview-container">
@@ -796,7 +810,7 @@ async function loadBannerSettings() {
         </p>`;
 
       // Pre-fill URL input if it's a URL type
-      if (settings.bannerUrl !== '/api/banner-image') {
+      if (settings.bannerUrl !== PUBLIC_ASSET_URLS.bannerImage) {
         document.getElementById('banner-url').value = settings.bannerUrl;
       }
     } else {
@@ -1104,7 +1118,7 @@ async function loadCommunityShouts() {
   body.innerHTML = '<div class="loading">Lade Community Shouts</div>';
 
   try {
-    const res = await fetch(`${COMMUNITY_SHOUTS_API}?all=1`);
+    const res = await fetch(COMMUNITY_SHOUTS_API);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     currentCommunityShouts = await res.json();
     renderCommunityShoutsAdmin();
@@ -1141,14 +1155,14 @@ function renderCommunityShoutsAdmin() {
       <tbody>
         ${currentCommunityShouts.map((shout) => `
           <tr>
-            <td>${shout.approved ? '<span class="tag tag--arc">Live</span>' : '<span class="tag tag--pubg">Wartet</span>'}</td>
+            <td>${shout.visible ? '<span class="tag tag--arc">Live</span>' : '<span class="tag tag--pubg">Wartet</span>'}</td>
             <td><strong>${escapeHtml(shout.name)}</strong></td>
             <td>${escapeHtml(shout.tag || 'Community')}</td>
             <td class="app-about">${escapeHtml(shout.message)}</td>
             <td class="app-date">${formatDate(shout.createdAt)}</td>
             <td>
-              <button class="btn-sm" onclick="setCommunityShoutApproval('${shout.id}', ${!shout.approved})">
-                ${shout.approved ? 'Ausblenden' : 'Freigeben'}
+              <button class="btn-sm" onclick="setCommunityShoutVisibility('${shout.id}', ${!shout.visible})">
+                ${shout.visible ? 'Ausblenden' : 'Freigeben'}
               </button>
               <button class="btn-delete" onclick="deleteCommunityShout('${shout.id}')">Löschen</button>
             </td>
@@ -1158,12 +1172,12 @@ function renderCommunityShoutsAdmin() {
     </table>`;
 }
 
-async function setCommunityShoutApproval(id, approved) {
+async function setCommunityShoutVisibility(id, visible) {
   try {
     const res = await fetch(COMMUNITY_SHOUTS_API, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, approved }),
+      body: JSON.stringify({ id, visible }),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     await loadCommunityShouts();
@@ -1187,12 +1201,6 @@ async function deleteCommunityShout(id) {
 // ══════════════════════════════════════════════════════════
 // HELPERS
 // ══════════════════════════════════════════════════════════
-function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
-}
-
 function truncate(str, max) {
   if (!str) return '';
   return str.length > max ? str.slice(0, max) + '\u2026' : str;
@@ -1212,6 +1220,7 @@ document.getElementById('btn-refresh').addEventListener('click', loadApplication
 document.getElementById('btn-refresh-roster').addEventListener('click', loadRoster);
 document.getElementById('btn-refresh-events').addEventListener('click', loadEvents);
 document.getElementById('btn-refresh-videos').addEventListener('click', loadVideos);
+document.getElementById('btn-refresh-news')?.addEventListener('click', initNewsAdmin);
 document.getElementById('btn-refresh-banner').addEventListener('click', loadBannerSettings);
 document.getElementById('btn-refresh-evt-registrations').addEventListener('click', loadEventRegistrations);
 document.getElementById('btn-refresh-community-shouts')?.addEventListener('click', loadCommunityShouts);

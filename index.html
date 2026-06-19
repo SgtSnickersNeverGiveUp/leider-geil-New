@@ -178,15 +178,15 @@
               </select>
             </div>
             <textarea name="message" maxlength="220" rows="3" placeholder="Dein Shout..." required></textarea>
-            <p class="community-shouts__hint">Hinweis: Shouts erscheinen erst nach Admin-Freigabe.</p>
+            <p class="community-shouts__hint">Hinweis: Shouts erscheinen auf der Wall, sobald sie geprüft wurden.</p>
             <button type="submit" class="btn community-shouts__submit">Shout senden</button>
             <p class="community-shouts__status" id="community-shouts-status" role="status"></p>
           </form>
 
-          <div class="community-shouts__feed" aria-label="Freigegebene Community Shouts">
+          <div class="community-shouts__feed" aria-label="Community Shouts auf der Wall">
             <div class="community-shouts__feed-title">Letzte Shouts</div>
             <div class="community-shouts__list" id="community-shouts-list">
-              <div class="community-shouts__empty">Noch keine freigegebenen Shouts.</div>
+              <div class="community-shouts__empty">Noch keine Shouts auf der Wall.</div>
             </div>
           </div>
         </div>
@@ -291,7 +291,10 @@
 
     <!-- Scripts -->
   <script src="config.js"></script>
-  <script src="assets/js/script.js"></script>
+  <script src="assets/js/public-core.js"></script>
+  <script src="assets/js/shared-utils.js"></script>
+  <script src="assets/js/roster-slideshow-settings.js"></script>
+  <script src="assets/js/index.js"></script>
   <script src="assets/js/roster-slideshow.js"></script>
   <script src="assets/js/community-shouts.js"></script>
   <script src="assets/js/public-roster.js"></script>
