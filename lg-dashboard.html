@@ -497,8 +497,9 @@
 
             <!-- File upload -->
             <div class="admin-form__group banner-tab" id="banner-tab-upload" style="display:none;">
-              <label class="admin-form__label" for="banner-file">Bild-Datei</label>
-              <input class="admin-form__input" type="file" id="banner-file" accept="image/*" style="padding:.4rem;">
+              <label class="admin-form__label" for="banner-file">Bild-Datei (JPEG/PNG/WebP, max. 5 MB)</label>
+              <input class="admin-form__input" type="file" id="banner-file" accept="image/jpeg,image/png,image/webp" style="padding:.4rem;">
+              <div class="admin-form__hint">Empfohlen: 1920 &times; 600 px. Sehr große PC-Dateien bitte vorher verkleinern.</div>
               <div id="banner-upload-status" style="font-family:var(--ff-mono);font-size:.75rem;color:var(--clr-text-muted);margin-top:.25rem;"></div>
             </div>
 

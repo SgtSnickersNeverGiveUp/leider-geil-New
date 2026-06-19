@@ -4,6 +4,15 @@ import { requireAdmin } from "./admin-auth.mjs";
 const STORE_NAME = "banner";
 const BANNER_KEY = "header-banner";
 const META_KEY = "header-banner-meta";
+const ALLOWED_CONTENT_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const MAX_BANNER_BYTES = 5 * 1024 * 1024;
+
+function jsonResponse(body, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { "Content-Type": "application/json" },
+  });
+}
 
 export default async (req) => {
   if (req.method === "POST") {
@@ -41,22 +50,20 @@ export default async (req) => {
   // POST – Upload a new banner image
   if (req.method === "POST") {
     try {
-      const contentType = req.headers.get("content-type") || "image/jpeg";
+      const contentType = (req.headers.get("content-type") || "image/jpeg").split(";")[0].trim().toLowerCase();
+      if (!ALLOWED_CONTENT_TYPES.has(contentType)) {
+        return jsonResponse({ error: "Nur JPEG, PNG oder WebP erlaubt." }, 400);
+      }
+
       const buffer = await req.arrayBuffer();
 
       if (buffer.byteLength === 0) {
-        return new Response(JSON.stringify({ error: "Keine Datei empfangen." }), {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        });
+        return jsonResponse({ error: "Keine Datei empfangen." }, 400);
       }
 
-      // Max 10MB
-      if (buffer.byteLength > 10 * 1024 * 1024) {
-        return new Response(JSON.stringify({ error: "Datei zu groß (max. 10 MB)." }), {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        });
+      // Keep uploads below Netlify's synchronous function body limit.
+      if (buffer.byteLength > MAX_BANNER_BYTES) {
+        return jsonResponse({ error: "Datei zu groß (max. 5 MB)." }, 400);
       }
 
       // Store image binary
@@ -69,19 +76,13 @@ export default async (req) => {
         uploadedAt: new Date().toISOString(),
       });
 
-      return new Response(JSON.stringify({
+      return jsonResponse({
         success: true,
         url: "/api/banner-image",
         size: buffer.byteLength,
-      }), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
       });
     } catch (err) {
-      return new Response(JSON.stringify({ error: "Fehler beim Upload." }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "Fehler beim Upload." }, 500);
     }
   }
 
