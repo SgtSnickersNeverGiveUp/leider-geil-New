@@ -1,31 +1,15 @@
-import { getStore } from "@netlify/blobs";
 import { jsonResponse, methodNotAllowed } from "./_shared/http.mjs";
-
-const STORE_NAME = "community-shouts";
-const MAX_NAME_LENGTH = 32;
-const MAX_MESSAGE_LENGTH = 220;
-const ALLOWED_TAGS = new Set(["GG", "PUBG", "ARC", "Event", "Community"]);
-
-function sanitizeText(value, maxLength) {
-  return String(value || "")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, maxLength);
-}
-
-async function listApprovedShouts(store) {
-  const { blobs } = await store.list();
-  const shouts = [];
-  for (const blob of blobs) {
-    const data = await store.get(blob.key, { type: "json" });
-    if (data?.approved) shouts.push(data);
-  }
-  shouts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  return shouts;
-}
+import {
+  ALLOWED_SHOUT_TAGS,
+  MAX_SHOUT_MESSAGE_LENGTH,
+  MAX_SHOUT_NAME_LENGTH,
+  getCommunityShoutsStore,
+  listApprovedShouts,
+  sanitizeText,
+} from "./_shared/community-shouts-store.mjs";
 
 export default async (req) => {
-  const store = getStore(STORE_NAME);
+  const store = getCommunityShoutsStore();
 
   if (req.method === "GET") {
     try {
@@ -43,9 +27,9 @@ export default async (req) => {
         return jsonResponse({ success: true, pending: true }, 201);
       }
 
-      const name = sanitizeText(body.name, MAX_NAME_LENGTH);
-      const message = sanitizeText(body.message, MAX_MESSAGE_LENGTH);
-      const tag = ALLOWED_TAGS.has(body.tag) ? body.tag : "Community";
+      const name = sanitizeText(body.name, MAX_SHOUT_NAME_LENGTH);
+      const message = sanitizeText(body.message, MAX_SHOUT_MESSAGE_LENGTH);
+      const tag = ALLOWED_SHOUT_TAGS.has(body.tag) ? body.tag : "Community";
 
       if (!name || !message) {
         return jsonResponse({ error: "Name und Nachricht sind Pflichtfelder." }, 400);

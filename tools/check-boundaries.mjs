@@ -42,10 +42,12 @@ for (const file of publicHtml) {
   assert(!html.includes("assets/js/admin"), `${file} must not load admin JS`);
   assert(!html.includes("admin-dashboard.js"), `${file} must not load admin dashboard JS`);
   assert(!html.includes("admin-login.js"), `${file} must not load admin login JS`);
+  assert(!html.includes("admin-config.js"), `${file} must not load admin config JS`);
 }
 
 for (const file of adminHtml) {
   const html = read(file);
+  assert(html.includes("/assets/js/admin-config.js"), `${file} must load admin config JS`);
   assert(!html.includes("assets/css/styles.css"), `${file} must not load public CSS`);
   assert(!html.includes("assets/js/public-core.js"), `${file} must not load public core JS`);
   assert(!html.includes("assets/js/index.js"), `${file} must not load index JS`);
@@ -59,6 +61,23 @@ assert(!existsSync(path.join(root, "assets/js/script.js")), "legacy assets/js/sc
 const config = read("config.js");
 assert(!config.includes("/api/admin-"), "public config.js must not expose admin endpoints");
 assert(!config.includes("applyEndpoint"), "public config.js must not expose the old application admin endpoint key");
+
+const adminConfig = read("assets/js/admin-config.js");
+assert(adminConfig.includes("window.ADMIN_CONFIG"), "admin-config.js must define window.ADMIN_CONFIG");
+assert(adminConfig.includes("/api/admin-"), "admin-config.js must own admin API endpoints");
+
+const adminLoginHtml = read("admin-login.html");
+assert(
+  adminLoginHtml.indexOf("/assets/js/admin-config.js") < adminLoginHtml.indexOf("/assets/js/admin-login.js"),
+  "admin-login.html must load admin-config.js before admin-login.js",
+);
+
+const dashboardHtml = read("lg-dashboard.html");
+assert(
+  dashboardHtml.indexOf("/assets/js/admin-config.js") < dashboardHtml.indexOf("/assets/js/admin-roster.js")
+    && dashboardHtml.indexOf("/assets/js/admin-config.js") < dashboardHtml.indexOf("/assets/js/admin-dashboard.js"),
+  "lg-dashboard.html must load admin-config.js before admin dashboard scripts",
+);
 
 const publicFunctionFiles = [
   "applications.mjs",
@@ -81,6 +100,22 @@ for (const file of publicFunctionFiles) {
   const source = read(relativePath);
   assert(!source.includes("admin-auth.mjs"), `${relativePath} must not import admin auth`);
   assert(!source.includes("requireAdmin"), `${relativePath} must not call requireAdmin`);
+}
+
+for (const relativePath of listFiles("netlify/functions/_shared", ".mjs")) {
+  const source = read(relativePath);
+  assert(!source.includes("admin-auth.mjs"), `${relativePath} must not import admin auth`);
+  assert(!source.includes("requireAdmin"), `${relativePath} must not call requireAdmin`);
+}
+
+for (const file of ["roster.mjs", "admin-roster.mjs"]) {
+  const relativePath = `netlify/functions/${file}`;
+  assert(!read(relativePath).includes("DEFAULT_ROSTER"), `${relativePath} must use the shared roster store`);
+}
+
+for (const file of ["events.mjs", "admin-events.mjs"]) {
+  const relativePath = `netlify/functions/${file}`;
+  assert(!read(relativePath).includes("DEFAULT_EVENTS"), `${relativePath} must use the shared events store`);
 }
 
 const adminContentFunctions = [
@@ -123,6 +158,7 @@ const adminEndpointConstantPattern = /const\s+[A-Z0-9_]+\s*=\s*['"]\/api\/([^'"]
 
 for (const file of adminBrowserFiles) {
   const source = read(file);
+  assert(!source.includes("/api/admin-"), `${file} must read admin endpoints from admin-config.js`);
   let match;
   while ((match = adminEndpointConstantPattern.exec(source))) {
     const endpoint = match[1];
@@ -131,6 +167,9 @@ for (const file of adminBrowserFiles) {
     }
   }
 }
+
+const indexJs = read("assets/js/index.js");
+assert(!/\bconst\s+\$+\s*=/.test(indexJs), "assets/js/index.js must not redeclare public DOM helpers");
 
 for (const file of listFiles("assets/js", ".js")) {
   if (file.startsWith("assets/js/admin-")) continue;
