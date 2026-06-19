@@ -1,7 +1,5 @@
-import { getStore } from "@netlify/blobs";
 import { jsonResponse, methodNotAllowed } from "./_shared/http.mjs";
-
-const STORE_NAME = "event-registrations";
+import { createEventRegistration } from "./_shared/event-registrations-store.mjs";
 
 export default async (req) => {
   if (req.method !== "POST") return methodNotAllowed();
@@ -14,20 +12,8 @@ export default async (req) => {
       return jsonResponse({ error: "Pflichtfelder fehlen (Name, E-Mail, Spiel)." }, 400);
     }
 
-    const id = `evt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-    const registration = {
-      id,
-      name,
-      email,
-      spiel,
-      clan: clan || "",
-      spielerAnzahl: spielerAnzahl || "",
-      bemerkungen: bemerkungen || "",
-      createdAt: new Date().toISOString(),
-    };
-
-    await getStore(STORE_NAME).setJSON(id, registration);
-    return jsonResponse({ success: true, id }, 201);
+    const registration = await createEventRegistration({ name, email, spiel, clan, spielerAnzahl, bemerkungen });
+    return jsonResponse({ success: true, id: registration.id }, 201);
   } catch {
     return jsonResponse({ error: "Fehler beim Speichern." }, 500);
   }

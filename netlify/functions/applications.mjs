@@ -1,7 +1,5 @@
-import { getStore } from "@netlify/blobs";
 import { jsonResponse, methodNotAllowed } from "./_shared/http.mjs";
-
-const STORE_NAME = "applications";
+import { createApplication } from "./_shared/applications-store.mjs";
 
 export default async (req) => {
   if (req.method !== "POST") return methodNotAllowed();
@@ -14,19 +12,8 @@ export default async (req) => {
       return jsonResponse({ error: "Alle Felder müssen ausgefüllt sein." }, 400);
     }
 
-    const id = `app_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-    const application = {
-      id,
-      gamingId,
-      alter: Number(alter),
-      hauptspiel,
-      rolle,
-      ueberMich,
-      createdAt: new Date().toISOString(),
-    };
-
-    await getStore(STORE_NAME).setJSON(id, application);
-    return jsonResponse({ success: true, id }, 201);
+    const application = await createApplication({ gamingId, alter, hauptspiel, rolle, ueberMich });
+    return jsonResponse({ success: true, id: application.id }, 201);
   } catch {
     return jsonResponse({ error: "Fehler beim Speichern." }, 500);
   }

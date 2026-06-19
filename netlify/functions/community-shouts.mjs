@@ -3,17 +3,15 @@ import {
   ALLOWED_SHOUT_TAGS,
   MAX_SHOUT_MESSAGE_LENGTH,
   MAX_SHOUT_NAME_LENGTH,
-  getCommunityShoutsStore,
   listApprovedShouts,
+  savePendingShout,
   sanitizeText,
 } from "./_shared/community-shouts-store.mjs";
 
 export default async (req) => {
-  const store = getCommunityShoutsStore();
-
   if (req.method === "GET") {
     try {
-      return jsonResponse(await listApprovedShouts(store));
+      return jsonResponse(await listApprovedShouts());
     } catch {
       return jsonResponse({ error: "Shouts konnten nicht geladen werden." }, 500);
     }
@@ -35,18 +33,8 @@ export default async (req) => {
         return jsonResponse({ error: "Name und Nachricht sind Pflichtfelder." }, 400);
       }
 
-      const id = `shout_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-      const shout = {
-        id,
-        name,
-        message,
-        tag,
-        approved: false,
-        createdAt: new Date().toISOString(),
-      };
-
-      await store.setJSON(id, shout);
-      return jsonResponse({ success: true, pending: true, id }, 201);
+      const shout = await savePendingShout({ name, message, tag });
+      return jsonResponse({ success: true, pending: true, id: shout.id }, 201);
     } catch {
       return jsonResponse({ error: "Shout konnte nicht gespeichert werden." }, 500);
     }

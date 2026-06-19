@@ -1,29 +1,17 @@
-import { getStore } from "@netlify/blobs";
 import { requireAdmin } from "./admin-auth.mjs";
 import { jsonResponse, methodNotAllowed } from "./_shared/http.mjs";
-
-const STORE_NAME = "event-registrations";
-
-async function listRegistrations(store) {
-  const { blobs } = await store.list();
-  const registrations = [];
-  for (const blob of blobs) {
-    const data = await store.get(blob.key, { type: "json" });
-    if (data) registrations.push(data);
-  }
-  registrations.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  return registrations;
-}
+import {
+  deleteEventRegistration,
+  listEventRegistrations,
+} from "./_shared/event-registrations-store.mjs";
 
 export default async (req) => {
   const adminGuard = requireAdmin(req);
   if (adminGuard) return adminGuard;
 
-  const store = getStore(STORE_NAME);
-
   if (req.method === "GET") {
     try {
-      return jsonResponse(await listRegistrations(store));
+      return jsonResponse(await listEventRegistrations());
     } catch {
       return jsonResponse({ error: "Fehler beim Laden." }, 500);
     }
@@ -33,7 +21,7 @@ export default async (req) => {
     try {
       const id = new URL(req.url).searchParams.get("id");
       if (!id) return jsonResponse({ error: "ID fehlt." }, 400);
-      await store.delete(id);
+      await deleteEventRegistration(id);
       return jsonResponse({ success: true });
     } catch {
       return jsonResponse({ error: "Fehler beim Löschen." }, 500);

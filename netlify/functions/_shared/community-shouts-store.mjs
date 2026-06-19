@@ -32,3 +32,18 @@ export async function listAllShouts(store = getCommunityShoutsStore()) {
 export async function listApprovedShouts(store = getCommunityShoutsStore()) {
   return (await listAllShouts(store)).filter((shout) => shout?.approved);
 }
+
+export async function savePendingShout(data, store = getCommunityShoutsStore()) {
+  const id = `shout_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  const shout = {
+    id,
+    name: data.name,
+    message: data.message,
+    tag: ALLOWED_SHOUT_TAGS.has(data.tag) ? data.tag : "Community",
+    approved: false,
+    createdAt: new Date().toISOString(),
+  };
+
+  await store.setJSON(id, shout);
+  return shout;
+}

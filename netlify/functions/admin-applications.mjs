@@ -1,29 +1,14 @@
-import { getStore } from "@netlify/blobs";
 import { requireAdmin } from "./admin-auth.mjs";
 import { jsonResponse, methodNotAllowed } from "./_shared/http.mjs";
-
-const STORE_NAME = "applications";
-
-async function listApplications(store) {
-  const { blobs } = await store.list();
-  const applications = [];
-  for (const blob of blobs) {
-    const data = await store.get(blob.key, { type: "json" });
-    if (data) applications.push(data);
-  }
-  applications.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  return applications;
-}
+import { deleteApplication, listApplications } from "./_shared/applications-store.mjs";
 
 export default async (req) => {
   const adminGuard = requireAdmin(req);
   if (adminGuard) return adminGuard;
 
-  const store = getStore(STORE_NAME);
-
   if (req.method === "GET") {
     try {
-      return jsonResponse(await listApplications(store));
+      return jsonResponse(await listApplications());
     } catch {
       return jsonResponse({ error: "Fehler beim Laden." }, 500);
     }
@@ -33,7 +18,7 @@ export default async (req) => {
     try {
       const id = new URL(req.url).searchParams.get("id");
       if (!id) return jsonResponse({ error: "ID fehlt." }, 400);
-      await store.delete(id);
+      await deleteApplication(id);
       return jsonResponse({ success: true });
     } catch {
       return jsonResponse({ error: "Fehler beim Löschen." }, 500);

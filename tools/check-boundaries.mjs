@@ -62,6 +62,31 @@ function assertOrdered(source, first, second, message) {
   );
 }
 
+function escapeRegex(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function selectorPattern(selector) {
+  return new RegExp(`(^|[\\s,{>+~])${escapeRegex(selector)}(?![-_a-zA-Z0-9])`, "m");
+}
+
+function extractNamedImports(source, modulePath) {
+  const imports = [];
+  const pattern = new RegExp(`import\\s*\\{([\\s\\S]*?)\\}\\s*from\\s*["']${escapeRegex(modulePath)}["']`, "g");
+  let match;
+
+  while ((match = pattern.exec(source))) {
+    imports.push(
+      ...match[1]
+        .split(",")
+        .map((name) => name.trim().split(/\s+as\s+/)[0].trim())
+        .filter(Boolean),
+    );
+  }
+
+  return imports;
+}
+
 for (const file of publicHtml) {
   const html = read(file);
   assert(!html.includes("assets/css/admin-dashboard.css"), `${file} must not load admin CSS`);
@@ -77,6 +102,46 @@ for (const file of adminHtml) {
   assert(!html.includes("assets/css/styles.css"), `${file} must not load public CSS`);
   assert(!html.includes("assets/js/public/"), `${file} must not load public JS`);
   assert(!html.includes("assets/js/script.js"), `${file} must not load legacy public script.js`);
+}
+
+const publicCss = read("assets/css/styles.css");
+const adminCss = read("assets/css/admin-dashboard.css");
+const adminOnlySelectors = [
+  ".admin-layout",
+  ".admin-main",
+  ".admin-header",
+  ".admin-page",
+  ".admin-form",
+  ".admin-login-card",
+  ".admin-login-page",
+  ".sidebar",
+  ".panel",
+  ".stats-row",
+  ".modal-overlay",
+  ".btn-delete",
+];
+const publicOnlySelectors = [
+  ".navbar",
+  ".hero",
+  ".header-banner",
+  ".top-community",
+  ".community-shouts",
+  ".roster-slideshow",
+  ".live-status",
+  ".timeline",
+  ".video-gallery-grid",
+  ".visitor-counter",
+  ".footer",
+  ".recruit-form",
+  ".event-form",
+];
+
+for (const selector of adminOnlySelectors) {
+  assert(!selectorPattern(selector).test(publicCss), `public styles.css must not define admin selector ${selector}`);
+}
+
+for (const selector of publicOnlySelectors) {
+  assert(!selectorPattern(selector).test(adminCss), `admin-dashboard.css must not define public selector ${selector}`);
 }
 
 assert(!existsSync(path.join(root, "assets/js/script.js")), "legacy assets/js/script.js must stay removed");
@@ -106,6 +171,25 @@ assert(indexHtml.includes("assets/js/shared/content-urls.js"), "index.html must 
 assert(indexHtml.includes("assets/js/shared/roster-slideshow-settings.js"), "index.html must load shared roster slideshow settings");
 assert(indexHtml.includes(sharedSiteUtilsPath), "index.html must load shared site utilities");
 assertOrdered(indexHtml, "assets/js/shared/content-urls.js", "assets/js/public/index.js", "index.html must load shared content URLs before index.js");
+assertOrdered(indexHtml, "assets/js/public/public-core.js", "assets/js/public/index.js", "index.html must load public-core.js before index.js");
+assertOrdered(
+  indexHtml,
+  "assets/js/public/public-core.js",
+  "assets/js/public/roster-slideshow.js",
+  "index.html must load public-core.js before roster-slideshow.js",
+);
+assertOrdered(
+  indexHtml,
+  "assets/js/public/public-core.js",
+  "assets/js/public/community-shouts.js",
+  "index.html must load public-core.js before community-shouts.js",
+);
+assertOrdered(
+  indexHtml,
+  "assets/js/public/public-core.js",
+  "assets/js/public/public-roster.js",
+  "index.html must load public-core.js before public-roster.js",
+);
 assertOrdered(
   indexHtml,
   "assets/js/shared/roster-slideshow-settings.js",
@@ -123,10 +207,17 @@ for (const file of [
 
 const recruitHtml = read("bewerben.html");
 assert(recruitHtml.includes(publicConfigPath), "bewerben.html must load public config");
+assertOrdered(recruitHtml, "assets/js/public/public-core.js", "assets/js/public/recruit-form.js", "bewerben.html must load public-core.js before recruit-form.js");
 assertOrdered(recruitHtml, publicConfigPath, "assets/js/public/recruit-form.js", "bewerben.html must load public config before recruit-form.js");
 
 const eventSignupHtml = read("event-anmeldung.html");
 assert(eventSignupHtml.includes(publicConfigPath), "event-anmeldung.html must load public config");
+assertOrdered(
+  eventSignupHtml,
+  "assets/js/public/public-core.js",
+  "assets/js/public/event-signup.js",
+  "event-anmeldung.html must load public-core.js before event-signup.js",
+);
 assertOrdered(
   eventSignupHtml,
   publicConfigPath,
@@ -159,6 +250,55 @@ const publicConfigEndpointLiterals = [
   "/api/applications",
   "/api/visitor-count",
 ];
+const publicContentUrlPaths = {
+  bannerImage: "/api/banner-image",
+  eventImage: "/api/event-image",
+  rosterAvatar: "/api/roster-avatar",
+};
+const publicFunctionMethodContracts = {
+  "/api/applications": ["POST"],
+  "/api/community-shouts": ["GET", "POST"],
+  "/api/event-registrations": ["POST"],
+  "/api/visitor-count": ["GET", "POST"],
+};
+
+function extractFunctionRoute(relativePath, source) {
+  const literalMatch = source.match(/path:\s*["']([^"']+)["']/);
+  if (literalMatch) return literalMatch[1];
+
+  const contentUrlMatch = source.match(/path:\s*PUBLIC_CONTENT_URLS\.([a-zA-Z0-9_]+)/);
+  if (contentUrlMatch) {
+    const route = publicContentUrlPaths[contentUrlMatch[1]];
+    assert(route, `${relativePath} uses unknown PUBLIC_CONTENT_URLS key ${contentUrlMatch[1]}`);
+    return route || null;
+  }
+
+  return null;
+}
+
+function extractComparedMethods(source) {
+  return new Set(
+    [...source.matchAll(/req\.method\s*(?:[!=]==?)\s*["']([A-Z]+)["']/g)].map((match) => match[1]),
+  );
+}
+
+function assertPublicMethodContract(relativePath, source, route) {
+  const allowedMethods = publicFunctionMethodContracts[route] || ["GET"];
+  const comparedMethods = extractComparedMethods(source);
+
+  for (const method of allowedMethods) {
+    assert(comparedMethods.has(method), `${relativePath} must explicitly handle public ${method} requests`);
+  }
+
+  for (const method of comparedMethods) {
+    assert(allowedMethods.includes(method), `${relativePath} must not handle public ${method} requests`);
+  }
+
+  assert(
+    source.includes("methodNotAllowed") || source.includes("Method not allowed"),
+    `${relativePath} must reject unsupported public methods`,
+  );
+}
 
 const config = read(publicConfigPath);
 assert(!config.includes("/api/admin-"), "public config.js must not expose admin endpoints");
@@ -231,6 +371,89 @@ for (const file of publicFunctionFiles) {
   assert(!source.includes("requireAdmin"), `${relativePath} must not call requireAdmin`);
 }
 
+const routedFunctionFiles = listFiles("netlify/functions", ".mjs").filter(
+  (file) => !file.startsWith("netlify/functions/_shared/")
+    && file !== "netlify/functions/admin-auth.mjs",
+);
+const adminAuthEndpointFiles = new Set(["admin-login.mjs", "admin-logout.mjs", "admin-session.mjs"]);
+const functionRoutes = new Map();
+
+for (const relativePath of routedFunctionFiles) {
+  const source = read(relativePath);
+  const fileName = path.basename(relativePath);
+  const route = extractFunctionRoute(relativePath, source);
+
+  assert(route, `${relativePath} must expose an explicit Netlify config.path`);
+  if (!route) continue;
+
+  assert(route.startsWith("/api/"), `${relativePath} must expose an /api/* route`);
+  assert(!functionRoutes.has(route), `${relativePath} duplicates route ${route} from ${functionRoutes.get(route)}`);
+  functionRoutes.set(route, relativePath);
+
+  if (route.startsWith("/api/admin-")) {
+    assert(fileName.startsWith("admin-"), `${relativePath} must use an admin-* filename for admin route ${route}`);
+    assert(source.includes('from "./admin-auth.mjs"'), `${relativePath} must import admin auth`);
+    if (!adminAuthEndpointFiles.has(fileName)) {
+      assert(source.includes("requireAdmin(req)"), `${relativePath} must guard admin content requests with requireAdmin`);
+    }
+  } else {
+    assert(!fileName.startsWith("admin-"), `${relativePath} must not use an admin-* filename for public route ${route}`);
+    assert(!source.includes("admin-auth.mjs"), `${relativePath} must not import admin auth`);
+    assert(!source.includes("requireAdmin"), `${relativePath} must not call requireAdmin`);
+    assertPublicMethodContract(relativePath, source, route);
+  }
+}
+
+const expectedPublicRoutes = [...publicConfigEndpointLiterals, ...publicDeliveryEndpointLiterals];
+for (const route of expectedPublicRoutes) {
+  assert(functionRoutes.has(route), `public route ${route} must be implemented by a Netlify function`);
+}
+
+for (const [route, relativePath] of functionRoutes.entries()) {
+  if (route.startsWith("/api/admin-")) continue;
+  assert(
+    expectedPublicRoutes.includes(route),
+    `${relativePath} exposes public route ${route}, which must be owned by public config.js or shared content-urls.js`,
+  );
+}
+
+const publicAllowedSharedStoreImports = new Map([
+  ["./_shared/applications-store.mjs", ["createApplication"]],
+  ["./_shared/community-shouts-store.mjs", [
+    "ALLOWED_SHOUT_TAGS",
+    "MAX_SHOUT_MESSAGE_LENGTH",
+    "MAX_SHOUT_NAME_LENGTH",
+    "listApprovedShouts",
+    "savePendingShout",
+    "sanitizeText",
+  ]],
+  ["./_shared/event-registrations-store.mjs", ["createEventRegistration"]],
+  ["./_shared/events-store.mjs", ["listEvents"]],
+  ["./_shared/news-store.mjs", ["readNews"]],
+  ["./_shared/roster-store.mjs", ["listRoster"]],
+  ["./_shared/settings-store.mjs", ["readSettings"]],
+  ["./_shared/videos-store.mjs", ["listVideos"]],
+]);
+const publicSubmissionRoutes = new Set(["/api/applications", "/api/community-shouts", "/api/event-registrations"]);
+
+for (const [route, relativePath] of functionRoutes.entries()) {
+  if (route.startsWith("/api/admin-")) continue;
+
+  const source = read(relativePath);
+  if (publicSubmissionRoutes.has(route)) {
+    assert(!source.includes('from "@netlify/blobs"'), `${relativePath} must use public-safe shared store helpers`);
+  }
+
+  for (const [modulePath, allowedImports] of publicAllowedSharedStoreImports.entries()) {
+    for (const importedName of extractNamedImports(source, modulePath)) {
+      assert(
+        allowedImports.includes(importedName),
+        `${relativePath} must not import admin-capable ${importedName} from ${modulePath}`,
+      );
+    }
+  }
+}
+
 const publicSettingsFunction = read("netlify/functions/settings.mjs");
 assert(publicSettingsFunction.includes("PUBLIC_SETTINGS_KEYS"), "public settings function must whitelist public fields");
 assert(
@@ -291,7 +514,12 @@ const publicContentEndpoints = [
 ];
 const adminEndpointConstantPattern = /const\s+[A-Z0-9_]+\s*=\s*['"]\/api\/([^'"]+)['"]/g;
 
-for (const file of adminBrowserFiles) {
+for (const endpoint of publicContentEndpoints) {
+  assert(!adminConfig.includes(`'/api/${endpoint}'`), `admin-config.js must not point admin APIs at public /api/${endpoint}`);
+  assert(!adminConfig.includes(`"/api/${endpoint}"`), `admin-config.js must not point admin APIs at public /api/${endpoint}`);
+}
+
+for (const file of [adminSharedPath, ...adminBrowserFiles]) {
   const source = read(file);
   assert(!source.includes("/api/admin-"), `${file} must read admin endpoints from admin-config.js`);
   for (const endpoint of publicDeliveryEndpointLiterals) {
