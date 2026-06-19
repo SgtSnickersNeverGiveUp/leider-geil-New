@@ -333,7 +333,7 @@
 
     .panel__actions { display: flex; gap: .5rem; }
 
-    .btn-sm {
+    .admin-btn-sm {
       font-family: var(--ff-mono);
       font-size: .75rem;
       padding: .35rem .85rem;
@@ -345,21 +345,21 @@
       transition: all .2s var(--ease);
     }
 
-    .btn-sm:hover {
+    .admin-btn-sm:hover {
       border-color: var(--clr-accent-arc);
       color: var(--clr-accent-arc);
     }
 
-    .btn-sm--danger:hover {
+    .admin-btn-sm--danger:hover {
       border-color: var(--clr-danger);
       color: var(--clr-danger);
     }
 
-    .btn-sm--accent {
+    .admin-btn-sm--accent {
       border-color: var(--clr-accent-arc);
       color: var(--clr-accent-arc);
     }
-    .btn-sm--accent:hover {
+    .admin-btn-sm--accent:hover {
       background: var(--clr-accent-arc);
       color: var(--clr-bg);
     }
@@ -422,7 +422,7 @@
       color: var(--clr-text-muted);
     }
 
-    .btn-delete {
+    .admin-btn-delete {
       font-family: var(--ff-mono);
       font-size: .7rem;
       padding: .3rem .7rem;
@@ -434,7 +434,7 @@
       transition: all .2s var(--ease);
     }
 
-    .btn-delete:hover {
+    .admin-btn-delete:hover {
       background: var(--clr-danger);
       color: #fff;
     }
@@ -981,7 +981,7 @@
         grid-template-columns: 44px minmax(0, 1fr);
       }
 
-      .roster-slideshow-admin__item .btn-delete {
+      .roster-slideshow-admin__item .admin-btn-delete {
         grid-column: 1 / -1;
         width: fit-content;
       }

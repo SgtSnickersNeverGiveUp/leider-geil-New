@@ -2,6 +2,12 @@
 
 const ADMIN_DASHBOARD_CONFIG = window.ADMIN_CONFIG;
 const ADMIN_DASHBOARD_CONTENT_URLS = window.LG_CONTENT_URLS;
+const {
+  escapeHtml,
+  truncate,
+  formatDate,
+  getEventGameVariant,
+} = window.ADMIN_UTILS;
 const API_URL = ADMIN_DASHBOARD_CONFIG.applicationsApi;
 const EVENTS_API = ADMIN_DASHBOARD_CONFIG.eventsApi;
 const EVENT_IMAGE_API = ADMIN_DASHBOARD_CONFIG.eventImageApi;
@@ -184,8 +190,8 @@ function renderApplications() {
             <td class="app-about">${app.ueberMich.substring(0,80)}${app.ueberMich.length > 80 ? '...' : ''}</td>
             <td class="app-date">${new Date(app.createdAt).toLocaleString('de-DE')}</td>
             <td>
-  <button class="btn-sm" onclick="alert('Details: ${app.gamingId} | ${app.ueberMich}')">Details</button>
-  <button class="btn-delete" onclick="deleteApplication('${app.id}')">Löschen</button>
+  <button class="admin-btn-sm" onclick="alert('Details: ${app.gamingId} | ${app.ueberMich}')">Details</button>
+  <button class="admin-btn-delete" onclick="deleteApplication('${app.id}')">Löschen</button>
 </td>
           </tr>
         `).join('')}
@@ -266,7 +272,7 @@ function renderNewsAdmin() {
               <option value="ranked"   ${type === 'ranked'   ? 'selected' : ''}>Ranked</option>
             </select>
             <button type="button"
-                    class="btn-sm btn-sm--danger"
+                    class="admin-btn-sm admin-btn-sm--danger"
                     data-news-remove="${i}">Löschen</button>
           </div>
         </div>
@@ -454,8 +460,8 @@ function renderEventsAdmin(events) {
           </div>
         </div>
         <div class="admin-event-actions">
-          <button class="btn-sm" onclick="openEditEvent('${ev.id}')">&#9998;</button>
-          <button class="btn-delete" onclick="deleteEvent('${ev.id}')">Löschen</button>
+          <button class="admin-btn-sm" onclick="openEditEvent('${ev.id}')">&#9998;</button>
+          <button class="admin-btn-delete" onclick="deleteEvent('${ev.id}')">Löschen</button>
         </div>
       </div>`;
   }).join('');
@@ -521,12 +527,12 @@ function openEditEvent(id) {
             <input type="file" id="edit-event-image-file" accept="image/jpeg,image/png,image/webp" style="display:none">
             <div class="avatar-upload-status" id="edit-event-image-status"></div>
             <div class="avatar-upload-actions">
-              <button type="button" class="btn-sm" id="edit-event-image-remove" style="color:var(--clr-danger);border-color:var(--clr-danger);">Bild entfernen</button>
+              <button type="button" class="admin-btn-sm" id="edit-event-image-remove" style="color:var(--clr-danger);border-color:var(--clr-danger);">Bild entfernen</button>
             </div>
           </div>
           <div class="edit-modal__footer">
             <button type="submit" class="admin-form__submit" id="edit-event-save">Speichern</button>
-            <button type="button" class="btn-sm" id="edit-event-cancel">Abbrechen</button>
+            <button type="button" class="admin-btn-sm" id="edit-event-cancel">Abbrechen</button>
           </div>
         </form>
       </div>`;
@@ -716,7 +722,7 @@ function renderVideosAdmin(videos) {
       <img class="admin-video-card__thumb" src="${escapeHtml(v.thumbnail)}" alt="${escapeHtml(v.title)}" loading="lazy">
       <div class="admin-video-card__body">
         <span class="admin-video-card__title">${escapeHtml(v.title)}</span>
-        <button class="btn-delete" onclick="deleteVideo('${v.id}')">&#10005;</button>
+        <button class="admin-btn-delete" onclick="deleteVideo('${v.id}')">&#10005;</button>
       </div>
     </div>
   `).join('')}</div>`;
@@ -1031,8 +1037,8 @@ function renderEventRegistrations() {
 <td class="app-about">${escapeHtml(truncate(reg.bemerkungen || '', 60))}</td>
 <td class="app-date">${formatDate(reg.createdAt)}</td>
 <td>
-  <button class="btn-sm" onclick="showEvtDetail('${reg.id}')">Details</button>
-  <button class="btn-delete" onclick="deleteEventRegistration('${reg.id}')">Löschen</button>
+  <button class="admin-btn-sm" onclick="showEvtDetail('${reg.id}')">Details</button>
+  <button class="admin-btn-delete" onclick="deleteEventRegistration('${reg.id}')">Löschen</button>
 </td>
 
           </tr>
@@ -1155,10 +1161,10 @@ function renderCommunityShoutsAdmin() {
             <td class="app-about">${escapeHtml(shout.message)}</td>
             <td class="app-date">${formatDate(shout.createdAt)}</td>
             <td>
-              <button class="btn-sm" onclick="setCommunityShoutApproval('${shout.id}', ${!shout.approved})">
+              <button class="admin-btn-sm" onclick="setCommunityShoutApproval('${shout.id}', ${!shout.approved})">
                 ${shout.approved ? 'Ausblenden' : 'Freigeben'}
               </button>
-              <button class="btn-delete" onclick="deleteCommunityShout('${shout.id}')">Löschen</button>
+              <button class="admin-btn-delete" onclick="deleteCommunityShout('${shout.id}')">Löschen</button>
             </td>
           </tr>
         `).join('')}

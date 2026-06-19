@@ -80,6 +80,7 @@ assert(
 const config = read("config.js");
 assert(!config.includes("/api/admin-"), "public config.js must not expose admin endpoints");
 assert(!config.includes("applyEndpoint"), "public config.js must not expose the old application admin endpoint key");
+assert(!config.includes("rosterPath"), "public config.js must not expose static roster fallback paths");
 
 const adminConfig = read("assets/js/admin-config.js");
 assert(adminConfig.includes("window.ADMIN_CONFIG"), "admin-config.js must define window.ADMIN_CONFIG");
@@ -140,6 +141,31 @@ for (const file of publicFunctionFiles) {
   assert(!source.includes("admin-auth.mjs"), `${relativePath} must not import admin auth`);
   assert(!source.includes("requireAdmin"), `${relativePath} must not call requireAdmin`);
 }
+
+const publicDtoFunctionRequirements = {
+  "settings.mjs": "toPublicSettings",
+  "roster.mjs": "toPublicRosterMember",
+  "events.mjs": "toPublicEvent",
+  "news.mjs": "toPublicNewsItem",
+  "videos.mjs": "toPublicVideo",
+};
+const rawPublicResponsePattern = /jsonResponse\(\s*(?:await\s+)?(?:readSettings|readNews|listRoster|listEvents|listVideos)\(|jsonResponse\(\s*(?:members|events|videos|news|settings)\s*\)/;
+
+for (const [file, mapper] of Object.entries(publicDtoFunctionRequirements)) {
+  const relativePath = `netlify/functions/${file}`;
+  const source = read(relativePath);
+  assert(source.includes('from "./_shared/public-dtos.mjs"'), `${relativePath} must import public DTO mappers`);
+  assert(source.includes(mapper), `${relativePath} must map store data through ${mapper}`);
+  assert(!rawPublicResponsePattern.test(source), `${relativePath} must not return raw store data`);
+}
+
+const publicDtos = read("netlify/functions/_shared/public-dtos.mjs");
+assert(publicDtos.includes("PUBLIC_SETTINGS_KEYS"), "public DTOs must whitelist public settings fields");
+for (const privateField of ["stats", "createdAt", "updatedAt", "email", "approved"]) {
+  assert(!new RegExp(`\\b${privateField}\\b`).test(publicDtos), `public DTOs must not expose ${privateField}`);
+}
+
+assert(!read("assets/data/roster.json").includes('"stats"'), "public roster fallback data must not expose stats");
 
 for (const relativePath of listFiles("netlify/functions/_shared", ".mjs")) {
   const source = read(relativePath);
@@ -236,10 +262,27 @@ assert(
 
 const adminShared = read("assets/js/admin-shared.js");
 assert(adminShared.includes("window.ADMIN_UTILS"), "admin-shared.js must expose admin-only helpers");
+for (const helper of ["escapeHtml", "truncate", "formatDate", "getEventGameVariant"]) {
+  assert(!adminShared.includes(`window.${helper} =`), `admin-shared.js must not expose window.${helper}`);
+}
+assert(read("assets/js/admin-dashboard.js").includes("window.ADMIN_UTILS"), "admin-dashboard.js must read helpers from ADMIN_UTILS");
+assert(read("assets/js/admin-roster.js").includes("window.ADMIN_UTILS"), "admin-roster.js must read helpers from ADMIN_UTILS");
 assert(!read("assets/js/admin-dashboard.js").includes("function escapeHtml"), "admin-dashboard.js must not own shared admin helpers");
 assert(!read("assets/js/admin-dashboard.js").includes("function truncate"), "admin-dashboard.js must not own shared admin helpers");
 assert(!read("assets/js/admin-dashboard.js").includes("function formatDate"), "admin-dashboard.js must not own shared admin helpers");
 assert(!read("assets/js/admin-dashboard.js").includes("function getEventGameVariant"), "admin-dashboard.js must not own shared admin helpers");
+
+const adminCss = read("assets/css/admin-dashboard.css");
+assert(!adminCss.includes(".btn-sm"), "admin CSS must use admin-prefixed small button classes");
+assert(!adminCss.includes(".btn-delete"), "admin CSS must use admin-prefixed delete button classes");
+assert(adminCss.includes(".admin-btn-sm"), "admin CSS must define admin-prefixed small buttons");
+assert(adminCss.includes(".admin-btn-delete"), "admin CSS must define admin-prefixed delete buttons");
+
+for (const file of ["lg-dashboard.html", "assets/js/admin-dashboard.js", "assets/js/admin-roster.js"]) {
+  const source = read(file);
+  assert(!/(^|["'`\s])btn-sm(["'`\s]|$)/.test(source), `${file} must not use public btn-sm utility class`);
+  assert(!/(^|["'`\s])btn-delete(["'`\s]|$)/.test(source), `${file} must not use public btn-delete utility class`);
+}
 
 const serverContentUrls = read("netlify/functions/_shared/content-urls.mjs");
 for (const endpoint of publicDeliveryEndpointLiterals) {
@@ -264,6 +307,8 @@ for (const file of listFiles("assets/js", ".js")) {
   if (file.startsWith("assets/js/admin-")) continue;
   const source = read(file);
   assert(!source.includes("/api/admin-"), `${file} must not call admin endpoints`);
+  assert(!source.includes("ADMIN_CONFIG"), `${file} must not read admin config`);
+  assert(!source.includes("ADMIN_UTILS"), `${file} must not read admin helpers`);
   assert(!source.includes("admin-dashboard"), `${file} must not reference admin dashboard code`);
 }
 

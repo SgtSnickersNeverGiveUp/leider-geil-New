@@ -38,7 +38,6 @@ const SITE_CONFIG = {
   visitorCounterApi: "/api/visitor-count",
 
   /* ── Datenpfade (Fallback) ─────────────────────────── */
-  rosterPath: "assets/data/roster.json",
   eventsPath: "assets/data/events.json",
 
   /* ── Refresh-Intervalle (ms) ─────────────────────────── */

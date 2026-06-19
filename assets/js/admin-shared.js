@@ -26,10 +26,6 @@
     return '';
   }
 
-  window.escapeHtml = escapeHtml;
-  window.truncate = truncate;
-  window.formatDate = formatDate;
-  window.getEventGameVariant = getEventGameVariant;
   window.ADMIN_UTILS = Object.freeze({
     escapeHtml,
     truncate,
