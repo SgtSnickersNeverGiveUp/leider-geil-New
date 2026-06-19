@@ -15,11 +15,15 @@ function = "admin-auth"
 path = "/lg-dashboard.html"
 function = "admin-auth"
 
+[[edge_functions]]
+path = "/api/admin/*"
+function = "admin-auth"
+
 [build]
 publish = "."
 publishOrigin = "config"
 commandOrigin = "config"
-command = "echo 'No build needed'"
+command = "npm test"
 
   [build.environment]
 
