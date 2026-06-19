@@ -35,10 +35,6 @@ const SITE_CONFIG = {
   applicationsApi: "/api/applications",
   visitorCounterApi: "/api/visitor-count",
 
-  /* ── Datenpfade (Fallback) ─────────────────────────── */
-  rosterPath: "assets/data/roster.json",
-  eventsPath: "assets/data/events.json",
-
   /* ── Refresh-Intervalle (ms) ─────────────────────────── */
   discordRefreshInterval: 60000,
   twitchRefreshInterval: 60000,

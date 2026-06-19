@@ -39,6 +39,11 @@ const publicConfigPath = "assets/js/public/config.js";
 const sharedSiteUtilsPath = "assets/js/shared/site-utils.js";
 const publicScripts = [
   "assets/js/public/public-core.js",
+  "assets/js/public/index-banner.js",
+  "assets/js/public/index-timeline.js",
+  "assets/js/public/index-videos.js",
+  "assets/js/public/index-visitor-counter.js",
+  "assets/js/public/index-live-status.js",
   "assets/js/public/index.js",
   "assets/js/public/roster-slideshow.js",
   "assets/js/public/community-shouts.js",
@@ -52,6 +57,7 @@ const adminSharedPath = "assets/js/admin/admin-shared.js";
 const adminBrowserFiles = [
   "assets/js/admin/admin-dashboard.js",
   "assets/js/admin/admin-roster.js",
+  "assets/js/admin/admin-shell.js",
   "assets/js/admin/admin-login.js",
 ];
 
@@ -167,10 +173,25 @@ for (const file of [adminConfigPath, adminSharedPath, ...adminBrowserFiles]) {
 }
 
 const indexHtml = read("index.html");
+const indexFeatureScripts = [
+  "assets/js/public/index-banner.js",
+  "assets/js/public/index-timeline.js",
+  "assets/js/public/index-videos.js",
+  "assets/js/public/index-visitor-counter.js",
+  "assets/js/public/index-live-status.js",
+];
 assert(indexHtml.includes("assets/js/shared/content-urls.js"), "index.html must load shared content URLs");
 assert(indexHtml.includes("assets/js/shared/roster-slideshow-settings.js"), "index.html must load shared roster slideshow settings");
 assert(indexHtml.includes(sharedSiteUtilsPath), "index.html must load shared site utilities");
-assertOrdered(indexHtml, "assets/js/shared/content-urls.js", "assets/js/public/index.js", "index.html must load shared content URLs before index.js");
+for (const file of indexFeatureScripts) {
+  assert(indexHtml.includes(file), `index.html must load public index feature module ${file}`);
+  assertOrdered(indexHtml, "assets/js/public/public-core.js", file, `index.html must load public-core.js before ${file}`);
+  assertOrdered(indexHtml, file, "assets/js/public/index.js", `index.html must load ${file} before index.js`);
+}
+for (const file of ["assets/js/public/index-banner.js", "assets/js/public/index-timeline.js"]) {
+  assertOrdered(indexHtml, "assets/js/shared/content-urls.js", file, `index.html must load shared content URLs before ${file}`);
+}
+assertOrdered(indexHtml, sharedSiteUtilsPath, "assets/js/public/index-timeline.js", "index.html must load shared site utilities before index-timeline.js");
 assertOrdered(indexHtml, "assets/js/public/public-core.js", "assets/js/public/index.js", "index.html must load public-core.js before index.js");
 assertOrdered(
   indexHtml,
@@ -197,7 +218,7 @@ assertOrdered(
   "index.html must load shared roster slideshow settings before roster-slideshow.js",
 );
 for (const file of [
-  "assets/js/public/index.js",
+  "assets/js/public/index-timeline.js",
   "assets/js/public/roster-slideshow.js",
   "assets/js/public/community-shouts.js",
   "assets/js/public/public-roster.js",
@@ -303,6 +324,8 @@ function assertPublicMethodContract(relativePath, source, route) {
 const config = read(publicConfigPath);
 assert(!config.includes("/api/admin-"), "public config.js must not expose admin endpoints");
 assert(!config.includes("applyEndpoint"), "public config.js must not expose the old application admin endpoint key");
+assert(!config.includes("eventsPath"), "public config.js must not expose static event fallback paths");
+assert(!config.includes("rosterPath"), "public config.js must not expose unused static roster fallback paths");
 for (const endpoint of publicConfigEndpointLiterals) {
   assert(config.includes(endpoint), `public config.js must own public endpoint ${endpoint}`);
 }
@@ -330,7 +353,7 @@ assert(
 );
 assert(dashboardHtml.includes(`/${sharedSiteUtilsPath}`), "lg-dashboard.html must load shared site utilities");
 assert(dashboardHtml.includes(`/${adminSharedPath}`), "lg-dashboard.html must load admin-shared.js");
-for (const file of ["/assets/js/admin/admin-roster.js", "/assets/js/admin/admin-dashboard.js"]) {
+for (const file of ["/assets/js/admin/admin-roster.js", "/assets/js/admin/admin-dashboard.js", "/assets/js/admin/admin-shell.js"]) {
   assertOrdered(dashboardHtml, `/${adminConfigPath}`, file, "lg-dashboard.html must load admin-config.js before admin dashboard scripts");
   assertOrdered(
     dashboardHtml,
@@ -341,6 +364,18 @@ for (const file of ["/assets/js/admin/admin-roster.js", "/assets/js/admin/admin-
   assertOrdered(dashboardHtml, `/${sharedSiteUtilsPath}`, file, "lg-dashboard.html must load shared site utilities before admin dashboard scripts");
   assertOrdered(dashboardHtml, `/${adminSharedPath}`, file, "lg-dashboard.html must load admin-shared.js before admin dashboard scripts");
 }
+assertOrdered(
+  dashboardHtml,
+  "/assets/js/admin/admin-dashboard.js",
+  "/assets/js/admin/admin-shell.js",
+  "lg-dashboard.html must load admin feature code before admin-shell.js",
+);
+assertOrdered(
+  dashboardHtml,
+  "/assets/js/admin/admin-roster.js",
+  "/assets/js/admin/admin-shell.js",
+  "lg-dashboard.html must load roster feature code before admin-shell.js",
+);
 assertOrdered(
   dashboardHtml,
   "/assets/js/shared/roster-slideshow-settings.js",
@@ -536,8 +571,21 @@ for (const file of [adminSharedPath, ...adminBrowserFiles]) {
 
 const indexJs = read("assets/js/public/index.js");
 assert(!/\bconst\s+\$+\s*=/.test(indexJs), "assets/js/public/index.js must not redeclare public DOM helpers");
-assert(indexJs.includes("LG_CONTENT_URLS"), "assets/js/public/index.js must read public content delivery URLs from shared content-urls.js");
-assert(indexJs.includes("LG_SITE_UTILS"), "assets/js/public/index.js must use shared site utilities");
+assert(!indexJs.includes("fetch("), "assets/js/public/index.js must only orchestrate index feature modules");
+assert(!indexJs.includes("LG_CONTENT_URLS"), "assets/js/public/index.js must not own public content delivery logic");
+assert(!indexJs.includes("LG_SITE_UTILS"), "assets/js/public/index.js must not own shared utility logic");
+assert(
+  read("assets/js/public/index-banner.js").includes("LG_CONTENT_URLS"),
+  "index-banner.js must read public content delivery URLs from shared content-urls.js",
+);
+assert(
+  read("assets/js/public/index-timeline.js").includes("LG_CONTENT_URLS"),
+  "index-timeline.js must read public content delivery URLs from shared content-urls.js",
+);
+assert(
+  read("assets/js/public/index-timeline.js").includes("LG_SITE_UTILS"),
+  "index-timeline.js must use shared site utilities",
+);
 
 const sharedContentUrls = read("assets/js/shared/content-urls.js");
 for (const endpoint of publicDeliveryEndpointLiterals) {
@@ -580,13 +628,19 @@ for (const file of [
 }
 
 const adminShared = read(adminSharedPath);
+const adminDashboard = read("assets/js/admin/admin-dashboard.js");
+const adminShell = read("assets/js/admin/admin-shell.js");
 assert(adminShared.includes("window.ADMIN_UTILS"), "admin-shared.js must expose admin-only helpers");
 assert(adminShared.includes("LG_SITE_UTILS"), "admin-shared.js must wrap shared site utilities for admin-only globals");
 assert(!adminShared.includes("document.createElement"), "admin-shared.js must not own separate HTML escaping");
-assert(!read("assets/js/admin/admin-dashboard.js").includes("function escapeHtml"), "admin-dashboard.js must not own shared admin helpers");
-assert(!read("assets/js/admin/admin-dashboard.js").includes("function truncate"), "admin-dashboard.js must not own shared admin helpers");
-assert(!read("assets/js/admin/admin-dashboard.js").includes("function formatDate"), "admin-dashboard.js must not own shared admin helpers");
-assert(!read("assets/js/admin/admin-dashboard.js").includes("function getEventGameVariant"), "admin-dashboard.js must not own shared admin helpers");
+assert(!adminDashboard.includes("function escapeHtml"), "admin-dashboard.js must not own shared admin helpers");
+assert(!adminDashboard.includes("function truncate"), "admin-dashboard.js must not own shared admin helpers");
+assert(!adminDashboard.includes("function formatDate"), "admin-dashboard.js must not own shared admin helpers");
+assert(!adminDashboard.includes("function getEventGameVariant"), "admin-dashboard.js must not own shared admin helpers");
+for (const shellOnlyName of ["ensureAdminSession", "logoutAdmin", "switchPage", "initAdminDashboard", "checkTwitchStatus"]) {
+  assert(adminShell.includes(shellOnlyName), `admin-shell.js must own ${shellOnlyName}`);
+  assert(!adminDashboard.includes(shellOnlyName), `admin-dashboard.js must not own admin shell responsibility ${shellOnlyName}`);
+}
 
 const serverContentUrls = read("netlify/functions/_shared/content-urls.mjs");
 for (const endpoint of publicDeliveryEndpointLiterals) {

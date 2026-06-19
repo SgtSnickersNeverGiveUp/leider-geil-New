@@ -29,43 +29,6 @@ function renderEventGameOptions(selectedGame) {
     .join('');
 }
 
-function redirectToAdminLogin() {
-  const redirect = `${window.location.pathname}${window.location.search}`;
-  window.location.assign(`${ADMIN_DASHBOARD_CONFIG.loginPath}?redirect=${encodeURIComponent(redirect)}`);
-}
-
-async function ensureAdminSession() {
-  try {
-    const res = await fetch(ADMIN_DASHBOARD_CONFIG.sessionApi, { credentials: 'same-origin' });
-    if (!res.ok) {
-      redirectToAdminLogin();
-      return false;
-    }
-
-    const session = await res.json();
-    if (!session.authenticated) {
-      redirectToAdminLogin();
-      return false;
-    }
-
-    return true;
-  } catch {
-    redirectToAdminLogin();
-    return false;
-  }
-}
-
-async function logoutAdmin() {
-  try {
-    await fetch(ADMIN_DASHBOARD_CONFIG.logoutApi, {
-      method: 'POST',
-      credentials: 'same-origin',
-    });
-  } finally {
-    redirectToAdminLogin();
-  }
-}
-
 async function loadTickerSettings() {
   try {
     const res = await fetch(SETTINGS_API);
@@ -81,44 +44,6 @@ async function loadTickerSettings() {
     console.error('Ticker Settings laden fehlgeschlagen:', err);
   }
 }
-
-
-
-// ══════════════════════════════════════════════════════════
-// PAGE NAVIGATION
-// ══════════════════════════════════════════════════════════
-const navLinks = document.querySelectorAll('.sidebar__link[data-page]');
-const pages = document.querySelectorAll('.admin-page');
-
-function switchPage(pageId) {
-  pages.forEach(p => p.classList.remove('active'));
-  navLinks.forEach(l => l.classList.remove('sidebar__link--active'));
-
-  const page = document.getElementById(pageId);
-  const link = document.querySelector(`.sidebar__link[data-page="${pageId}"]`);
-  if (page) page.classList.add('active');
-  if (link) link.classList.add('sidebar__link--active');
-
-  // Load data for the page
-  if (pageId === 'page-bewerbungen') loadApplications();
-  if (pageId === 'page-roster') loadRoster();
-  if (pageId === 'page-events') loadEvents();
-  if (pageId === 'page-videos') loadVideos();
-  if (pageId === 'page-banner') loadBannerSettings();
-  if (pageId === 'page-event-anmeldungen') loadEventRegistrations();
-  if (pageId === 'page-community-shouts') loadCommunityShouts();
-  if (pageId === 'page-news') {
-    loadTickerSettings();
-    initNewsAdmin();
-  }
-}
-
-navLinks.forEach(link => {
-  link.addEventListener('click', (e) => {
-    e.preventDefault();
-    switchPage(link.dataset.page);
-  });
-});
 // ══════════════════════════════════════════════════════════
 // BEWERBUNGEN (Applications) – KOMPLETT FUNKTIONAL
 // ══════════════════════════════════════════════════════════
@@ -1203,7 +1128,6 @@ document.getElementById('btn-refresh-news')?.addEventListener('click', initNewsA
 document.getElementById('btn-refresh-banner').addEventListener('click', loadBannerSettings);
 document.getElementById('btn-refresh-evt-registrations').addEventListener('click', loadEventRegistrations);
 document.getElementById('btn-refresh-community-shouts')?.addEventListener('click', loadCommunityShouts);
-document.getElementById('admin-logout')?.addEventListener('click', logoutAdmin);
 
 document.getElementById('modal-close').addEventListener('click', closeModal);
 document.getElementById('modal-close-btn').addEventListener('click', closeModal);
@@ -1214,31 +1138,3 @@ document.getElementById('modal-delete').addEventListener('click', () => {
 document.getElementById('modal-overlay').addEventListener('click', (e) => {
   if (e.target === e.currentTarget) closeModal();
 });
-
-// TWITCH STATUS CHECK (TEMPORÄR UMGEHEND – Admin Dashboard Fix)
-async function checkTwitchStatus() {
-  const banner = document.getElementById('twitch-admin-banner');
-  if (!banner) return;
-  
-  // Banner verstecken + neutrale Nachricht (Twitch später fixen)
-  banner.style.display = 'block';
-  banner.innerHTML = `
-    <div style="display:flex;align-items:center;gap:.6rem;">
-      <span style="width:10px;height:10px;border-radius:50%;background:var(--clr-text-muted);"></span>
-      <strong style="font-family:var(--ff-heading);font-size:.95rem;color:var(--clr-text-muted);">Twitch</strong>
-      <span style="color:var(--clr-text-muted);font-size:.8rem;">Konfiguration ausstehend</span>
-    </div>
-  `;
-  
-  console.log('Twitch Status wird aktuell im Dashboard uebersprungen.');
-}
-// ══════════════════════════════════════════════════════════
-// INIT
-// ══════════════════════════════════════════════════════════
-(async function initAdminDashboard() {
-  if (!(await ensureAdminSession())) return;
-
-  loadApplications();
-  checkTwitchStatus();
-  setInterval(checkTwitchStatus, 60000);
-})();
