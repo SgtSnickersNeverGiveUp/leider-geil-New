@@ -134,9 +134,46 @@ assertOrdered(
   "event-anmeldung.html must load public config before event-signup.js",
 );
 
+for (const file of publicScripts) {
+  const source = read(file);
+  if (!source.includes("SITE_CONFIG")) continue;
+
+  const pages = publicHtml.filter((htmlFile) => read(htmlFile).includes(file));
+  assert(pages.length > 0, `${file} uses SITE_CONFIG and must be loaded by a public HTML page`);
+  for (const htmlFile of pages) {
+    const html = htmlFile === "index.html" ? indexHtml : read(htmlFile);
+    assertOrdered(html, publicConfigPath, file, `${htmlFile} must load public config before ${file}`);
+  }
+}
+
+const publicDeliveryEndpointLiterals = ["/api/banner-image", "/api/event-image", "/api/roster-avatar"];
+const publicConfigEndpointLiterals = [
+  "/api/twitch-status",
+  "/api/roster",
+  "/api/events",
+  "/api/videos",
+  "/api/news",
+  "/api/settings",
+  "/api/community-shouts",
+  "/api/event-registrations",
+  "/api/applications",
+  "/api/visitor-count",
+];
+
 const config = read(publicConfigPath);
 assert(!config.includes("/api/admin-"), "public config.js must not expose admin endpoints");
 assert(!config.includes("applyEndpoint"), "public config.js must not expose the old application admin endpoint key");
+for (const endpoint of publicConfigEndpointLiterals) {
+  assert(config.includes(endpoint), `public config.js must own public endpoint ${endpoint}`);
+}
+for (const endpoint of publicDeliveryEndpointLiterals) {
+  assert(!config.includes(endpoint), "public config.js must not duplicate shared content delivery URLs");
+}
+
+for (const file of publicScripts) {
+  const source = read(file);
+  assert(!source.includes("/api/"), `${file} must read public API endpoints from public config.js`);
+}
 
 const adminConfig = read(adminConfigPath);
 assert(adminConfig.includes("window.ADMIN_CONFIG"), "admin-config.js must define window.ADMIN_CONFIG");
@@ -239,7 +276,6 @@ for (const file of adminContentFunctions) {
   assert(source.includes('path: "/api/admin-'), `${relativePath} must expose an /api/admin-* route`);
 }
 
-const publicDeliveryEndpointLiterals = ["/api/banner-image", "/api/event-image", "/api/roster-avatar"];
 const publicContentEndpoints = [
   "applications",
   "banner-image",
@@ -278,6 +314,11 @@ assert(indexJs.includes("LG_SITE_UTILS"), "assets/js/public/index.js must use sh
 const sharedContentUrls = read("assets/js/shared/content-urls.js");
 for (const endpoint of publicDeliveryEndpointLiterals) {
   assert(sharedContentUrls.includes(endpoint), "shared content-urls.js must own public content delivery URL literals");
+}
+
+for (const file of listFiles("assets/js/shared", ".js")) {
+  if (file === "assets/js/shared/content-urls.js") continue;
+  assert(!read(file).includes("/api/"), `${file} must not own API endpoint literals`);
 }
 
 const sharedRosterSlideshowSettings = read("assets/js/shared/roster-slideshow-settings.js");

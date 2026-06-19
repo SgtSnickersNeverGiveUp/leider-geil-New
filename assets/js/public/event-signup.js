@@ -22,7 +22,7 @@ function initEventSignupDiscord() {
     if (submitBtn) submitBtn.disabled = true;
 
     try {
-      const apiRes = await fetch(SITE_CONFIG.eventRegistrationsApi || '/api/event-registrations', {
+      const apiRes = await fetch(SITE_CONFIG.eventRegistrationsApi, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

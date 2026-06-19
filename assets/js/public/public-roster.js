@@ -12,7 +12,7 @@
     container.innerHTML = '<div class="loading">Lade Clan Roster...</div>';
 
     try {
-      const res = await fetch(SITE_CONFIG.rosterApi || '/api/roster');
+      const res = await fetch(SITE_CONFIG.rosterApi);
       if (!res.ok) throw new Error('HTTP ' + res.status);
       const members = await res.json();
 
