@@ -1,10 +1,13 @@
 import { getStore } from "@netlify/blobs";
-import { requireAdmin } from "./admin-auth.mjs";
-
-const STORE_NAME = "community-shouts";
-const MAX_NAME_LENGTH = 32;
-const MAX_MESSAGE_LENGTH = 220;
-const ALLOWED_TAGS = new Set(["GG", "PUBG", "ARC", "Event", "Community"]);
+import {
+  COMMUNITY_SHOUT_MAX_MESSAGE_LENGTH,
+  COMMUNITY_SHOUT_MAX_NAME_LENGTH,
+  COMMUNITY_SHOUTS_STORE_NAME,
+  listApprovedCommunityShouts,
+  sanitizeCommunityShoutTag,
+  sanitizeCommunityShoutText,
+} from "./_shared/community-shouts-data.mjs";
+import { toPublicCommunityShout } from "./_shared/public-community-shouts-data.mjs";
 
 function jsonResponse(body, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -13,44 +16,16 @@ function jsonResponse(body, status = 200) {
   });
 }
 
-function sanitizeText(value, maxLength) {
-  return String(value || "")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, maxLength);
-}
-
-async function listShouts(store, includePending = false) {
-  const { blobs } = await store.list();
-  const shouts = [];
-
-  for (const blob of blobs) {
-    const data = await store.get(blob.key, { type: "json" });
-    if (data && (includePending || data.approved)) shouts.push(data);
-  }
-
-  shouts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  return shouts;
-}
-
 export default async (req) => {
-  const url = new URL(req.url);
-
-  if (
-    (req.method === "GET" && url.searchParams.get("all") === "1") ||
-    req.method === "PUT" ||
-    req.method === "DELETE"
-  ) {
-    const adminGuard = requireAdmin(req);
-    if (adminGuard) return adminGuard;
+  if (req.method !== "GET" && req.method !== "POST") {
+    return jsonResponse({ error: "Method not allowed" }, 405);
   }
 
-  const store = getStore(STORE_NAME);
+  const store = getStore(COMMUNITY_SHOUTS_STORE_NAME);
 
   if (req.method === "GET") {
     try {
-      const includePending = url.searchParams.get("all") === "1";
-      const shouts = await listShouts(store, includePending);
+      const shouts = (await listApprovedCommunityShouts(store)).map(toPublicCommunityShout);
       return jsonResponse(shouts);
     } catch (err) {
       return jsonResponse({ error: "Shouts konnten nicht geladen werden." }, 500);
@@ -65,9 +40,9 @@ export default async (req) => {
         return jsonResponse({ success: true, pending: true }, 201);
       }
 
-      const name = sanitizeText(body.name, MAX_NAME_LENGTH);
-      const message = sanitizeText(body.message, MAX_MESSAGE_LENGTH);
-      const tag = ALLOWED_TAGS.has(body.tag) ? body.tag : "Community";
+      const name = sanitizeCommunityShoutText(body.name, COMMUNITY_SHOUT_MAX_NAME_LENGTH);
+      const message = sanitizeCommunityShoutText(body.message, COMMUNITY_SHOUT_MAX_MESSAGE_LENGTH);
+      const tag = sanitizeCommunityShoutTag(body.tag);
 
       if (!name || !message) {
         return jsonResponse({ error: "Name und Nachricht sind Pflichtfelder." }, 400);
@@ -89,42 +64,6 @@ export default async (req) => {
       return jsonResponse({ error: "Shout konnte nicht gespeichert werden." }, 500);
     }
   }
-
-  if (req.method === "PUT") {
-    try {
-      const body = await req.json();
-      const id = sanitizeText(body.id, 80);
-      if (!id) return jsonResponse({ error: "ID fehlt." }, 400);
-
-      const existing = await store.get(id, { type: "json" });
-      if (!existing) return jsonResponse({ error: "Shout nicht gefunden." }, 404);
-
-      const updated = {
-        ...existing,
-        approved: Boolean(body.approved),
-        moderatedAt: new Date().toISOString(),
-      };
-
-      await store.setJSON(id, updated);
-      return jsonResponse({ success: true, shout: updated });
-    } catch (err) {
-      return jsonResponse({ error: "Shout konnte nicht aktualisiert werden." }, 500);
-    }
-  }
-
-  if (req.method === "DELETE") {
-    try {
-      const id = sanitizeText(url.searchParams.get("id"), 80);
-      if (!id) return jsonResponse({ error: "ID fehlt." }, 400);
-
-      await store.delete(id);
-      return jsonResponse({ success: true });
-    } catch (err) {
-      return jsonResponse({ error: "Shout konnte nicht gelöscht werden." }, 500);
-    }
-  }
-
-  return jsonResponse({ error: "Method not allowed" }, 405);
 };
 
 export const config = {
