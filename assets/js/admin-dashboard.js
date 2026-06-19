@@ -1155,14 +1155,14 @@ function renderCommunityShoutsAdmin() {
       <tbody>
         ${currentCommunityShouts.map((shout) => `
           <tr>
-            <td>${shout.approved ? '<span class="tag tag--arc">Live</span>' : '<span class="tag tag--pubg">Wartet</span>'}</td>
+            <td>${shout.visible ? '<span class="tag tag--arc">Live</span>' : '<span class="tag tag--pubg">Wartet</span>'}</td>
             <td><strong>${escapeHtml(shout.name)}</strong></td>
             <td>${escapeHtml(shout.tag || 'Community')}</td>
             <td class="app-about">${escapeHtml(shout.message)}</td>
             <td class="app-date">${formatDate(shout.createdAt)}</td>
             <td>
-              <button class="btn-sm" onclick="setCommunityShoutApproval('${shout.id}', ${!shout.approved})">
-                ${shout.approved ? 'Ausblenden' : 'Freigeben'}
+              <button class="btn-sm" onclick="setCommunityShoutVisibility('${shout.id}', ${!shout.visible})">
+                ${shout.visible ? 'Ausblenden' : 'Freigeben'}
               </button>
               <button class="btn-delete" onclick="deleteCommunityShout('${shout.id}')">Löschen</button>
             </td>
@@ -1172,12 +1172,12 @@ function renderCommunityShoutsAdmin() {
     </table>`;
 }
 
-async function setCommunityShoutApproval(id, approved) {
+async function setCommunityShoutVisibility(id, visible) {
   try {
     const res = await fetch(COMMUNITY_SHOUTS_API, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, approved }),
+      body: JSON.stringify({ id, visible }),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     await loadCommunityShouts();

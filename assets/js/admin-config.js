@@ -18,6 +18,7 @@
     logoutApi: '/api/admin-logout',
     loginPath: '/admin-login.html',
     dashboardPath: '/lg-dashboard.html',
+    // Only used by admin previews/cache-busting for assets that are published publicly.
     publicAssetUrls: Object.freeze({
       eventImage: '/api/event-image',
       bannerImage: '/api/banner-image',

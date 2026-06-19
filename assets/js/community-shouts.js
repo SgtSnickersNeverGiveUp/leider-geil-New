@@ -17,7 +17,7 @@
     const list = document.getElementById('community-shouts-list');
     const apiUrl = SITE_CONFIG.communityShoutsApi;
 
-    loadApprovedShouts(apiUrl, list);
+    loadVisibleShouts(apiUrl, list);
 
     form?.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -45,7 +45,7 @@
 
         form.reset();
         status.classList.add('community-shouts__status--success');
-        status.textContent = 'Shout empfangen. Wartet auf Freigabe, bevor er auf der Wall erscheint.';
+        status.textContent = 'Shout empfangen. Er erscheint auf der Wall, sobald er geprüft wurde.';
       } catch (err) {
         status.classList.add('community-shouts__status--error');
         status.textContent = 'Shout konnte nicht gesendet werden. Bitte später erneut versuchen.';
@@ -53,7 +53,7 @@
     });
   }
 
-  async function loadApprovedShouts(apiUrl, list) {
+  async function loadVisibleShouts(apiUrl, list) {
     if (!list) return;
 
     try {
@@ -68,7 +68,7 @@
 
   function renderShouts(list, shouts) {
     if (shouts.length === 0) {
-      list.innerHTML = '<div class="community-shouts__empty">Noch keine freigegebenen Shouts.</div>';
+      list.innerHTML = '<div class="community-shouts__empty">Noch keine Shouts auf der Wall.</div>';
       return;
     }
 

@@ -8,9 +8,11 @@ const ROSTER_PUBLIC_ASSET_URLS = ADMIN_ROSTER_CONFIG.publicAssetUrls;
 const {
   addMinuteCacheBust,
   escapeHtml,
+} = window.LG_SHARED_UTILS;
+const {
   getDefaultRosterSlideshowSettings,
   normalizeRosterSlideshowSettings,
-} = window.LG_SHARED_UTILS;
+} = window.LG_ROSTER_SLIDESHOW_SETTINGS;
 
 // ══════════════════════════════════════════════════════════
 // CLAN ROSTER

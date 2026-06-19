@@ -2,9 +2,12 @@ import { requireAdmin } from "./admin-auth.mjs";
 import { jsonResponse, methodNotAllowed } from "./_shared/http.mjs";
 import {
   getCommunityShoutsStore,
-  listAllShouts,
-  sanitizeText,
 } from "./_shared/community-shouts-store.mjs";
+import {
+  deleteModerationShout,
+  listModerationShouts,
+  setShoutVisibility,
+} from "./_shared/community-shouts-admin.mjs";
 
 export default async (req) => {
   const adminGuard = requireAdmin(req);
@@ -14,7 +17,7 @@ export default async (req) => {
 
   if (req.method === "GET") {
     try {
-      return jsonResponse(await listAllShouts(store));
+      return jsonResponse(await listModerationShouts(store));
     } catch {
       return jsonResponse({ error: "Shouts konnten nicht geladen werden." }, 500);
     }
@@ -23,20 +26,13 @@ export default async (req) => {
   if (req.method === "PUT") {
     try {
       const body = await req.json();
-      const id = sanitizeText(body.id, 80);
-      if (!id) return jsonResponse({ error: "ID fehlt." }, 400);
+      const visible = typeof body.visible === "boolean" ? body.visible : Boolean(body.approved);
+      const result = await setShoutVisibility(store, body.id, visible);
+      if (result.error) {
+        return jsonResponse({ error: result.error.message }, result.error.status);
+      }
 
-      const existing = await store.get(id, { type: "json" });
-      if (!existing) return jsonResponse({ error: "Shout nicht gefunden." }, 404);
-
-      const updated = {
-        ...existing,
-        approved: Boolean(body.approved),
-        moderatedAt: new Date().toISOString(),
-      };
-
-      await store.setJSON(id, updated);
-      return jsonResponse({ success: true, shout: updated });
+      return jsonResponse({ success: true, shout: result.shout });
     } catch {
       return jsonResponse({ error: "Shout konnte nicht aktualisiert werden." }, 500);
     }
@@ -44,9 +40,11 @@ export default async (req) => {
 
   if (req.method === "DELETE") {
     try {
-      const id = sanitizeText(new URL(req.url).searchParams.get("id"), 80);
-      if (!id) return jsonResponse({ error: "ID fehlt." }, 400);
-      await store.delete(id);
+      const result = await deleteModerationShout(store, new URL(req.url).searchParams.get("id"));
+      if (result.error) {
+        return jsonResponse({ error: result.error.message }, result.error.status);
+      }
+
       return jsonResponse({ success: true });
     } catch {
       return jsonResponse({ error: "Shout konnte nicht gelöscht werden." }, 500);

@@ -61,8 +61,11 @@ const publicBrowserFiles = listFiles("assets/js", ".js")
 const publicScriptsRequiringConfig = publicBrowserFiles
   .filter((file) => read(file).includes("SITE_CONFIG"));
 const sharedUtilsScript = "assets/js/shared-utils.js";
+const rosterSlideshowSettingsScript = "assets/js/roster-slideshow-settings.js";
 const publicScriptsRequiringSharedUtils = publicBrowserFiles
   .filter((file) => file !== sharedUtilsScript && read(file).includes("LG_SHARED_UTILS"));
+const publicScriptsRequiringRosterSettings = publicBrowserFiles
+  .filter((file) => file !== rosterSlideshowSettingsScript && read(file).includes("LG_ROSTER_SLIDESHOW_SETTINGS"));
 
 for (const htmlFile of publicHtml) {
   const html = read(htmlFile);
@@ -83,9 +86,19 @@ for (const htmlFile of publicHtml) {
       `${htmlFile} must load shared browser utils before ${scriptFile}`,
     );
   }
-}
 
-assert(!read("index.html").includes("Admin-Freigabe"), "public index.html must not mention admin approval");
+  for (const scriptFile of publicScriptsRequiringRosterSettings) {
+    if (!html.includes(scriptFile)) continue;
+    assert(
+      html.includes(rosterSlideshowSettingsScript),
+      `${htmlFile} must load roster slideshow settings before ${scriptFile}`,
+    );
+    assert(
+      html.indexOf(rosterSlideshowSettingsScript) < html.indexOf(scriptFile),
+      `${htmlFile} must load roster slideshow settings before ${scriptFile}`,
+    );
+  }
+}
 
 assert(!existsSync(path.join(root, "assets/js/script.js")), "legacy assets/js/script.js must stay removed");
 
@@ -134,6 +147,10 @@ assert(
     && dashboardHtml.indexOf("/assets/js/shared-utils.js") < dashboardHtml.indexOf("/assets/js/admin-dashboard.js"),
   "lg-dashboard.html must load shared browser utils before admin dashboard scripts",
 );
+assert(
+  dashboardHtml.indexOf("/assets/js/roster-slideshow-settings.js") < dashboardHtml.indexOf("/assets/js/admin-roster.js"),
+  "lg-dashboard.html must load roster slideshow settings before admin roster scripts",
+);
 
 const publicFunctionFiles = [
   "applications.mjs",
@@ -150,6 +167,35 @@ const publicFunctionFiles = [
   "visitor-count.mjs",
   "twitch-status.mjs",
 ];
+
+const publicSurfaceFiles = [
+  ...publicHtml,
+  "config.js",
+  ...publicBrowserFiles,
+  ...publicFunctionFiles.map((file) => `netlify/functions/${file}`),
+];
+const forbiddenPublicTerms = [
+  "/api/admin-",
+  "ADMIN_CONFIG",
+  "admin-auth.mjs",
+  "requireAdmin",
+  "admin-dashboard",
+  "admin-login",
+  "assets/js/admin",
+  "assets/css/admin-dashboard.css",
+  "Freigabe",
+  "Freigegeben",
+  "freigegeben",
+  "approved",
+  "listApproved",
+];
+
+for (const file of publicSurfaceFiles) {
+  const source = read(file);
+  for (const term of forbiddenPublicTerms) {
+    assert(!source.includes(term), `${file} must not contain public/admin boundary term "${term}"`);
+  }
+}
 
 for (const file of publicFunctionFiles) {
   const relativePath = `netlify/functions/${file}`;

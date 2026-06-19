@@ -16,7 +16,32 @@ export function sanitizeText(value, maxLength) {
     .slice(0, maxLength);
 }
 
-export async function listAllShouts(store = getCommunityShoutsStore()) {
+export function createShoutId() {
+  return `shout_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+export function isShoutVisible(shout) {
+  return shout?.visible === true || shout?.approved === true;
+}
+
+export function toPublicShout(shout) {
+  return {
+    id: shout.id,
+    name: shout.name,
+    message: shout.message,
+    tag: shout.tag,
+    createdAt: shout.createdAt,
+  };
+}
+
+export function toAdminShout(shout) {
+  return {
+    ...shout,
+    visible: isShoutVisible(shout),
+  };
+}
+
+export async function listStoredShouts(store = getCommunityShoutsStore()) {
   const { blobs } = await store.list();
   const shouts = [];
 
@@ -27,8 +52,4 @@ export async function listAllShouts(store = getCommunityShoutsStore()) {
 
   shouts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   return shouts;
-}
-
-export async function listApprovedShouts(store = getCommunityShoutsStore()) {
-  return (await listAllShouts(store)).filter((shout) => shout?.approved);
 }

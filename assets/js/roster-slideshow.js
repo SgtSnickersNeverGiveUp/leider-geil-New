@@ -3,8 +3,10 @@
 
   const {
     escapeHtml,
-    normalizeRosterSlideshowSettings,
   } = window.LG_SHARED_UTILS;
+  const {
+    normalizeRosterSlideshowSettings,
+  } = window.LG_ROSTER_SLIDESHOW_SETTINGS;
   const DEFAULT_AVATAR = 'assets/img/default-avatar.png';
 
   document.addEventListener('DOMContentLoaded', initRosterSlideshow);
