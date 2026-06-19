@@ -14,7 +14,7 @@
     const form = document.getElementById('community-shouts-form');
     const status = document.getElementById('community-shouts-status');
     const list = document.getElementById('community-shouts-list');
-    const apiUrl = SITE_CONFIG.communityShoutsApi || '/api/community-shouts';
+    const apiUrl = SITE_CONFIG.communityShoutsApi;
 
     loadApprovedShouts(apiUrl, list);
 

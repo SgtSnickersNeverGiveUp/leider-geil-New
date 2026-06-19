@@ -22,7 +22,7 @@ function initEventSignupDiscord() {
     if (submitBtn) submitBtn.disabled = true;
 
     try {
-      const apiRes = await fetch(SITE_CONFIG.eventRegistrationsApi || '/api/event-registrations', {
+      const apiRes = await fetch(SITE_CONFIG.eventRegistrationsApi, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -53,25 +53,6 @@ function initEventSignupDiscord() {
       }).catch((err) => {
         console.error('Netlify Form (Event) Fehler:', err);
       });
-
-      if (typeof DISCORD_WEBHOOK_EVENT === 'string' && DISCORD_WEBHOOK_EVENT) {
-        fetch(DISCORD_WEBHOOK_EVENT, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            content:
-              '**Neue Event-Anmeldung**\n' +
-              `Name / Gaming-ID: ${name}\n` +
-              `E-Mail: ${email}\n` +
-              `Spiel: ${spiel}\n` +
-              `Clan: ${clan}\n` +
-              `Anzahl Spieler: ${anzahl}\n` +
-              `Bemerkungen: ${bemerkungen || '-'}`,
-          }),
-        }).catch((err) => {
-          console.error('Discord Webhook (Event) Fehler:', err);
-        });
-      }
 
       eventForm.reset();
       if (status) status.style.display = 'block';

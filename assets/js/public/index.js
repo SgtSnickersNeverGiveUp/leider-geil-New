@@ -40,7 +40,7 @@ async function fetchTwitchStatus() {
   if (!el) return;
 
   try {
-    const res = await fetch(SITE_CONFIG.twitchStatusApi || '/api/twitch-status');
+    const res = await fetch(SITE_CONFIG.twitchStatusApi);
     if (!res.ok) throw new Error(`Twitch API ${res.status}`);
     const data = await res.json();
     const dot = $('#twitch-dot');
@@ -72,7 +72,7 @@ async function renderTimeline() {
   try {
     let events;
     try {
-      const res = await fetch(SITE_CONFIG.eventsApi || '/api/events');
+      const res = await fetch(SITE_CONFIG.eventsApi);
       if (!res.ok) throw new Error('API unavailable');
       events = await res.json();
     } catch {
@@ -196,7 +196,7 @@ async function renderHeaderBanner() {
   if (!section || !img) return;
 
   try {
-    const res = await fetch(SITE_CONFIG.settingsApi || '/api/settings');
+    const res = await fetch(SITE_CONFIG.settingsApi);
     if (!res.ok) return;
     const settings = await res.json();
 
@@ -219,7 +219,7 @@ async function renderVideoGallery() {
   if (!grid) return;
 
   try {
-    const res = await fetch(SITE_CONFIG.videosApi || '/api/videos');
+    const res = await fetch(SITE_CONFIG.videosApi);
     if (!res.ok) throw new Error(`Videos fetch ${res.status}`);
     const videos = await res.json();
 
@@ -288,7 +288,7 @@ async function renderVisitorCounter() {
   const alreadyCounted = hasCountedHomepageVisitor();
 
   try {
-    const res = await fetch(SITE_CONFIG.visitorCounterApi || '/api/visitor-count', {
+    const res = await fetch(SITE_CONFIG.visitorCounterApi, {
       method: alreadyCounted ? 'GET' : 'POST',
       cache: 'no-store',
     });

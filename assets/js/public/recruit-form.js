@@ -21,7 +21,7 @@ function initRecruitFormDiscord() {
     if (submitBtn) submitBtn.disabled = true;
 
     try {
-      const apiRes = await fetch(SITE_CONFIG.applicationsApi || '/api/applications', {
+      const apiRes = await fetch(SITE_CONFIG.applicationsApi, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -47,26 +47,6 @@ function initRecruitFormDiscord() {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams(formData).toString(),
       });
-
-      if (typeof DISCORD_WEBHOOK_BEWERBUNG === 'string' && DISCORD_WEBHOOK_BEWERBUNG) {
-        try {
-          await fetch(DISCORD_WEBHOOK_BEWERBUNG, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              content:
-                '**Neue Clan-Bewerbung**\n' +
-                `Gaming-ID: ${gamingId}\n` +
-                `Alter: ${alter}\n` +
-                `Spiel: ${spiel}\n` +
-                `Rolle: ${rolle}\n` +
-                `Über mich: ${about}`,
-            }),
-          });
-        } catch (err) {
-          console.error('Discord Webhook (Bewerbung) Fehler:', err);
-        }
-      }
 
       recruitForm.reset();
       alert('Bewerbung gesendet - vielen Dank!');
