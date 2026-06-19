@@ -1,5 +1,6 @@
 import { getStore } from "@netlify/blobs";
 import { requireAdmin } from "./admin-auth.mjs";
+import { buildEventImageUrl } from "./_shared/content-urls.mjs";
 import { jsonResponse, methodNotAllowed } from "./_shared/http.mjs";
 
 const STORE_NAME = "event-images";
@@ -35,7 +36,7 @@ export default async (req) => {
         uploadedAt: new Date().toISOString(),
       });
 
-      const imageUrl = `/api/event-image?id=${encodeURIComponent(eventId)}`;
+      const imageUrl = buildEventImageUrl(eventId);
       return jsonResponse({ success: true, url: imageUrl, size: buffer.byteLength });
     } catch {
       return jsonResponse({ error: "Fehler beim Upload." }, 500);

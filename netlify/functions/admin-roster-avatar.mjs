@@ -1,5 +1,6 @@
 import { getStore } from "@netlify/blobs";
 import { requireAdmin } from "./admin-auth.mjs";
+import { buildRosterAvatarUrl } from "./_shared/content-urls.mjs";
 import { jsonResponse, methodNotAllowed } from "./_shared/http.mjs";
 
 const STORE_NAME = "roster-avatars";
@@ -35,7 +36,7 @@ export default async (req) => {
         uploadedAt: new Date().toISOString(),
       });
 
-      const avatarUrl = `/api/roster-avatar?id=${encodeURIComponent(memberId)}`;
+      const avatarUrl = buildRosterAvatarUrl(memberId);
       return jsonResponse({ success: true, url: avatarUrl, size: buffer.byteLength });
     } catch {
       return jsonResponse({ error: "Fehler beim Upload." }, 500);

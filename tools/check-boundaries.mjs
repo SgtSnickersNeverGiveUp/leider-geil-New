@@ -58,6 +58,25 @@ for (const file of adminHtml) {
 
 assert(!existsSync(path.join(root, "assets/js/script.js")), "legacy assets/js/script.js must stay removed");
 
+const indexHtml = read("index.html");
+assert(indexHtml.includes("assets/js/shared/content-urls.js"), "index.html must load shared content URLs");
+assert(indexHtml.includes("assets/js/shared/roster-slideshow-settings.js"), "index.html must load shared roster slideshow settings");
+assert(
+  indexHtml.indexOf("assets/js/shared/content-urls.js") < indexHtml.indexOf("assets/js/index.js"),
+  "index.html must load shared content URLs before index.js",
+);
+assert(
+  indexHtml.indexOf("assets/js/shared/roster-slideshow-settings.js") < indexHtml.indexOf("assets/js/roster-slideshow.js"),
+  "index.html must load shared roster slideshow settings before roster-slideshow.js",
+);
+
+const recruitHtml = read("bewerben.html");
+assert(recruitHtml.includes("config.js"), "bewerben.html must load public config");
+assert(
+  recruitHtml.indexOf("config.js") < recruitHtml.indexOf("assets/js/recruit-form.js"),
+  "bewerben.html must load public config before recruit-form.js",
+);
+
 const config = read("config.js");
 assert(!config.includes("/api/admin-"), "public config.js must not expose admin endpoints");
 assert(!config.includes("applyEndpoint"), "public config.js must not expose the old application admin endpoint key");
@@ -73,10 +92,30 @@ assert(
 );
 
 const dashboardHtml = read("lg-dashboard.html");
+assert(dashboardHtml.includes("/assets/js/shared/content-urls.js"), "lg-dashboard.html must load shared content URLs");
+assert(
+  dashboardHtml.includes("/assets/js/shared/roster-slideshow-settings.js"),
+  "lg-dashboard.html must load shared roster slideshow settings",
+);
+assert(dashboardHtml.includes("/assets/js/admin-shared.js"), "lg-dashboard.html must load admin-shared.js");
 assert(
   dashboardHtml.indexOf("/assets/js/admin-config.js") < dashboardHtml.indexOf("/assets/js/admin-roster.js")
     && dashboardHtml.indexOf("/assets/js/admin-config.js") < dashboardHtml.indexOf("/assets/js/admin-dashboard.js"),
   "lg-dashboard.html must load admin-config.js before admin dashboard scripts",
+);
+assert(
+  dashboardHtml.indexOf("/assets/js/shared/content-urls.js") < dashboardHtml.indexOf("/assets/js/admin-roster.js")
+    && dashboardHtml.indexOf("/assets/js/shared/content-urls.js") < dashboardHtml.indexOf("/assets/js/admin-dashboard.js"),
+  "lg-dashboard.html must load shared content URLs before admin dashboard scripts",
+);
+assert(
+  dashboardHtml.indexOf("/assets/js/shared/roster-slideshow-settings.js") < dashboardHtml.indexOf("/assets/js/admin-roster.js"),
+  "lg-dashboard.html must load shared roster slideshow settings before admin-roster.js",
+);
+assert(
+  dashboardHtml.indexOf("/assets/js/admin-shared.js") < dashboardHtml.indexOf("/assets/js/admin-roster.js")
+    && dashboardHtml.indexOf("/assets/js/admin-shared.js") < dashboardHtml.indexOf("/assets/js/admin-dashboard.js"),
+  "lg-dashboard.html must load admin-shared.js before admin dashboard scripts",
 );
 
 const publicFunctionFiles = [
@@ -141,6 +180,7 @@ for (const file of adminContentFunctions) {
 }
 
 const adminBrowserFiles = ["assets/js/admin-dashboard.js", "assets/js/admin-roster.js", "assets/js/admin-login.js"];
+const publicDeliveryEndpointLiterals = ["/api/banner-image", "/api/event-image", "/api/roster-avatar"];
 const publicContentEndpoints = [
   "applications",
   "banner-image",
@@ -159,6 +199,9 @@ const adminEndpointConstantPattern = /const\s+[A-Z0-9_]+\s*=\s*['"]\/api\/([^'"]
 for (const file of adminBrowserFiles) {
   const source = read(file);
   assert(!source.includes("/api/admin-"), `${file} must read admin endpoints from admin-config.js`);
+  for (const endpoint of publicDeliveryEndpointLiterals) {
+    assert(!source.includes(endpoint), `${file} must read public content delivery URLs from shared content-urls.js`);
+  }
   let match;
   while ((match = adminEndpointConstantPattern.exec(source))) {
     const endpoint = match[1];
@@ -170,6 +213,52 @@ for (const file of adminBrowserFiles) {
 
 const indexJs = read("assets/js/index.js");
 assert(!/\bconst\s+\$+\s*=/.test(indexJs), "assets/js/index.js must not redeclare public DOM helpers");
+assert(indexJs.includes("LG_CONTENT_URLS"), "assets/js/index.js must read public content delivery URLs from shared content-urls.js");
+
+const sharedContentUrls = read("assets/js/shared/content-urls.js");
+for (const endpoint of publicDeliveryEndpointLiterals) {
+  assert(sharedContentUrls.includes(endpoint), "shared content-urls.js must own public content delivery URL literals");
+}
+
+const sharedRosterSlideshowSettings = read("assets/js/shared/roster-slideshow-settings.js");
+assert(
+  sharedRosterSlideshowSettings.includes("window.LG_ROSTER_SLIDESHOW_SETTINGS"),
+  "shared roster slideshow settings must expose LG_ROSTER_SLIDESHOW_SETTINGS",
+);
+assert(
+  read("assets/js/roster-slideshow.js").includes("LG_ROSTER_SLIDESHOW_SETTINGS"),
+  "public roster slideshow must use shared roster slideshow settings",
+);
+assert(
+  read("assets/js/admin-roster.js").includes("LG_ROSTER_SLIDESHOW_SETTINGS"),
+  "admin roster must use shared roster slideshow settings",
+);
+
+const adminShared = read("assets/js/admin-shared.js");
+assert(adminShared.includes("window.ADMIN_UTILS"), "admin-shared.js must expose admin-only helpers");
+assert(!read("assets/js/admin-dashboard.js").includes("function escapeHtml"), "admin-dashboard.js must not own shared admin helpers");
+assert(!read("assets/js/admin-dashboard.js").includes("function truncate"), "admin-dashboard.js must not own shared admin helpers");
+assert(!read("assets/js/admin-dashboard.js").includes("function formatDate"), "admin-dashboard.js must not own shared admin helpers");
+assert(!read("assets/js/admin-dashboard.js").includes("function getEventGameVariant"), "admin-dashboard.js must not own shared admin helpers");
+
+const serverContentUrls = read("netlify/functions/_shared/content-urls.mjs");
+for (const endpoint of publicDeliveryEndpointLiterals) {
+  assert(serverContentUrls.includes(endpoint), "server shared content-urls.mjs must own public content delivery URL literals");
+}
+
+for (const file of [
+  "netlify/functions/admin-banner-image.mjs",
+  "netlify/functions/admin-event-image.mjs",
+  "netlify/functions/admin-roster-avatar.mjs",
+  "netlify/functions/banner-image.mjs",
+  "netlify/functions/event-image.mjs",
+  "netlify/functions/roster-avatar.mjs",
+]) {
+  const source = read(file);
+  for (const endpoint of publicDeliveryEndpointLiterals) {
+    assert(!source.includes(endpoint), `${file} must use shared content URL constants`);
+  }
+}
 
 for (const file of listFiles("assets/js", ".js")) {
   if (file.startsWith("assets/js/admin-")) continue;

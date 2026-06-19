@@ -1,6 +1,7 @@
 'use strict';
 
 const ADMIN_DASHBOARD_CONFIG = window.ADMIN_CONFIG;
+const ADMIN_DASHBOARD_CONTENT_URLS = window.LG_CONTENT_URLS;
 const API_URL = ADMIN_DASHBOARD_CONFIG.applicationsApi;
 const EVENTS_API = ADMIN_DASHBOARD_CONFIG.eventsApi;
 const EVENT_IMAGE_API = ADMIN_DASHBOARD_CONFIG.eventImageApi;
@@ -26,13 +27,6 @@ function renderEventGameOptions(selectedGame) {
   return EVENT_GAME_OPTIONS
     .map((game) => `<option value="${escapeHtml(game)}" ${selectedGame === game ? 'selected' : ''}>${escapeHtml(game)}</option>`)
     .join('');
-}
-
-function getEventGameVariant(game) {
-  if (game === 'PUBG' || game === 'PUBG NEWS') return 'pubg';
-  if (game === 'ARC Raiders' || game === 'ARC Raiders NEWS') return 'arc';
-  if (game === 'NEWS') return 'news';
-  return '';
 }
 
 function redirectToAdminLogin() {
@@ -443,7 +437,7 @@ function renderEventsAdmin(events) {
   body.innerHTML = events.map(ev => {
     const dateStr = new Date(ev.date).toLocaleDateString('de-DE', { year: 'numeric', month: 'long', day: 'numeric' });
     const thumbHtml = ev.image
-      ? `<img class="admin-event-thumb" src="${escapeHtml(ev.image)}${ev.image.startsWith('/api/event-image') ? (ev.image.includes('?') ? '&' : '?') + 't=' + Math.floor(Date.now() / 60000) : ''}" alt="" loading="lazy" onerror="this.style.display='none'">`
+      ? `<img class="admin-event-thumb" src="${escapeHtml(ADMIN_DASHBOARD_CONTENT_URLS.withCacheBuster(ev.image, 'eventImage'))}" alt="" loading="lazy" onerror="this.style.display='none'">`
       : '';
     const game = ev.game || 'Mixed';
     const gameVariant = getEventGameVariant(game);
@@ -486,7 +480,7 @@ function openEditEvent(id) {
     if (!ev) { alert('Event nicht gefunden.'); return; }
 
     const imgSrc = ev.image
-      ? escapeHtml(ev.image) + (ev.image.startsWith('/api/event-image') ? (ev.image.includes('?') ? '&' : '?') + 't=' + Math.floor(Date.now() / 60000) : '')
+      ? escapeHtml(ADMIN_DASHBOARD_CONTENT_URLS.withCacheBuster(ev.image, 'eventImage'))
       : "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 50'%3E%3Crect fill='%231a1a2e' width='80' height='50'/%3E%3Ctext x='50%25' y='55%25' text-anchor='middle' fill='%237a7a8e' font-size='14'%3E%3F%3C/text%3E%3C/svg%3E";
 
     const overlay = document.createElement('div');
@@ -798,10 +792,7 @@ async function loadBannerSettings() {
     const settings = await res.json();
 
     if (settings.bannerUrl) {
-      // Add cache-buster for uploaded images
-      const imgUrl = settings.bannerUrl === '/api/banner-image'
-        ? settings.bannerUrl + '?t=' + Date.now()
-        : settings.bannerUrl;
+      const imgUrl = ADMIN_DASHBOARD_CONTENT_URLS.withCacheBuster(settings.bannerUrl, 'bannerImage', Date.now());
 
       body.innerHTML = `
         <div class="banner-preview-container">
@@ -813,7 +804,7 @@ async function loadBannerSettings() {
         </p>`;
 
       // Pre-fill URL input if it's a URL type
-      if (settings.bannerUrl !== '/api/banner-image') {
+      if (!ADMIN_DASHBOARD_CONTENT_URLS.isContentUrl(settings.bannerUrl, 'bannerImage')) {
         document.getElementById('banner-url').value = settings.bannerUrl;
       }
     } else {
@@ -1199,27 +1190,6 @@ async function deleteCommunityShout(id) {
   } catch (err) {
     alert('Fehler beim Löschen: ' + err.message);
   }
-}
-
-// ══════════════════════════════════════════════════════════
-// HELPERS
-// ══════════════════════════════════════════════════════════
-function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
-}
-
-function truncate(str, max) {
-  if (!str) return '';
-  return str.length > max ? str.slice(0, max) + '\u2026' : str;
-}
-
-function formatDate(value) {
-  if (!value) return '–';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '–';
-  return date.toLocaleString('de-DE');
 }
 
 // ══════════════════════════════════════════════════════════

@@ -1,5 +1,6 @@
 import { getStore } from "@netlify/blobs";
 import { requireAdmin } from "./admin-auth.mjs";
+import { PUBLIC_CONTENT_URLS } from "./_shared/content-urls.mjs";
 import { jsonResponse, methodNotAllowed } from "./_shared/http.mjs";
 
 const STORE_NAME = "banner";
@@ -34,7 +35,7 @@ export default async (req) => {
 
     return jsonResponse({
       success: true,
-      url: "/api/banner-image",
+      url: PUBLIC_CONTENT_URLS.bannerImage,
       size: buffer.byteLength,
     });
   } catch {

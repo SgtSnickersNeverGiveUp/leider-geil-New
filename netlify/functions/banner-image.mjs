@@ -1,4 +1,5 @@
 import { getStore } from "@netlify/blobs";
+import { PUBLIC_CONTENT_URLS } from "./_shared/content-urls.mjs";
 import { methodNotAllowed } from "./_shared/http.mjs";
 
 const STORE_NAME = "banner";
@@ -29,5 +30,5 @@ export default async (req) => {
 };
 
 export const config = {
-  path: "/api/banner-image",
+  path: PUBLIC_CONTENT_URLS.bannerImage,
 };

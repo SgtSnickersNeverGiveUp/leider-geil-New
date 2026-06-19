@@ -1,6 +1,7 @@
 'use strict';
 
 const VISITOR_COUNTER_STORAGE_KEY = 'lg-homepage-visitor-counted';
+const INDEX_CONTENT_URLS = window.LG_CONTENT_URLS;
 
 function getTimelineGameVariant(game) {
   if (game === 'PUBG' || game === 'PUBG NEWS') return 'pubg';
@@ -114,9 +115,7 @@ async function renderTimeline() {
       }
 
       const imgSrc = e.image
-        ? e.image + (e.image.startsWith('/api/event-image')
-            ? (e.image.includes('?') ? '&' : '?') + 't=' + Math.floor(Date.now() / 60000)
-            : '')
+        ? INDEX_CONTENT_URLS.withCacheBuster(e.image, 'eventImage')
         : '';
       const imgHtml = imgSrc
         ? `<img class="timeline__image" src="${imgSrc}" alt="${e.title || ''}" loading="lazy" onerror="this.style.display='none'">`
@@ -202,9 +201,7 @@ async function renderHeaderBanner() {
     const settings = await res.json();
 
     if (settings.bannerUrl) {
-      const imgUrl = settings.bannerUrl === '/api/banner-image'
-        ? settings.bannerUrl + '?t=' + Math.floor(Date.now() / 60000)
-        : settings.bannerUrl;
+      const imgUrl = INDEX_CONTENT_URLS.withCacheBuster(settings.bannerUrl, 'bannerImage');
 
       img.src = imgUrl;
       img.onload = () => { section.style.display = ''; };

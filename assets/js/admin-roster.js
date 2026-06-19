@@ -1,6 +1,8 @@
 'use strict';
 
 const ADMIN_ROSTER_CONFIG = window.ADMIN_CONFIG;
+const ADMIN_ROSTER_CONTENT_URLS = window.LG_CONTENT_URLS;
+const ADMIN_ROSTER_SLIDESHOW_SETTINGS = window.LG_ROSTER_SLIDESHOW_SETTINGS;
 const ROSTER_API = ADMIN_ROSTER_CONFIG.rosterApi;
 const ROSTER_AVATAR_API = ADMIN_ROSTER_CONFIG.rosterAvatarApi;
 const ROSTER_SETTINGS_API = ADMIN_ROSTER_CONFIG.settingsApi;
@@ -10,7 +12,7 @@ const ROSTER_SETTINGS_API = ADMIN_ROSTER_CONFIG.settingsApi;
 // ══════════════════════════════════════════════════════════
 let rosterAvatarFile = null;
 let editAvatarFile = null;
-let currentRosterSlideshowSettings = getDefaultRosterSlideshowSettings();
+let currentRosterSlideshowSettings = ADMIN_ROSTER_SLIDESHOW_SETTINGS.getDefaultRosterSlideshowSettings();
 
 // Drag & drop support for new member form
 const rosterAvatarArea = document.getElementById('roster-avatar-area');
@@ -85,7 +87,9 @@ function renderRosterAdmin(members) {
   }
 
   body.innerHTML = `<div class="admin-roster-grid">${members.map(m => {
-    const avatarSrc = m.avatar ? escapeHtml(m.avatar) + (m.avatar.startsWith('/api/roster-avatar') ? '&t=' + Math.floor(Date.now() / 60000) : '') : '';
+    const avatarSrc = m.avatar
+      ? escapeHtml(ADMIN_ROSTER_CONTENT_URLS.withCacheBuster(m.avatar, 'rosterAvatar'))
+      : '';
 
     const gamesHtml = (m.games || []).map(g => {
       const cls = g === 'PUBG' ? 'pubg' : g === 'ARC Raiders' ? 'arc' : 'other';
@@ -120,52 +124,16 @@ function renderRosterAdmin(members) {
   }).join('')}</div>`;
 }
 
-function getDefaultRosterSlideshowSettings() {
-  return {
-    enabled: false,
-    autoplay: true,
-    speedSeconds: 8,
-    pinnedMemberId: '',
-    entries: [],
-  };
-}
-
 async function loadRosterSlideshowSettings() {
   try {
     const res = await fetch(ROSTER_SETTINGS_API);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const settings = await res.json();
-    currentRosterSlideshowSettings = normalizeRosterSlideshowSettings(settings.rosterSlideshow);
+    currentRosterSlideshowSettings = ADMIN_ROSTER_SLIDESHOW_SETTINGS.normalizeRosterSlideshowSettings(settings.rosterSlideshow);
   } catch (err) {
     console.warn('[Roster Slideshow Admin] Settings konnten nicht geladen werden:', err);
-    currentRosterSlideshowSettings = getDefaultRosterSlideshowSettings();
+    currentRosterSlideshowSettings = ADMIN_ROSTER_SLIDESHOW_SETTINGS.getDefaultRosterSlideshowSettings();
   }
-}
-
-function normalizeRosterSlideshowSettings(settings) {
-  const defaults = getDefaultRosterSlideshowSettings();
-  if (!settings || typeof settings !== 'object') return defaults;
-
-  const rawEntries = Array.isArray(settings.entries)
-    ? settings.entries
-    : Array.isArray(settings.members)
-      ? settings.members
-      : [];
-
-  const entries = rawEntries
-    .filter((entry) => entry && (entry.memberId || entry.id))
-    .map((entry) => ({
-      memberId: String(entry.memberId || entry.id),
-      text: String(entry.text || ''),
-    }));
-
-  return {
-    enabled: Boolean(settings.enabled),
-    autoplay: settings.autoplay !== false,
-    speedSeconds: Math.max(3, Number(settings.speedSeconds) || defaults.speedSeconds),
-    pinnedMemberId: settings.pinnedMemberId ? String(settings.pinnedMemberId) : '',
-    entries,
-  };
 }
 
 async function renderRosterSlideshowAdmin(members, reloadSettings = true) {

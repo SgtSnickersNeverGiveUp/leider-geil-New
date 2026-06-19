@@ -1,4 +1,5 @@
 import { getStore } from "@netlify/blobs";
+import { PUBLIC_CONTENT_URLS } from "./_shared/content-urls.mjs";
 import { jsonResponse, methodNotAllowed } from "./_shared/http.mjs";
 
 const STORE_NAME = "roster-avatars";
@@ -33,5 +34,5 @@ export default async (req) => {
 };
 
 export const config = {
-  path: "/api/roster-avatar",
+  path: PUBLIC_CONTENT_URLS.rosterAvatar,
 };
