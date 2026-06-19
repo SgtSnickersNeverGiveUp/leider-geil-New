@@ -1,18 +1,9 @@
-import { getStore } from "@netlify/blobs";
 import { jsonResponse, methodNotAllowed } from "./_shared/http.mjs";
-
-const STORE_NAME = "settings";
-const SETTINGS_KEY = "site-settings";
+import { readSettings } from "./_shared/settings-store.mjs";
 
 export default async (req) => {
   if (req.method !== "GET") return methodNotAllowed();
-
-  try {
-    const settings = await getStore(STORE_NAME).get(SETTINGS_KEY, { type: "json" });
-    return jsonResponse(settings || {});
-  } catch {
-    return jsonResponse({});
-  }
+  return jsonResponse(await readSettings());
 };
 
 export const config = {

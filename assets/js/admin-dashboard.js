@@ -1,14 +1,15 @@
 'use strict';
 
-const API_URL = '/api/admin-applications';
-const EVENTS_API = '/api/admin-events';
-const EVENT_IMAGE_API = '/api/admin-event-image';
-const VIDEOS_API = '/api/admin-videos';
-const EVT_REGISTRATIONS_API = '/api/admin-event-registrations';
-const NEWS_API_URL = '/api/admin-news';
-const SETTINGS_API = '/api/admin-settings';
-const BANNER_IMAGE_API = '/api/admin-banner-image';
-const COMMUNITY_SHOUTS_API = '/api/admin-community-shouts';
+const ADMIN_DASHBOARD_CONFIG = window.ADMIN_CONFIG;
+const API_URL = ADMIN_DASHBOARD_CONFIG.applicationsApi;
+const EVENTS_API = ADMIN_DASHBOARD_CONFIG.eventsApi;
+const EVENT_IMAGE_API = ADMIN_DASHBOARD_CONFIG.eventImageApi;
+const VIDEOS_API = ADMIN_DASHBOARD_CONFIG.videosApi;
+const EVT_REGISTRATIONS_API = ADMIN_DASHBOARD_CONFIG.eventRegistrationsApi;
+const NEWS_API_URL = ADMIN_DASHBOARD_CONFIG.newsApi;
+const SETTINGS_API = ADMIN_DASHBOARD_CONFIG.settingsApi;
+const BANNER_IMAGE_API = ADMIN_DASHBOARD_CONFIG.bannerImageApi;
+const COMMUNITY_SHOUTS_API = ADMIN_DASHBOARD_CONFIG.communityShoutsApi;
 const BANNER_ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const BANNER_MAX_SIZE_BYTES = 5 * 1024 * 1024;
 
@@ -36,12 +37,12 @@ function getEventGameVariant(game) {
 
 function redirectToAdminLogin() {
   const redirect = `${window.location.pathname}${window.location.search}`;
-  window.location.assign(`/admin-login.html?redirect=${encodeURIComponent(redirect)}`);
+  window.location.assign(`${ADMIN_DASHBOARD_CONFIG.loginPath}?redirect=${encodeURIComponent(redirect)}`);
 }
 
 async function ensureAdminSession() {
   try {
-    const res = await fetch('/api/admin-session', { credentials: 'same-origin' });
+    const res = await fetch(ADMIN_DASHBOARD_CONFIG.sessionApi, { credentials: 'same-origin' });
     if (!res.ok) {
       redirectToAdminLogin();
       return false;
@@ -62,7 +63,7 @@ async function ensureAdminSession() {
 
 async function logoutAdmin() {
   try {
-    await fetch('/api/admin-logout', {
+    await fetch(ADMIN_DASHBOARD_CONFIG.logoutApi, {
       method: 'POST',
       credentials: 'same-origin',
     });

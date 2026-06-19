@@ -1,8 +1,5 @@
 'use strict';
 
-const $ = (sel, ctx = document) => ctx.querySelector(sel);
-const $$ = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
-
 const VISITOR_COUNTER_STORAGE_KEY = 'lg-homepage-visitor-counted';
 
 function getTimelineGameVariant(game) {
