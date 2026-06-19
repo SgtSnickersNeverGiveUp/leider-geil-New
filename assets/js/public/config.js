@@ -24,23 +24,18 @@ const SITE_CONFIG = {
   twitchChannel: "sgtsnickersnevergiveup",
   twitchStatusApi: "/api/twitch-status",
 
-  /* ── Bewerbungs-Endpoint ─────────────────────────────── */
-  applyEndpoint: "/api/applications",
-
   /* ── API-Endpunkte ──────────────────────────────────── */
   rosterApi: "/api/roster",
-  rosterAvatarApi: "/api/roster-avatar",
   eventsApi: "/api/events",
-  eventImageApi: "/api/event-image",
   videosApi: "/api/videos",
   newsApi: "/api/news",
   settingsApi: "/api/settings",
   communityShoutsApi: "/api/community-shouts",
   eventRegistrationsApi: "/api/event-registrations",
+  applicationsApi: "/api/applications",
   visitorCounterApi: "/api/visitor-count",
 
   /* ── Datenpfade (Fallback) ─────────────────────────── */
-  rosterPath: "assets/data/roster.json",
   eventsPath: "assets/data/events.json",
 
   /* ── Refresh-Intervalle (ms) ─────────────────────────── */

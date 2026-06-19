@@ -19,7 +19,7 @@ function = "admin-auth"
 publish = "."
 publishOrigin = "config"
 commandOrigin = "config"
-command = "echo 'No build needed'"
+command = "npm test"
 
   [build.environment]
 

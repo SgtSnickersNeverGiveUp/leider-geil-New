@@ -14,7 +14,7 @@
     const form = document.getElementById('community-shouts-form');
     const status = document.getElementById('community-shouts-status');
     const list = document.getElementById('community-shouts-list');
-    const apiUrl = SITE_CONFIG.communityShoutsApi || '/api/community-shouts';
+    const apiUrl = SITE_CONFIG.communityShoutsApi;
 
     loadApprovedShouts(apiUrl, list);
 
@@ -44,7 +44,7 @@
 
         form.reset();
         status.classList.add('community-shouts__status--success');
-        status.textContent = 'Shout empfangen. Wartet auf Admin-Freigabe, bevor er auf der Wall erscheint.';
+        status.textContent = 'Shout empfangen. Wartet auf Moderation, bevor er auf der Wall erscheint.';
       } catch (err) {
         status.classList.add('community-shouts__status--error');
         status.textContent = 'Shout konnte nicht gesendet werden. Bitte später erneut versuchen.';
