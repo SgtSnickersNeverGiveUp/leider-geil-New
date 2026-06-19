@@ -12,8 +12,8 @@
 
     try {
       const [settings, members] = await Promise.all([
-        fetchJson(SITE_CONFIG.settingsApi || '/api/settings', {}),
-        fetchJson(SITE_CONFIG.rosterApi || '/api/roster', []),
+        fetchJson(SITE_CONFIG.settingsApi, {}),
+        fetchJson(SITE_CONFIG.rosterApi, []),
       ]);
       const config = normalizeSlideshowSettings(settings.rosterSlideshow);
       if (!config.enabled || !Array.isArray(members) || members.length === 0) return;
