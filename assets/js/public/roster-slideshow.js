@@ -2,6 +2,7 @@
   'use strict';
 
   const SLIDESHOW_SETTINGS = window.LG_ROSTER_SLIDESHOW_SETTINGS;
+  const { escapeHtml } = window.LG_SITE_UTILS;
   const DEFAULT_AVATAR = 'assets/img/default-avatar.png';
 
   document.addEventListener('DOMContentLoaded', initRosterSlideshow);
@@ -103,14 +104,5 @@
         .map((game) => `<span>${escapeHtml(game)}</span>`)
         .join('');
     }
-  }
-
-  function escapeHtml(value) {
-    return String(value || '')
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
   }
 })();

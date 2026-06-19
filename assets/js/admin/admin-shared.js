@@ -1,10 +1,10 @@
 (function () {
   'use strict';
 
+  const SHARED_UTILS = window.LG_SITE_UTILS;
+
   function escapeHtml(value) {
-    const div = document.createElement('div');
-    div.textContent = String(value || '');
-    return div.innerHTML;
+    return SHARED_UTILS.escapeHtml(value);
   }
 
   function truncate(value, max) {
@@ -20,10 +20,7 @@
   }
 
   function getEventGameVariant(game) {
-    if (game === 'PUBG' || game === 'PUBG NEWS') return 'pubg';
-    if (game === 'ARC Raiders' || game === 'ARC Raiders NEWS') return 'arc';
-    if (game === 'NEWS') return 'news';
-    return '';
+    return SHARED_UTILS.getGameVariant(game);
   }
 
   window.escapeHtml = escapeHtml;

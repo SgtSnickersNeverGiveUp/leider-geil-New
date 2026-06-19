@@ -2,13 +2,7 @@
 
 const VISITOR_COUNTER_STORAGE_KEY = 'lg-homepage-visitor-counted';
 const INDEX_CONTENT_URLS = window.LG_CONTENT_URLS;
-
-function getTimelineGameVariant(game) {
-  if (game === 'PUBG' || game === 'PUBG NEWS') return 'pubg';
-  if (game === 'ARC Raiders' || game === 'ARC Raiders NEWS') return 'arc';
-  if (game === 'NEWS') return 'news';
-  return '';
-}
+const INDEX_UTILS = window.LG_SITE_UTILS;
 
 function initVideos() {
   const pubgFrame = $('#video-pubg');
@@ -95,7 +89,7 @@ async function renderTimeline() {
     wrap.innerHTML = events.map((e) => {
       const game = e.game || 'Mixed';
       const type = e.type || 'event';
-      const gameVariant = getTimelineGameVariant(game);
+      const gameVariant = INDEX_UTILS.getGameVariant(game);
 
       const itemClass = gameVariant ? `timeline__item--${gameVariant}` : '';
       const dotClass = gameVariant ? `timeline__dot--${gameVariant}` : '';
