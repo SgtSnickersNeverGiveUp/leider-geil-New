@@ -1,63 +1,24 @@
-import { getStore } from "@netlify/blobs";
-import { requireAdmin } from "./admin-auth.mjs";
+import { jsonResponse, methodNotAllowed } from "./_shared/http.mjs";
+import { readSettings } from "./_shared/settings-store.mjs";
 
-const STORE_NAME = "settings";
-const SETTINGS_KEY = "site-settings";
+const PUBLIC_SETTINGS_KEYS = [
+  "bannerUrl",
+  "rosterSlideshow",
+  "tickerSeparator",
+  "tickerSpeedSeconds",
+];
+
+function pickPublicSettings(settings) {
+  return Object.fromEntries(
+    PUBLIC_SETTINGS_KEYS
+      .filter((key) => Object.hasOwn(settings, key))
+      .map((key) => [key, settings[key]]),
+  );
+}
 
 export default async (req) => {
-  if (req.method === "POST") {
-    const adminGuard = requireAdmin(req);
-    if (adminGuard) return adminGuard;
-  }
-
-  const store = getStore(STORE_NAME);
-
-  // GET – Return current settings
-  if (req.method === "GET") {
-    try {
-      const settings = await store.get(SETTINGS_KEY, { type: "json" });
-      return new Response(JSON.stringify(settings || {}), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
-    } catch (err) {
-      return new Response(JSON.stringify({}), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-  }
-
-  // POST – Save settings
-  if (req.method === "POST") {
-    try {
-      const body = await req.json();
-
-      // Merge with existing settings
-      let existing = {};
-      try {
-        existing = (await store.get(SETTINGS_KEY, { type: "json" })) || {};
-      } catch {}
-
-      const updated = { ...existing, ...body, updatedAt: new Date().toISOString() };
-      await store.setJSON(SETTINGS_KEY, updated);
-
-      return new Response(JSON.stringify({ success: true, settings: updated }), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
-    } catch (err) {
-      return new Response(JSON.stringify({ error: "Fehler beim Speichern." }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-  }
-
-  return new Response(JSON.stringify({ error: "Method not allowed" }), {
-    status: 405,
-    headers: { "Content-Type": "application/json" },
-  });
+  if (req.method !== "GET") return methodNotAllowed();
+  return jsonResponse(pickPublicSettings(await readSettings()));
 };
 
 export const config = {

@@ -25,6 +25,10 @@ function jsonResponse(body, status = 200) {
   });
 }
 
+function methodNotAllowed() {
+  return jsonResponse({ error: "Method not allowed" }, 405);
+}
+
 // ── Auth-Step: obtain an access_token via client_credentials ──
 async function getAccessToken() {
   const tokenUrl = "https://id.twitch.tv/oauth2/token";
@@ -89,7 +93,9 @@ async function getStreamStatus(token) {
 }
 
 // ── Handler ──
-export default async () => {
+export default async (req) => {
+  if (req.method !== "GET") return methodNotAllowed();
+
   try {
     if (!CLIENT_ID || !CLIENT_SECRET) {
       console.error("[twitch-status] TWITCH_CLIENT_ID or TWITCH_CLIENT_SECRET not set");

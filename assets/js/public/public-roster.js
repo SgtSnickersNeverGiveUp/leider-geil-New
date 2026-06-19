@@ -1,6 +1,7 @@
 (() => {
   'use strict';
 
+  const escapeRosterHtml = window.LG_SITE_UTILS.escapeHtml;
   let publicRosterMembers = [];
   let activeRosterFilter = '';
 
@@ -11,7 +12,7 @@
     container.innerHTML = '<div class="loading">Lade Clan Roster...</div>';
 
     try {
-      const res = await fetch(SITE_CONFIG.rosterApi || '/api/roster');
+      const res = await fetch(SITE_CONFIG.rosterApi);
       if (!res.ok) throw new Error('HTTP ' + res.status);
       const members = await res.json();
 
@@ -61,16 +62,6 @@
         <span>${escapeRosterHtml(label)}: ${count} Member</span>
         <button type="button" class="btn-sm" data-roster-filter-clear>Alle anzeigen</button>
       </div>`;
-  }
-
-  function escapeRosterHtml(value) {
-    if (!value) return '';
-    return String(value)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
   }
 
   function renderPublicRosterCard(member) {
