@@ -72,7 +72,7 @@ function selectorPattern(selector) {
 
 function extractNamedImports(source, modulePath) {
   const imports = [];
-  const pattern = new RegExp(`import\\s*\\{([\\s\\S]*?)\\}\\s*from\\s*["']${escapeRegex(modulePath)}["']`, "g");
+  const pattern = new RegExp(`import\\s*\\{([^}]*)\\}\\s*from\\s*["']${escapeRegex(modulePath)}["']`, "g");
   let match;
 
   while ((match = pattern.exec(source))) {
