@@ -2,6 +2,7 @@
   'use strict';
 
   const MAX_VISIBLE_SHOUTS = 4;
+  const { escapeHtml } = window.LG_SITE_UTILS;
 
   document.addEventListener('DOMContentLoaded', () => {
     const root = document.getElementById('community-shouts');
@@ -80,14 +81,5 @@
         <p>${escapeHtml(shout.message)}</p>
       </article>
     `).join('');
-  }
-
-  function escapeHtml(value) {
-    return String(value || '')
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
   }
 })();
