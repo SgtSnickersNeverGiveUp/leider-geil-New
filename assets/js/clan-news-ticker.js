@@ -2,8 +2,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const tickerItemsEl = document.querySelector('#clan-news-ticker .clan-news-ticker__items');
   if (!tickerItemsEl) return;
 
-  const settingsApi = SITE_CONFIG.settingsApi || '/api/settings';
-  const newsApi = SITE_CONFIG.newsApi || '/api/news';
+  const settingsApi = SITE_CONFIG.settingsApi;
+  const newsApi = SITE_CONFIG.newsApi;
 
   Promise.all([
     fetch(settingsApi).then((r) => r.json()),

@@ -21,7 +21,7 @@ function initRecruitFormDiscord() {
     if (submitBtn) submitBtn.disabled = true;
 
     try {
-      const apiRes = await fetch('/api/applications', {
+      const apiRes = await fetch(SITE_CONFIG.applicationsApi, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

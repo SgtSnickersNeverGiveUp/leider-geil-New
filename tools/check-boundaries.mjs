@@ -56,15 +56,52 @@ for (const file of adminHtml) {
   assert(!html.includes("assets/js/script.js"), `${file} must not load legacy public script.js`);
 }
 
+const publicBrowserFiles = listFiles("assets/js", ".js")
+  .filter((file) => !file.startsWith("assets/js/admin-"));
+const publicScriptsRequiringConfig = publicBrowserFiles
+  .filter((file) => read(file).includes("SITE_CONFIG"));
+
+for (const htmlFile of publicHtml) {
+  const html = read(htmlFile);
+  for (const scriptFile of publicScriptsRequiringConfig) {
+    if (!html.includes(scriptFile)) continue;
+    assert(html.includes("config.js"), `${htmlFile} must load public config.js before ${scriptFile}`);
+    assert(
+      html.indexOf("config.js") < html.indexOf(scriptFile),
+      `${htmlFile} must load public config.js before ${scriptFile}`,
+    );
+  }
+}
+
 assert(!existsSync(path.join(root, "assets/js/script.js")), "legacy assets/js/script.js must stay removed");
 
 const config = read("config.js");
 assert(!config.includes("/api/admin-"), "public config.js must not expose admin endpoints");
 assert(!config.includes("applyEndpoint"), "public config.js must not expose the old application admin endpoint key");
 
+const publicEndpointConfigKeys = [
+  "applicationsApi",
+  "bannerImageApi",
+  "communityShoutsApi",
+  "eventImageApi",
+  "eventRegistrationsApi",
+  "eventsApi",
+  "newsApi",
+  "rosterAvatarApi",
+  "rosterApi",
+  "settingsApi",
+  "twitchStatusApi",
+  "videosApi",
+  "visitorCounterApi",
+];
+for (const key of publicEndpointConfigKeys) {
+  assert(config.includes(`${key}: "/api/`), `config.js must own public endpoint ${key}`);
+}
+
 const adminConfig = read("assets/js/admin-config.js");
 assert(adminConfig.includes("window.ADMIN_CONFIG"), "admin-config.js must define window.ADMIN_CONFIG");
 assert(adminConfig.includes("/api/admin-"), "admin-config.js must own admin API endpoints");
+assert(adminConfig.includes("publicAssetUrls"), "admin-config.js must document public asset URLs used by admin previews");
 
 const adminLoginHtml = read("admin-login.html");
 assert(
@@ -141,39 +178,18 @@ for (const file of adminContentFunctions) {
 }
 
 const adminBrowserFiles = ["assets/js/admin-dashboard.js", "assets/js/admin-roster.js", "assets/js/admin-login.js"];
-const publicContentEndpoints = [
-  "applications",
-  "banner-image",
-  "community-shouts",
-  "event-image",
-  "event-registrations",
-  "events",
-  "news",
-  "roster-avatar",
-  "roster",
-  "settings",
-  "videos",
-];
-const adminEndpointConstantPattern = /const\s+[A-Z0-9_]+\s*=\s*['"]\/api\/([^'"]+)['"]/g;
 
 for (const file of adminBrowserFiles) {
   const source = read(file);
-  assert(!source.includes("/api/admin-"), `${file} must read admin endpoints from admin-config.js`);
-  let match;
-  while ((match = adminEndpointConstantPattern.exec(source))) {
-    const endpoint = match[1];
-    if (publicContentEndpoints.includes(endpoint)) {
-      failures.push(`${file} has admin API constant pointing at public /api/${endpoint}`);
-    }
-  }
+  assert(!source.includes("/api/"), `${file} must read all API endpoints from admin-config.js`);
 }
 
 const indexJs = read("assets/js/index.js");
 assert(!/\bconst\s+\$+\s*=/.test(indexJs), "assets/js/index.js must not redeclare public DOM helpers");
 
-for (const file of listFiles("assets/js", ".js")) {
-  if (file.startsWith("assets/js/admin-")) continue;
+for (const file of publicBrowserFiles) {
   const source = read(file);
+  assert(!source.includes("/api/"), `${file} must read public endpoints from config.js`);
   assert(!source.includes("/api/admin-"), `${file} must not call admin endpoints`);
   assert(!source.includes("admin-dashboard"), `${file} must not reference admin dashboard code`);
 }

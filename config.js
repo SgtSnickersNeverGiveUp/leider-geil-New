@@ -27,11 +27,13 @@ const SITE_CONFIG = {
   /* ── API-Endpunkte ──────────────────────────────────── */
   rosterApi: "/api/roster",
   rosterAvatarApi: "/api/roster-avatar",
+  applicationsApi: "/api/applications",
   eventsApi: "/api/events",
   eventImageApi: "/api/event-image",
   videosApi: "/api/videos",
   newsApi: "/api/news",
   settingsApi: "/api/settings",
+  bannerImageApi: "/api/banner-image",
   communityShoutsApi: "/api/community-shouts",
   eventRegistrationsApi: "/api/event-registrations",
   visitorCounterApi: "/api/visitor-count",

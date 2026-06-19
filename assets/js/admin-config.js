@@ -18,5 +18,10 @@
     logoutApi: '/api/admin-logout',
     loginPath: '/admin-login.html',
     dashboardPath: '/lg-dashboard.html',
+    publicAssetUrls: Object.freeze({
+      eventImage: '/api/event-image',
+      bannerImage: '/api/banner-image',
+      rosterAvatar: '/api/roster-avatar',
+    }),
   });
 })();

@@ -4,6 +4,7 @@ const ADMIN_ROSTER_CONFIG = window.ADMIN_CONFIG;
 const ROSTER_API = ADMIN_ROSTER_CONFIG.rosterApi;
 const ROSTER_AVATAR_API = ADMIN_ROSTER_CONFIG.rosterAvatarApi;
 const ROSTER_SETTINGS_API = ADMIN_ROSTER_CONFIG.settingsApi;
+const ROSTER_PUBLIC_ASSET_URLS = ADMIN_ROSTER_CONFIG.publicAssetUrls;
 
 // ══════════════════════════════════════════════════════════
 // CLAN ROSTER
@@ -11,6 +12,11 @@ const ROSTER_SETTINGS_API = ADMIN_ROSTER_CONFIG.settingsApi;
 let rosterAvatarFile = null;
 let editAvatarFile = null;
 let currentRosterSlideshowSettings = getDefaultRosterSlideshowSettings();
+
+function addCacheBustForPublicRosterAsset(url, publicAssetUrl) {
+  if (!url || !publicAssetUrl || !url.startsWith(publicAssetUrl)) return url || '';
+  return `${url}${url.includes('?') ? '&' : '?'}t=${Math.floor(Date.now() / 60000)}`;
+}
 
 // Drag & drop support for new member form
 const rosterAvatarArea = document.getElementById('roster-avatar-area');
@@ -85,7 +91,9 @@ function renderRosterAdmin(members) {
   }
 
   body.innerHTML = `<div class="admin-roster-grid">${members.map(m => {
-    const avatarSrc = m.avatar ? escapeHtml(m.avatar) + (m.avatar.startsWith('/api/roster-avatar') ? '&t=' + Math.floor(Date.now() / 60000) : '') : '';
+    const avatarSrc = m.avatar
+      ? escapeHtml(addCacheBustForPublicRosterAsset(m.avatar, ROSTER_PUBLIC_ASSET_URLS.rosterAvatar))
+      : '';
 
     const gamesHtml = (m.games || []).map(g => {
       const cls = g === 'PUBG' ? 'pubg' : g === 'ARC Raiders' ? 'arc' : 'other';
