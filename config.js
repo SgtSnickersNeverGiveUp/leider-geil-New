@@ -24,9 +24,6 @@ const SITE_CONFIG = {
   twitchChannel: "sgtsnickersnevergiveup",
   twitchStatusApi: "/api/twitch-status",
 
-  /* ── Bewerbungs-Endpoint ─────────────────────────────── */
-  applyEndpoint: "/api/applications",
-
   /* ── API-Endpunkte ──────────────────────────────────── */
   rosterApi: "/api/roster",
   rosterAvatarApi: "/api/roster-avatar",
