@@ -5,7 +5,7 @@ const STORE_NAME = "settings";
 const SETTINGS_KEY = "site-settings";
 
 export default async (req) => {
-  if (req.method === "POST") {
+  if (req.method === "GET" || req.method === "POST") {
     const adminGuard = requireAdmin(req);
     if (adminGuard) return adminGuard;
   }
