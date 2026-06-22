@@ -1,8 +1,9 @@
 'use strict';
 
-const ROSTER_API = '/api/roster';
-const ROSTER_AVATAR_API = '/api/roster-avatar';
-const ROSTER_SETTINGS_API = '/api/settings';
+const ADMIN_ROSTER_CONFIG = window.ADMIN_CONFIG;
+const ROSTER_API = ADMIN_ROSTER_CONFIG.rosterApi;
+const ROSTER_AVATAR_API = ADMIN_ROSTER_CONFIG.rosterAvatarApi;
+const ROSTER_SETTINGS_API = ADMIN_ROSTER_CONFIG.settingsApi;
 
 // ══════════════════════════════════════════════════════════
 // CLAN ROSTER
@@ -125,7 +126,7 @@ function getDefaultRosterSlideshowSettings() {
     autoplay: true,
     speedSeconds: 8,
     pinnedMemberId: '',
-    members: [],
+    entries: [],
   };
 }
 
@@ -145,21 +146,25 @@ function normalizeRosterSlideshowSettings(settings) {
   const defaults = getDefaultRosterSlideshowSettings();
   if (!settings || typeof settings !== 'object') return defaults;
 
-  const members = Array.isArray(settings.members)
-    ? settings.members
-        .filter((entry) => entry && entry.id)
-        .map((entry) => ({
-          id: String(entry.id),
-          text: String(entry.text || ''),
-        }))
-    : [];
+  const rawEntries = Array.isArray(settings.entries)
+    ? settings.entries
+    : Array.isArray(settings.members)
+      ? settings.members
+      : [];
+
+  const entries = rawEntries
+    .filter((entry) => entry && (entry.memberId || entry.id))
+    .map((entry) => ({
+      memberId: String(entry.memberId || entry.id),
+      text: String(entry.text || ''),
+    }));
 
   return {
     enabled: Boolean(settings.enabled),
     autoplay: settings.autoplay !== false,
     speedSeconds: Math.max(3, Number(settings.speedSeconds) || defaults.speedSeconds),
     pinnedMemberId: settings.pinnedMemberId ? String(settings.pinnedMemberId) : '',
-    members,
+    entries,
   };
 }
 
@@ -171,7 +176,7 @@ async function renderRosterSlideshowAdmin(members, reloadSettings = true) {
 
   if (reloadSettings) await loadRosterSlideshowSettings();
   const settings = currentRosterSlideshowSettings;
-  const selectedIds = new Set(settings.members.map((entry) => entry.id));
+  const selectedIds = new Set(settings.entries.map((entry) => entry.memberId));
 
   document.getElementById('roster-slideshow-enabled').checked = settings.enabled;
   document.getElementById('roster-slideshow-autoplay').checked = settings.autoplay;
@@ -182,16 +187,16 @@ async function renderRosterSlideshowAdmin(members, reloadSettings = true) {
     .map((member) => `<option value="${escapeHtml(member.id)}">${escapeHtml(member.name)}</option>`)
     .join('');
 
-  pinnedSelect.innerHTML = '<option value="">Automatisch erster aktiver Member</option>' + settings.members
+  pinnedSelect.innerHTML = '<option value="">Automatisch erster aktiver Member</option>' + settings.entries
     .map((entry) => {
-      const member = members.find((item) => item.id === entry.id);
+      const member = members.find((item) => item.id === entry.memberId);
       if (!member) return '';
-      const selected = settings.pinnedMemberId === entry.id ? ' selected' : '';
-      return `<option value="${escapeHtml(entry.id)}"${selected}>${escapeHtml(member.name)}</option>`;
+      const selected = settings.pinnedMemberId === entry.memberId ? ' selected' : '';
+      return `<option value="${escapeHtml(entry.memberId)}"${selected}>${escapeHtml(member.name)}</option>`;
     })
     .join('');
 
-  if (settings.members.length === 0) {
+  if (settings.entries.length === 0) {
     selectedBody.innerHTML = `
       <div class="empty-state">
         <div class="empty-state__icon">&#9733;</div>
@@ -200,25 +205,25 @@ async function renderRosterSlideshowAdmin(members, reloadSettings = true) {
     return;
   }
 
-  selectedBody.innerHTML = settings.members.map((entry) => {
-    const member = members.find((item) => item.id === entry.id);
+  selectedBody.innerHTML = settings.entries.map((entry) => {
+    const member = members.find((item) => item.id === entry.memberId);
     if (!member) return '';
     const avatarSrc = member.avatar ? escapeHtml(member.avatar) : '';
     return `
-      <div class="roster-slideshow-admin__item" data-slideshow-member-id="${escapeHtml(entry.id)}">
+      <div class="roster-slideshow-admin__item" data-slideshow-member-id="${escapeHtml(entry.memberId)}">
         <img class="roster-slideshow-admin__avatar" src="${avatarSrc}" alt="${escapeHtml(member.name)}" loading="lazy"
              onerror="this.style.display='none'">
         <div>
           <div class="roster-slideshow-admin__name">${escapeHtml(member.name)}</div>
           <div class="roster-slideshow-admin__meta">${escapeHtml(member.clanRole || member.role || 'Member')}</div>
-          <label class="admin-form__label" for="slideshow-text-${escapeHtml(entry.id)}">Diashow-Text</label>
+          <label class="admin-form__label" for="slideshow-text-${escapeHtml(entry.memberId)}">Diashow-Text</label>
           <textarea class="admin-form__textarea roster-slideshow-text"
-                    id="slideshow-text-${escapeHtml(entry.id)}"
-                    data-slideshow-text="${escapeHtml(entry.id)}"
+                    id="slideshow-text-${escapeHtml(entry.memberId)}"
+                    data-slideshow-text="${escapeHtml(entry.memberId)}"
                     maxlength="180"
                     placeholder="z.B. Alles Gute zum Geburtstag oder Willkommen im Clan!">${escapeHtml(entry.text)}</textarea>
         </div>
-        <button type="button" class="btn-delete" data-slideshow-remove="${escapeHtml(entry.id)}">Entfernen</button>
+        <button type="button" class="btn-delete" data-slideshow-remove="${escapeHtml(entry.memberId)}">Entfernen</button>
       </div>`;
   }).join('');
 }
@@ -228,16 +233,16 @@ function addRosterSlideshowMember() {
   const memberId = select?.value;
   if (!memberId) return;
   currentRosterSlideshowSettings = collectRosterSlideshowSettingsFromForm();
-  if (currentRosterSlideshowSettings.members.some((entry) => entry.id === memberId)) return;
+  if (currentRosterSlideshowSettings.entries.some((entry) => entry.memberId === memberId)) return;
 
-  currentRosterSlideshowSettings.members.push({ id: memberId, text: '' });
+  currentRosterSlideshowSettings.entries.push({ memberId, text: '' });
   renderRosterSlideshowAdmin(currentRosterMembers, false);
 }
 
 function removeRosterSlideshowMember(memberId) {
   currentRosterSlideshowSettings = collectRosterSlideshowSettingsFromForm();
-  currentRosterSlideshowSettings.members = currentRosterSlideshowSettings.members
-    .filter((entry) => entry.id !== memberId);
+  currentRosterSlideshowSettings.entries = currentRosterSlideshowSettings.entries
+    .filter((entry) => entry.memberId !== memberId);
   if (currentRosterSlideshowSettings.pinnedMemberId === memberId) {
     currentRosterSlideshowSettings.pinnedMemberId = '';
   }
@@ -254,9 +259,9 @@ function collectRosterSlideshowSettingsFromForm() {
     autoplay: Boolean(document.getElementById('roster-slideshow-autoplay')?.checked),
     speedSeconds: Math.max(3, speed),
     pinnedMemberId: document.getElementById('roster-slideshow-pinned-member')?.value || '',
-    members: currentRosterSlideshowSettings.members.map((entry) => ({
-      id: entry.id,
-      text: textById.get(entry.id) || '',
+    entries: currentRosterSlideshowSettings.entries.map((entry) => ({
+      memberId: entry.memberId,
+      text: textById.get(entry.memberId) || '',
     })),
   };
 }

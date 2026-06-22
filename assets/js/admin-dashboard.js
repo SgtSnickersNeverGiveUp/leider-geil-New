@@ -1,14 +1,15 @@
 'use strict';
 
-const API_URL = '/api/applications';
-const EVENTS_API = '/api/events';
-const EVENT_IMAGE_API = '/api/event-image';
-const VIDEOS_API = '/api/videos';
-const EVT_REGISTRATIONS_API = '/api/event-registrations';
-const NEWS_API_URL = '/api/news';
-const SETTINGS_API = '/api/settings';
-const BANNER_IMAGE_API = '/api/banner-image';
-const COMMUNITY_SHOUTS_API = '/api/community-shouts';
+const ADMIN_DASHBOARD_CONFIG = window.ADMIN_CONFIG;
+const API_URL = ADMIN_DASHBOARD_CONFIG.applicationsApi;
+const EVENTS_API = ADMIN_DASHBOARD_CONFIG.eventsApi;
+const EVENT_IMAGE_API = ADMIN_DASHBOARD_CONFIG.eventImageApi;
+const VIDEOS_API = ADMIN_DASHBOARD_CONFIG.videosApi;
+const EVT_REGISTRATIONS_API = ADMIN_DASHBOARD_CONFIG.eventRegistrationsApi;
+const NEWS_API_URL = ADMIN_DASHBOARD_CONFIG.newsApi;
+const SETTINGS_API = ADMIN_DASHBOARD_CONFIG.settingsApi;
+const BANNER_IMAGE_API = ADMIN_DASHBOARD_CONFIG.bannerImageApi;
+const COMMUNITY_SHOUTS_API = ADMIN_DASHBOARD_CONFIG.communityShoutsApi;
 const BANNER_ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const BANNER_MAX_SIZE_BYTES = 5 * 1024 * 1024;
 
@@ -36,12 +37,12 @@ function getEventGameVariant(game) {
 
 function redirectToAdminLogin() {
   const redirect = `${window.location.pathname}${window.location.search}`;
-  window.location.assign(`/admin-login.html?redirect=${encodeURIComponent(redirect)}`);
+  window.location.assign(`${ADMIN_DASHBOARD_CONFIG.loginPath}?redirect=${encodeURIComponent(redirect)}`);
 }
 
 async function ensureAdminSession() {
   try {
-    const res = await fetch('/api/admin-session', { credentials: 'same-origin' });
+    const res = await fetch(ADMIN_DASHBOARD_CONFIG.sessionApi, { credentials: 'same-origin' });
     if (!res.ok) {
       redirectToAdminLogin();
       return false;
@@ -62,7 +63,7 @@ async function ensureAdminSession() {
 
 async function logoutAdmin() {
   try {
-    await fetch('/api/admin-logout', {
+    await fetch(ADMIN_DASHBOARD_CONFIG.logoutApi, {
       method: 'POST',
       credentials: 'same-origin',
     });
@@ -137,7 +138,7 @@ async function loadApplications() {
   body.innerHTML = '<div class="loading">Lade Bewerbungen</div>';
 
   try {
-    const res = await fetch(API_URL); // '/api/applications'
+    const res = await fetch(API_URL);
     if (!res.ok) throw new Error('API error ' + res.status);
     currentApplications = await res.json();
   } catch (err) {
@@ -202,6 +203,22 @@ function updateStats() {
   document.getElementById('stat-total').textContent = currentApplications.length;
   document.getElementById('stat-pubg').textContent = currentApplications.filter(a => a.hauptspiel === 'PUBG' || a.hauptspiel === 'Beides').length;
   document.getElementById('stat-arc').textContent = currentApplications.filter(a => a.hauptspiel === 'ARC Raiders' || a.hauptspiel === 'Beides').length;
+}
+
+async function deleteApplication(id) {
+  if (!id) return;
+  if (!confirm('Bewerbung wirklich löschen?')) return;
+
+  try {
+    const res = await fetch(`${API_URL}?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    currentApplications = currentApplications.filter((app) => app.id !== id);
+    renderApplications();
+    updateStats();
+  } catch (err) {
+    console.error('[Applications] Löschen fehlgeschlagen', err);
+    alert('Bewerbung konnte nicht gelöscht werden.');
+  }
 }
 
 function closeModal() {
@@ -1104,7 +1121,7 @@ async function loadCommunityShouts() {
   body.innerHTML = '<div class="loading">Lade Community Shouts</div>';
 
   try {
-    const res = await fetch(`${COMMUNITY_SHOUTS_API}?all=1`);
+    const res = await fetch(COMMUNITY_SHOUTS_API);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     currentCommunityShouts = await res.json();
     renderCommunityShoutsAdmin();
@@ -1212,6 +1229,7 @@ document.getElementById('btn-refresh').addEventListener('click', loadApplication
 document.getElementById('btn-refresh-roster').addEventListener('click', loadRoster);
 document.getElementById('btn-refresh-events').addEventListener('click', loadEvents);
 document.getElementById('btn-refresh-videos').addEventListener('click', loadVideos);
+document.getElementById('btn-refresh-news')?.addEventListener('click', initNewsAdmin);
 document.getElementById('btn-refresh-banner').addEventListener('click', loadBannerSettings);
 document.getElementById('btn-refresh-evt-registrations').addEventListener('click', loadEventRegistrations);
 document.getElementById('btn-refresh-community-shouts')?.addEventListener('click', loadCommunityShouts);
